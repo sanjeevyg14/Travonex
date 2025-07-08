@@ -18,7 +18,7 @@ export function verifyJwt(requiredRole?: string | string[]) {
       const payload = jwt.verify(token, process.env.JWT_SECRET || 'secret') as AuthUser;
       (req as any).authUser = payload;
       if (requiredRole) {
-        let allowed: string[] = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+        let allowed = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
         if (allowed.includes('ADMIN')) {
           allowed = allowed.flatMap(r =>
             r === 'ADMIN'

@@ -16,4 +16,7 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": ["src/**/*"]
+    "transpileOnly": true
+  },
+  "include": ["src/**/*", "tests/**/*"]
 }
