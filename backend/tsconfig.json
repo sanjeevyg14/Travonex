@@ -12,6 +12,12 @@
   },
   "ts-node": {
     "transpileOnly": true
+
+    "types": ["node"]
+  },
+  "ts-node": {
+    "transpileOnly": true
+    "forceConsistentCasingInFileNames": true
   },
   "include": ["src/**/*"]
 }

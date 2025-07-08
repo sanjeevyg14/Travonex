@@ -179,6 +179,7 @@ A: The project uses `https://placehold.co` for mock images. In a production envi
 
 **Q: Where is the data stored?**
 A: Most pages now fetch data from the Express backend. A small amount of static data (e.g., trip categories) still resides in `src/lib/mock-data.ts` until those endpoints are implemented.
+A: Currently, all data is mocked and lives in `src/lib/mock-data.ts`. The next step is to replace these mock data imports with API calls to your backend database.
 
 ---
 

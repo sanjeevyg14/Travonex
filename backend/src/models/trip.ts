@@ -21,6 +21,13 @@ export interface ITrip extends Document {
   organizerId: string;
   cancellationRules?: { days: number; refundPercentage: number }[];
   status: 'Published' | 'Draft' | 'Unlisted' | 'Pending Approval' | 'Rejected';
+
+
+  status: 'Published' | 'Draft' | 'Unlisted' | 'Pending Approval' | 'Rejected';
+
+
+status: 'Published' | 'Draft' | 'Unlisted' | 'Pending Approval' | 'Rejected';
+
 }
 
 const batchSchema = new Schema<ITripBatch>({

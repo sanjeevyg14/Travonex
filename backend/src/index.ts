@@ -37,6 +37,7 @@ app.use('/api/organizers/me', organizerRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/users', userRoutes);
 
+
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert({
