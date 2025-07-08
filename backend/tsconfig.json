@@ -11,6 +11,11 @@
     "types": ["node", "jest"]
   },
   "ts-node": {
+    "transpileOnly": true,
+    "types": ["node"],
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src/**/*"]
     "transpileOnly": true
   },
   "include": ["src/**/*", "tests/**/*"]
