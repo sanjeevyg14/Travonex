@@ -1,3 +1,9 @@
+import express, { Request, Response, NextFunction } from 'express';
+import Trip, { ITripBatch } from '../models/trip';
+import Booking from '../models/booking';
+import Coupon from '../models/coupon';
+import User from '../models/user';
+import Dispute from '../models/dispute';
 import express from 'express';
 import Trip from '../models/trip';
 import Booking from '../models/booking';
@@ -8,12 +14,14 @@ import crypto from 'crypto';
 
 const router = express.Router();
 
+router.post('/create', (req: Request, res: Response, next: NextFunction) => {
 router.post('/create', (req, res, next) => {
   (async () => {
     const { tripId, batchId, userId, travelers, couponCode, walletAmount } = req.body;
     const trip = await Trip.findById(tripId);
     if (!trip) return res.status(404).json({ message: 'Trip not found' });
 
+    const batch = trip.batches.find((b: ITripBatch) => b.id === batchId);
     const batch = trip.batches.find(b => b.id === batchId);
     if (!batch) return res.status(400).json({ message: 'Batch not found' });
 
@@ -63,6 +71,7 @@ router.post('/create', (req, res, next) => {
   })().catch(next);
 });
 
+router.post('/payment-callback', (req: Request, res: Response, next: NextFunction) => {
 router.post('/payment-callback', (req, res, next) => {
   (async () => {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
@@ -84,6 +93,7 @@ router.post('/payment-callback', (req, res, next) => {
 
     const trip = await Trip.findById(booking.tripId);
     if (trip) {
+      const batch = trip.batches.find((b: ITripBatch) => b.id === booking.batchId);
       const batch = trip.batches.find(b => b.id === booking.batchId);
       if (batch) {
         batch.availableSlots -= booking.travelers.length;
@@ -93,6 +103,46 @@ router.post('/payment-callback', (req, res, next) => {
     }
 
     res.json({ success: true });
+  })().catch(next);
+});
+
+router.post('/:id/cancel', (req: Request, res: Response, next: NextFunction) => {
+  (async () => {
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+    if (booking.status === 'Cancelled') return res.json({ refundAmount: 0 });
+
+    const trip = await Trip.findById(booking.tripId);
+    const batch = trip?.batches.find((b: ITripBatch) => b.id === booking.batchId);
+    const rules = trip?.cancellationRules || [];
+    let refund = 0;
+    if (batch) {
+      const daysBefore = Math.floor((new Date(batch.startDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+      const rule = rules
+        .sort((a: { days: number; refundPercentage: number }, b: { days: number; refundPercentage: number }) => b.days - a.days)
+        .find((r: { days: number; refundPercentage: number }) => daysBefore >= r.days);
+      refund = rule ? Math.round((booking.amount * rule.refundPercentage) / 100) : 0;
+    }
+
+    booking.status = 'Cancelled';
+    await booking.save();
+    res.json({ refundAmount: refund });
+  })().catch(next);
+});
+
+router.post('/:id/disputes', (req: Request, res: Response, next: NextFunction) => {
+  (async () => {
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+
+    const trip = await Trip.findById(booking.tripId);
+    const dispute = await Dispute.create({
+      bookingId: booking.id,
+      userId: booking.userId,
+      organizerId: trip ? trip.organizerId : '',
+      reason: req.body.reason,
+    });
+    res.status(201).json(dispute);
     const { tripId, batchId, userId, travelers } = req.body;
     const trip = await Trip.findById(tripId);
     if (!trip) {

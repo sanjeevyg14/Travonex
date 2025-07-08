@@ -19,7 +19,9 @@ export interface ITrip extends Document {
   image: string;
   batches: ITripBatch[];
   organizerId: string;
-  status: 'Published' | 'Draft' | 'Unlisted' | 'Pending Approval' | 'Rejected';
+  cancellationRules?: { days: number; refundPercentage: number }[];
+
+status: 'Published' | 'Draft' | 'Unlisted' | 'Pending Approval' | 'Rejected';
 }
 
 const batchSchema = new Schema<ITripBatch>({
@@ -41,6 +43,7 @@ const tripSchema = new Schema<ITrip>({
   image: String,
   batches: [batchSchema],
   organizerId: String,
+  cancellationRules: [{ days: Number, refundPercentage: Number }],
   status: {
     type: String,
     enum: ['Published', 'Draft', 'Unlisted', 'Pending Approval', 'Rejected'],

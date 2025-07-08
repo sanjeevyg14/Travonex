@@ -1,3 +1,4 @@
+import express, { Request, Response, NextFunction } from 'express';
 import express from 'express';
 import admin from 'firebase-admin';
 import jwt from 'jsonwebtoken';
@@ -6,6 +7,7 @@ import Organizer from '../models/organizer';
 
 const router = express.Router();
 
+router.post('/login', (req: Request, res: Response, next: NextFunction) => {
 router.post('/login', (req, res, next) => {
   (async () => {
     const { token } = req.body;
