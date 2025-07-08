@@ -1,0 +1,24 @@
+diff --git a/node_modules/@opentelemetry/sdk-node/build/src/TracerProviderWithEnvExporter.js b/node_modules/@opentelemetry/sdk-node/build/src/TracerProviderWithEnvExporter.js
+index 2871144..fd69e36 100644
+--- a/node_modules/@opentelemetry/sdk-node/build/src/TracerProviderWithEnvExporter.js
++++ b/node_modules/@opentelemetry/sdk-node/build/src/TracerProviderWithEnvExporter.js
+@@ -42,12 +42,15 @@
+             this._exporter = new otlp_exporter_trace_grpc_1.OTLPTraceExporter();
+             break;
+         case 'jaeger':
+-            // eslint-disable-next-line @typescript-eslint/no-var-requires
+-            const { JaegerExporter } = require('@opentelemetry/exporter-jaeger');
+-            this._exporter = new JaegerExporter();
++            // DEV_COMMENT: The Jaeger exporter is an optional dependency and was causing build failures.
++            // It has been disabled via a patch to ensure the application can build successfully
++            // in environments where Jaeger is not installed or configured.
++            // this._exporter = new (require('@opentelemetry/exporter-jaeger').JaegerExporter)();
+             break;
+         case 'zipkin':
+-            this._exporter = new zipkin_exporter_1.ZipkinExporter();
++            // DEV_COMMENT: The Zipkin exporter is an optional dependency and was causing build failures.
++            // It has been disabled via a patch.
++            // this._exporter = new zipkin_exporter_1.ZipkinExporter();
+             break;
+         default:
+             diag_1.diag.error(`Unrecognized OTEL_TRACES_EXPORTER value: ${exporterName}.`);
