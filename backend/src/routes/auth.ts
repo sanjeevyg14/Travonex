@@ -8,6 +8,7 @@ import Organizer from '../models/organizer';
 const router = express.Router();
 
 router.post('/login', (req: Request, res: Response, next: NextFunction) => {
+
 router.post('/login', (req, res, next) => {
   (async () => {
     const { token } = req.body;

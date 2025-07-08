@@ -8,6 +8,7 @@ export interface AuthUser {
 
 export function verifyJwt(requiredRole?: string | string[]) {
 export function verifyJwt(requiredRole?: string) {
+
   return (req: Request, res: Response, next: NextFunction): void => {
     const header = req.headers.authorization;
     if (!header || !header.startsWith('Bearer ')) {
@@ -28,9 +29,11 @@ export function verifyJwt(requiredRole?: string) {
           return;
         }
 
+
       if (requiredRole && payload.role !== requiredRole) {
         res.status(403).json({ message: 'Forbidden' });
         return;
+
       }
       next();
     } catch {

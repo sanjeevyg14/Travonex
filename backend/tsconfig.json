@@ -8,6 +8,10 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
+    "types": ["node", "jest"]
+  },
+  "ts-node": {
+    "transpileOnly": true
     "types": ["node"]
   },
   "ts-node": {
