@@ -16,7 +16,7 @@ import Link from "next/link";
 import * as React from "react";
 import { TripCard, TripCardSkeleton } from "@/components/common/TripCard";
 import { DestinationSuggestionForm } from "@/components/ai/DestinationSuggestionForm";
-import { trips, categories as mockCategories } from "@/lib/mock-data";
+import { categories as mockCategories } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { useCity } from "@/context/CityContext";
@@ -47,29 +47,27 @@ export default function HomePage() {
 
 
   React.useEffect(() => {
-    // FRONTEND: Simulate fetching data from the backend.
-    const loadData = () => {
-        // BACKEND: Fetch trips marked for the banner. The API should limit this to 5. `GET /api/trips?isBanner=true`
-        const fetchedBannerTrips = trips.filter(trip => trip.isBannerTrip && trip.status === 'Published');
-        setBannerTrips(fetchedBannerTrips);
-        
-        // BACKEND: This logic should be a single API call: GET /api/trips?isFeatured=true&city={selectedCity}&limit=4
-        // The `isFeatured` flag is set by an Admin in the Admin Panel.
-        const fetchedFeaturedTrips = trips
-            .filter(trip => trip.isFeatured && trip.status === 'Published')
-            .filter(trip => selectedCity === 'all' || trip.city === selectedCity)
-            .slice(0, 4);
-        setFeaturedTrips(fetchedFeaturedTrips);
+    const loadData = async () => {
+      try {
+        const bannerRes = await fetch(`/api/trips?isBanner=true&limit=5`);
+        if (bannerRes.ok) {
+          setBannerTrips(await bannerRes.json());
+        }
 
-        // BACKEND: Fetch active categories from `GET /api/categories?status=Active`
+        const featureRes = await fetch(`/api/trips?isFeatured=true&city=${selectedCity}&limit=4`);
+        if (featureRes.ok) {
+          setFeaturedTrips(await featureRes.json());
+        }
+
         const activeCategories = mockCategories.filter(c => c.status === 'Active');
         setCategories(activeCategories);
-
+      } catch (err) {
+        console.error('Failed to load homepage data', err);
+      } finally {
         setIsLoading(false);
+      }
     };
-    
-    // Using requestAnimationFrame to ensure the browser has painted the initial skeletons before we do heavy work.
-    requestAnimationFrame(loadData);
+    loadData();
   }, [selectedCity]);
   
 

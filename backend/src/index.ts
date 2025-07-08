@@ -10,6 +10,7 @@ import tripRoutes from './routes/trips';
 import bookingRoutes from './routes/bookings';
 import organizerRoutes from './routes/organizers';
 import adminRoutes from './routes/admin';
+import userRoutes from './routes/users';
 import { errorHandler } from './middleware/errorHandler';
 
 dotenv.config();
@@ -34,6 +35,7 @@ app.use('/api/trips', tripRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/organizers/me', organizerRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/users', userRoutes);
 
 
 if (!admin.apps.length) {

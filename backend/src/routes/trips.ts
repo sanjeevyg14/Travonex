@@ -1,10 +1,13 @@
 import express, { Request, Response, NextFunction } from 'express';
+import Trip from '../models/trip';
+import Organizer from '../models/organizer';
 import express from 'express';
 import Trip from '../models/trip';
 
 const router = express.Router();
 
 router.get('/', (req: Request, res: Response, next: NextFunction) => {
+
 router.get('/', (req, res, next) => {
   Trip.find({ status: 'Published' })
     .then(trips => res.json(trips))
@@ -12,6 +15,13 @@ router.get('/', (req, res, next) => {
 });
 
 router.get('/slug/:slug', (req: Request, res: Response, next: NextFunction) => {
+  (async () => {
+    const trip = await Trip.findOne({ slug: req.params.slug, status: 'Published' });
+    if (!trip) return res.status(404).json({ message: 'Trip not found' });
+    const organizer = await Organizer.findById(trip.organizerId);
+    res.json({ trip, organizer });
+  })().catch(next);
+
 router.get('/slug/:slug', (req, res, next) => {
  
   Trip.findOne({ slug: req.params.slug, status: 'Published' })

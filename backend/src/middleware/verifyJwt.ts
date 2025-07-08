@@ -7,6 +7,7 @@ export interface AuthUser {
 }
 
 export function verifyJwt(requiredRole?: string | string[]) {
+
 export function verifyJwt(requiredRole?: string) {
 
   return (req: Request, res: Response, next: NextFunction): void => {

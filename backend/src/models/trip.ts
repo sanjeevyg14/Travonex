@@ -20,6 +20,8 @@ export interface ITrip extends Document {
   batches: ITripBatch[];
   organizerId: string;
   cancellationRules?: { days: number; refundPercentage: number }[];
+  status: 'Published' | 'Draft' | 'Unlisted' | 'Pending Approval' | 'Rejected';
+
 
   status: 'Published' | 'Draft' | 'Unlisted' | 'Pending Approval' | 'Rejected';
 
