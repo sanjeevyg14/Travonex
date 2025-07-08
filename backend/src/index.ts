@@ -5,6 +5,10 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import admin from 'firebase-admin';
 import Razorpay from 'razorpay';
+import authRoutes from './routes/auth';
+import tripRoutes from './routes/trips';
+import bookingRoutes from './routes/bookings';
+import { errorHandler } from './middleware/errorHandler';
 
 dotenv.config();
 
@@ -21,6 +25,10 @@ const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(bodyParser.json());
+
+app.use('/api/auth', authRoutes);
+app.use('/api/trips', tripRoutes);
+app.use('/api/bookings', bookingRoutes);
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -69,6 +77,7 @@ app.get('/protected', authenticate, (req, res) => {
   res.json({ user: (req as any).user });
 });
 
+app.use(errorHandler);
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
