@@ -1,0 +1,23 @@
+import express from 'express';
+import Trip from '../models/trip';
+
+const router = express.Router();
+
+router.get('/', (req, res, next) => {
+  Trip.find({ status: 'Published' })
+    .then(trips => res.json(trips))
+    .catch(next);
+});
+
+router.get('/slug/:slug', (req, res, next) => {
+  Trip.findOne({ slug: req.params.slug, status: 'Published' })
+    .then(trip => {
+      if (!trip) {
+        return res.status(404).json({ message: 'Trip not found' });
+      }
+      res.json(trip);
+    })
+    .catch(next);
+});
+
+export default router;
