@@ -4,28 +4,21 @@ import Booking from '../models/booking';
 import Coupon from '../models/coupon';
 import User from '../models/user';
 import Dispute from '../models/dispute';
-import express from 'express';
-import Trip from '../models/trip';
-import Booking from '../models/booking';
-import Coupon from '../models/coupon';
-import User from '../models/user';
 import { razorpay } from '../index';
 import crypto from 'crypto';
+import { verifyJwt } from '../middleware/verifyJwt';
 
 const router = express.Router();
+router.use(verifyJwt());
 
 router.post('/create', (req: Request, res: Response, next: NextFunction) => {
-
-router.post('/create', (req, res, next) => {
   (async () => {
-    const { tripId, batchId, userId, travelers, couponCode, walletAmount } = req.body;
+    const { tripId, batchId, travelers, couponCode, walletAmount } = req.body;
+    const userId = (req as any).authUser.id;
     const trip = await Trip.findById(tripId);
     if (!trip) return res.status(404).json({ message: 'Trip not found' });
 
     const batch = trip.batches.find((b: ITripBatch) => b.id === batchId);
-
-
-    const batch = trip.batches.find(b => b.id === batchId);
     if (!batch) return res.status(400).json({ message: 'Batch not found' });
 
     if (batch.availableSlots < travelers.length) {
@@ -37,7 +30,10 @@ router.post('/create', (req, res, next) => {
     if (couponCode) {
       const coupon = await Coupon.findOne({ code: couponCode, isActive: true });
       if (!coupon) return res.status(400).json({ message: 'Invalid coupon' });
-      couponDiscount = coupon.discountType === 'percent' ? Math.round((amount * coupon.discountValue) / 100) : coupon.discountValue;
+      couponDiscount =
+        coupon.discountType === 'percent'
+          ? Math.round((amount * coupon.discountValue) / 100)
+          : coupon.discountValue;
       amount -= couponDiscount;
     }
 
@@ -75,12 +71,11 @@ router.post('/create', (req, res, next) => {
 });
 
 router.post('/payment-callback', (req: Request, res: Response, next: NextFunction) => {
-
-router.post('/payment-callback', (req, res, next) => {
   (async () => {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
     const body = `${razorpay_order_id}|${razorpay_payment_id}`;
-    const expected = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || '')
+    const expected = crypto
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || '')
       .update(body)
       .digest('hex');
 
@@ -97,8 +92,6 @@ router.post('/payment-callback', (req, res, next) => {
 
     const trip = await Trip.findById(booking.tripId);
     if (trip) {
-      const batch = trip.batches.find((b: ITripBatch) => b.id === booking.batchId);
-
       const batch = trip.batches.find(b => b.id === booking.batchId);
       if (batch) {
         batch.availableSlots -= booking.travelers.length;
@@ -118,14 +111,16 @@ router.post('/:id/cancel', (req: Request, res: Response, next: NextFunction) => 
     if (booking.status === 'Cancelled') return res.json({ refundAmount: 0 });
 
     const trip = await Trip.findById(booking.tripId);
-    const batch = trip?.batches.find((b: ITripBatch) => b.id === booking.batchId);
+    const batch = trip?.batches.find(b => b.id === booking.batchId);
     const rules = trip?.cancellationRules || [];
     let refund = 0;
     if (batch) {
-      const daysBefore = Math.floor((new Date(batch.startDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+      const daysBefore = Math.floor(
+        (new Date(batch.startDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+      );
       const rule = rules
-        .sort((a: { days: number; refundPercentage: number }, b: { days: number; refundPercentage: number }) => b.days - a.days)
-        .find((r: { days: number; refundPercentage: number }) => daysBefore >= r.days);
+        .sort((a, b) => b.days - a.days)
+        .find(r => daysBefore >= r.days);
       refund = rule ? Math.round((booking.amount * rule.refundPercentage) / 100) : 0;
     }
 
@@ -148,21 +143,6 @@ router.post('/:id/disputes', (req: Request, res: Response, next: NextFunction) =
       reason: req.body.reason,
     });
     res.status(201).json(dispute);
-    const { tripId, batchId, userId, travelers } = req.body;
-    const trip = await Trip.findById(tripId);
-    if (!trip) {
-      return res.status(404).json({ message: 'Trip not found' });
-    }
-    const batch = trip.batches.find(b => b.id === batchId);
-    if (!batch) {
-      return res.status(400).json({ message: 'Batch not found' });
-    }
-    if (batch.availableSlots < travelers.length) {
-      return res.status(400).json({ message: 'Not enough slots available' });
-    }
-    const amount = batch.priceOverride ?? trip.price;
-    const booking = await Booking.create({ tripId, batchId, userId, travelers, amount, status: 'Pending' });
-    res.status(201).json(booking);
   })().catch(next);
 });
 
