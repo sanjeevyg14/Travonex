@@ -11,12 +11,8 @@
     "types": ["node", "jest"]
   },
   "ts-node": {
-    "transpileOnly": true
-
-    "types": ["node"]
-  },
-  "ts-node": {
-    "transpileOnly": true
+    "transpileOnly": true,
+    "types": ["node"],
     "forceConsistentCasingInFileNames": true
   },
   "include": ["src/**/*"]
