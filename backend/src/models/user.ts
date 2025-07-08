@@ -7,6 +7,7 @@ export interface IUser extends Document {
   joinDate: Date;
   status: 'Active' | 'Suspended';
   avatar: string;
+  walletBalance: number;
 }
 
 const userSchema = new Schema<IUser>({
@@ -16,6 +17,7 @@ const userSchema = new Schema<IUser>({
   joinDate: { type: Date, default: Date.now },
   status: { type: String, enum: ['Active', 'Suspended'], default: 'Active' },
   avatar: { type: String, default: '' },
+  walletBalance: { type: Number, default: 0 },
 });
 
 export default mongoose.model<IUser>('User', userSchema);

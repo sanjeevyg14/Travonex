@@ -13,6 +13,11 @@ export interface IBooking extends Document {
   bookingDate: Date;
   status: 'Confirmed' | 'Completed' | 'Cancelled' | 'Pending';
   amount: number;
+  couponCodeUsed?: string;
+  couponDiscount?: number;
+  walletAmountUsed?: number;
+  razorpayOrderId?: string;
+  transactionId?: string;
   travelers: ITraveler[];
 }
 
@@ -33,6 +38,11 @@ const bookingSchema = new Schema<IBooking>({
     default: 'Pending',
   },
   amount: Number,
+  couponCodeUsed: String,
+  couponDiscount: Number,
+  walletAmountUsed: Number,
+  razorpayOrderId: String,
+  transactionId: String,
   travelers: [travelerSchema],
 });
 

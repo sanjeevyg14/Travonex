@@ -8,6 +8,7 @@ import Razorpay from 'razorpay';
 import authRoutes from './routes/auth';
 import tripRoutes from './routes/trips';
 import bookingRoutes from './routes/bookings';
+import organizerRoutes from './routes/organizers';
 import { errorHandler } from './middleware/errorHandler';
 
 dotenv.config();
@@ -16,6 +17,7 @@ declare global {
   namespace Express {
     interface Request {
       user?: admin.auth.DecodedIdToken;
+      authUser?: { id: string; role: string };
     }
   }
 }
@@ -29,6 +31,7 @@ app.use(bodyParser.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/trips', tripRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/organizers/me', organizerRoutes);
 
 if (!admin.apps.length) {
   admin.initializeApp({
