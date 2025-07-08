@@ -7,9 +7,6 @@ export interface AuthUser {
 }
 
 export function verifyJwt(requiredRole?: string | string[]) {
-
-export function verifyJwt(requiredRole?: string) {
-
   return (req: Request, res: Response, next: NextFunction): void => {
     const header = req.headers.authorization;
     if (!header || !header.startsWith('Bearer ')) {
@@ -21,20 +18,18 @@ export function verifyJwt(requiredRole?: string) {
       const payload = jwt.verify(token, process.env.JWT_SECRET || 'secret') as AuthUser;
       (req as any).authUser = payload;
       if (requiredRole) {
-        let allowed: string[] = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+        let allowed = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
         if (allowed.includes('ADMIN')) {
-          allowed = allowed.flatMap(r => r === 'ADMIN' ? ['Super Admin', 'Finance Manager', 'Support Agent', 'Operations Manager'] : [r]);
+          allowed = allowed.flatMap(r =>
+            r === 'ADMIN'
+              ? ['Super Admin', 'Finance Manager', 'Support Agent', 'Operations Manager']
+              : [r]
+          );
         }
         if (!allowed.includes(payload.role)) {
           res.status(403).json({ message: 'Forbidden' });
           return;
         }
-
-
-      if (requiredRole && payload.role !== requiredRole) {
-        res.status(403).json({ message: 'Forbidden' });
-        return;
-
       }
       next();
     } catch {
