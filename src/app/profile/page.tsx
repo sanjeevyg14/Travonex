@@ -3,7 +3,6 @@
 "use client";
 
 import * as React from "react";
-import { users } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -56,15 +55,22 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = React.useState(false);
 
   React.useEffect(() => {
-    // FRONTEND: Fetch the full profile for the logged-in user.
-    // In a real app, this would be `GET /api/users/me`
-    if (sessionUser) {
-        const fullUserProfile = users.find(u => u.id === sessionUser.id);
-        if (fullUserProfile) {
-            setUser(fullUserProfile);
-            setDob(fullUserProfile.dateOfBirth ? new Date(fullUserProfile.dateOfBirth) : undefined);
+    if (!sessionUser) return;
+    const loadProfile = async () => {
+      try {
+        const res = await fetch('/api/users/me', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` }
+        });
+        if (res.ok) {
+          const profile: User = await res.json();
+          setUser(profile);
+          setDob(profile.dateOfBirth ? new Date(profile.dateOfBirth) : undefined);
         }
-    }
+      } catch (err) {
+        console.error('Failed to load profile', err);
+      }
+    };
+    loadProfile();
   }, [sessionUser]);
 
   const handleSaveChanges = async () => {

@@ -1,28 +1,11 @@
 
 import { NextResponse } from 'next/server';
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+
 export async function POST() {
-  try {
-    const response = NextResponse.json({ message: 'Logged out successfully' });
-    
-    // Clear the session cookies by setting their expiration date to the past.
-    response.cookies.set({
-      name: 'userSession',
-      value: '',
-      path: '/',
-      expires: new Date(0),
-    });
-
-    response.cookies.set({
-      name: 'authToken',
-      value: '',
-      path: '/',
-      expires: new Date(0),
-    });
-
-    return response;
-  } catch (error) {
-    console.error('Logout error:', error);
-    return NextResponse.json({ message: 'An internal server error occurred' }, { status: 500 });
-  }
+  const res = await fetch(`${BACKEND_URL}/api/auth/logout`, { method: 'POST' });
+  const data = await res.json();
+  return NextResponse.json(data, { status: res.status });
 }
+

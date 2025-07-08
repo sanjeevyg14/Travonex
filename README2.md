@@ -51,18 +51,22 @@ npm install
 This will install all the necessary packages defined in `package.json`, including Next.js, React, Tailwind, and Genkit.
 
 ### Step 3.3: Configure Environment Variables
-The application uses environment variables for configuration, particularly for the AI features powered by Genkit.
+The application uses environment variables for configuration, both for the AI features powered by Genkit and for connecting to the backend server.
 
-1.  Create a new file named `.env` in the root of the project.
-2.  Add the following line to the `.env` file:
+1.  Create a new file named `.env` in the root of the project. You can copy `.env.example` as a starting point.
+2.  Add the following lines to the `.env` file:
 
     ```env
     # This key is required for Genkit to communicate with Google AI services.
     # Get your key from Google AI Studio: https://aistudio.google.com/app/apikey
     GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY_HERE
+
+    # Base URL of the Node.js/Express backend
+    NEXT_PUBLIC_BACKEND_URL=http://localhost:5000
     ```
 
-3.  **Important**: Replace `YOUR_GOOGLE_API_KEY_HERE` with your actual API key from Google AI Studio. The AI-powered "Destination Suggestion" feature will not work without it.
+3.  **Important**: Replace `YOUR_GOOGLE_API_KEY_HERE` with your actual API key from Google AI Studio. Update `NEXT_PUBLIC_BACKEND_URL` if your backend runs on a different host or port.
+
 
 ---
 
@@ -174,4 +178,26 @@ A: You need to create a `.env` file in the project root and add your Google AI S
 A: The project uses `https://placehold.co` for mock images. In a production environment, you would integrate a file storage service (like Firebase Storage, AWS S3, or Cloudinary) for image uploads and replace the placeholder URLs with the URLs from your storage service.
 
 **Q: Where is the data stored?**
-A: Currently, all data is mocked and lives in `src/lib/mock-data.ts`. The next step is to replace these mock data imports with API calls to your backend database.
+A: Most pages now fetch data from the Express backend. A small amount of static data (e.g., trip categories) still resides in `src/lib/mock-data.ts` until those endpoints are implemented.
+
+---
+
+## 8. Backend Integration & Testing
+
+The repository includes a minimal Express backend in the `backend/` directory. Copy `backend/.env.example` to `backend/.env` and update the connection details for MongoDB, Firebase and Razorpay.
+
+To run the backend in development mode:
+
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+Automated tests live under `backend/tests`. Run them with:
+
+```bash
+npm test
+```
+
+These tests cover basic Mongoose models, JWT authentication and a simple booking flow using SuperTest.

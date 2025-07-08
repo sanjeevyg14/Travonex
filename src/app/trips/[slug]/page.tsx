@@ -22,7 +22,7 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { trips, users, organizers } from "@/lib/mock-data";
+
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,13 +40,11 @@ import { ClientOnlyDate } from "@/components/common/ClientOnlyDate";
 
 
 // DEV_COMMENT: Data fetching now happens on the server.
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 async function getTripData(slug: string) {
-    const trip = trips.find(t => t.slug === slug && t.status === 'Published');
-    if (!trip) {
-        return { trip: null, organizer: null };
-    }
-    const organizer = organizers.find(o => o.id === trip.organizerId) || null;
-    return { trip, organizer };
+  const res = await fetch(`${BACKEND_URL}/api/trips/slug/${slug}`);
+  if (!res.ok) return { trip: null, organizer: null };
+  return res.json();
 }
 
 
@@ -60,17 +58,14 @@ export default async function TripDetailsPage({ params }: { params: { slug: stri
   // --- DEV_COMMENT: START - Organizer Average Rating Calculation ---
   // This logic calculates the average rating for the organizer across all their trips.
   // In a real backend, this would likely be a pre-calculated field on the organizer's profile to improve performance.
-  const organizerTrips = trips.filter(t => t.organizerId === organizer?.id);
-  const allOrganizerReviews = organizerTrips.flatMap(t => t.reviews || []);
-  const totalRating = allOrganizerReviews.reduce((acc, review) => acc + review.rating, 0);
-  const averageRating = allOrganizerReviews.length > 0 ? (totalRating / allOrganizerReviews.length).toFixed(1) : 'New';
-  const reviewCount = allOrganizerReviews.length;
+  const averageRating = organizer.averageRating ?? 'New';
+  const reviewCount = organizer.reviewCount ?? 0;
   // --- DEV_COMMENT: END - Organizer Average Rating Calculation ---
 
   // --- DEV_COMMENT: START - Trip-Specific Average Rating Calculation ---
   // This logic calculates the average rating *for this trip only*.
   // The backend should return these pre-calculated values in the trip API response to avoid this client-side logic.
-  const tripAverageRating = (trip.reviews?.length || 0) > 0 ? (trip.reviews.reduce((acc, r) => acc + r.rating, 0) / trip.reviews.length) : 0;
+  const tripAverageRating = (trip.reviews?.length || 0) > 0 ? (trip.reviews.reduce((acc: number, r: { rating: number }) => acc + r.rating, 0) / trip.reviews.length) : 0;
   const tripReviewCount = trip.reviews?.length || 0;
   // --- DEV_COMMENT: END - Trip-Specific Average Rating Calculation ---
 
@@ -385,17 +380,15 @@ export default async function TripDetailsPage({ params }: { params: { slug: stri
                     )}
 
                     <div className="space-y-4">
-                        {trip.reviews?.map(review => {
-                            const user = users.find(u => u.id === review.userId);
-                            return (
+                        {trip.reviews?.map((review) => (
                                 <div key={review.id} className="flex gap-4 border-t pt-4 first:border-t-0 first:pt-0">
                                     <Avatar>
-                                        <AvatarImage src={`https://placehold.co/40x40.png?text=${user?.name.charAt(0)}`} data-ai-hint="person avatar" />
-                                        <AvatarFallback>{user?.name.charAt(0)}</AvatarFallback>
+                                        <AvatarImage src={`https://placehold.co/40x40.png?text=${review.userName?.charAt(0)}`} data-ai-hint="person avatar" />
+                                        <AvatarFallback>{review.userName?.charAt(0)}</AvatarFallback>
                                     </Avatar>
                                     <div>
                                         <div className="flex items-center gap-2">
-                                            <h4 className="font-semibold">{user?.name}</h4>
+                                            <h4 className="font-semibold">{review.userName}</h4>
                                             <div className="flex">
                                                 {[...Array(5)].map((_, i) => <Star key={i} className={`h-4 w-4 ${i < review.rating ? 'text-amber-400 fill-current' : 'text-muted-foreground'}`} />)}
                                             </div>
@@ -403,8 +396,7 @@ export default async function TripDetailsPage({ params }: { params: { slug: stri
                                         <p className="text-muted-foreground text-sm">{review.comment}</p>
                                     </div>
                                 </div>
-                            )
-                        })}
+                        ))}
                         {(trip.reviews?.length || 0) === 0 && <p className="text-muted-foreground text-sm text-center py-4">No reviews yet. Be the first to leave one!</p>}
                     </div>
                 </CardContent>
