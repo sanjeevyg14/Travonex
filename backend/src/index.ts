@@ -35,6 +35,7 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/organizers/me', organizerRoutes);
 app.use('/api/admin', adminRoutes);
 
+
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert({
@@ -83,7 +84,6 @@ app.get('/protected', authenticate, (req, res) => {
 });
 
 app.use(errorHandler);
-
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

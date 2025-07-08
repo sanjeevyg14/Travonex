@@ -4,18 +4,25 @@ import Booking from '../models/booking';
 import Coupon from '../models/coupon';
 import User from '../models/user';
 import Dispute from '../models/dispute';
+import express from 'express';
+import Trip from '../models/trip';
+import Booking from '../models/booking';
+import Coupon from '../models/coupon';
+import User from '../models/user';
 import { razorpay } from '../index';
 import crypto from 'crypto';
 
 const router = express.Router();
 
 router.post('/create', (req: Request, res: Response, next: NextFunction) => {
+router.post('/create', (req, res, next) => {
   (async () => {
     const { tripId, batchId, userId, travelers, couponCode, walletAmount } = req.body;
     const trip = await Trip.findById(tripId);
     if (!trip) return res.status(404).json({ message: 'Trip not found' });
 
     const batch = trip.batches.find((b: ITripBatch) => b.id === batchId);
+    const batch = trip.batches.find(b => b.id === batchId);
     if (!batch) return res.status(400).json({ message: 'Batch not found' });
 
     if (batch.availableSlots < travelers.length) {
@@ -65,6 +72,7 @@ router.post('/create', (req: Request, res: Response, next: NextFunction) => {
 });
 
 router.post('/payment-callback', (req: Request, res: Response, next: NextFunction) => {
+router.post('/payment-callback', (req, res, next) => {
   (async () => {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
     const body = `${razorpay_order_id}|${razorpay_payment_id}`;
@@ -86,6 +94,7 @@ router.post('/payment-callback', (req: Request, res: Response, next: NextFunctio
     const trip = await Trip.findById(booking.tripId);
     if (trip) {
       const batch = trip.batches.find((b: ITripBatch) => b.id === booking.batchId);
+      const batch = trip.batches.find(b => b.id === booking.batchId);
       if (batch) {
         batch.availableSlots -= booking.travelers.length;
         if (batch.availableSlots < 0) batch.availableSlots = 0;
@@ -134,6 +143,21 @@ router.post('/:id/disputes', (req: Request, res: Response, next: NextFunction) =
       reason: req.body.reason,
     });
     res.status(201).json(dispute);
+    const { tripId, batchId, userId, travelers } = req.body;
+    const trip = await Trip.findById(tripId);
+    if (!trip) {
+      return res.status(404).json({ message: 'Trip not found' });
+    }
+    const batch = trip.batches.find(b => b.id === batchId);
+    if (!batch) {
+      return res.status(400).json({ message: 'Batch not found' });
+    }
+    if (batch.availableSlots < travelers.length) {
+      return res.status(400).json({ message: 'Not enough slots available' });
+    }
+    const amount = batch.priceOverride ?? trip.price;
+    const booking = await Booking.create({ tripId, batchId, userId, travelers, amount, status: 'Pending' });
+    res.status(201).json(booking);
   })().catch(next);
 });
 
