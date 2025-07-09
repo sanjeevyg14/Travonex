@@ -1,7 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express';
 import Trip, { ITripBatch } from '../models/trip';
 import Booking from '../models/booking';
-import Coupon from '../models/coupon';
+import PromoCode from '../models/promoCode';
 import User from '../models/user';
 import Dispute from '../models/dispute';
 import { razorpay } from '../index';
@@ -28,13 +28,20 @@ router.post('/create', (req: Request, res: Response, next: NextFunction) => {
     let amount = batch.priceOverride ?? trip.price;
     let couponDiscount = 0;
     if (couponCode) {
-      const coupon = await Coupon.findOne({ code: couponCode, isActive: true });
-      if (!coupon) return res.status(400).json({ message: 'Invalid coupon' });
+      const promo = await PromoCode.findOne({ code: couponCode, status: 'Active' });
+      if (!promo || (promo.expiryDate && promo.expiryDate < new Date())) {
+        return res.status(400).json({ message: 'Invalid coupon' });
+      }
+      if (promo.usage >= promo.limit) {
+        return res.status(400).json({ message: 'Promo code usage limit reached' });
+      }
       couponDiscount =
-        coupon.discountType === 'percent'
-          ? Math.round((amount * coupon.discountValue) / 100)
-          : coupon.discountValue;
+        promo.type === 'Percentage'
+          ? Math.round((amount * promo.value) / 100)
+          : promo.value;
       amount -= couponDiscount;
+      promo.usage += 1;
+      await promo.save();
     }
 
     let walletUsed = 0;
@@ -125,6 +132,8 @@ router.post('/:id/cancel', (req: Request, res: Response, next: NextFunction) => 
     }
 
     booking.status = 'Cancelled';
+    booking.refundStatus = 'Pending';
+    if (req.body.reason) booking.cancellationReason = req.body.reason;
     await booking.save();
     res.json({ refundAmount: refund });
   })().catch(next);
