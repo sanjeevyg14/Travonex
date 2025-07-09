@@ -3,6 +3,7 @@ import express from 'express';
 
 jest.mock('../../src/middleware/verifyJwt', () => ({
   verifyJwt: () => (req: any, _res: any, next: any) => {
+    req.authUser = { id: 'admin1', role: 'Super Admin' };
     req.authUser = { id: 'admin1', role: 'ADMIN' };
     next();
   }
