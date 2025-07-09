@@ -157,6 +157,7 @@ export interface Organizer {
   id: string;
   name: string; // Business / Brand Name
   email: string; // Primary contact email for platform communication
+  firebaseUid: string;
   joinDate: string;
 
   // --- Profile Information ---
@@ -209,6 +210,7 @@ export interface User {
   name: string;
   email: string;
   phone: string;
+  firebaseUid: string;
   joinDate: string;
   status: 'Active' | 'Suspended';
   isProfileComplete: boolean; // Backend should set this to true only after all required fields are filled.
