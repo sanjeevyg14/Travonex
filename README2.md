@@ -149,6 +149,8 @@ Your database schema should align with the TypeScript types defined in `src/lib/
 *   **Logic:** This endpoint should check the user's credentials against the `AdminUser`, `Organizer`, and `User` tables to determine their role.
 *   **Response:** On successful login, the API should return a session token (e.g., JWT) and a user object containing `id`, `name`, `email`, `role`, and `avatar`.
 *   **Session Management:** The frontend uses `localStorage` to persist the session. All subsequent API calls should include the token in the `Authorization` header for validation.
+*   **Admin Login URL:** Visit [`/admin`](http://localhost:3000/admin) to access the Super Admin panel. Unauthenticated users are automatically redirected to `/auth/login`.
+*   **Firebase Authentication Flow:** Phone-based logins (for users and organizers) rely on Firebase to send an OTP to the provided number. After the OTP is verified, the backend issues a JWT session token. Admins sign in with email and password on the same `/auth/login` page.
 
 ### 6.3. Key API Endpoints Expected by the Frontend
 The frontend is built to call these (or similar) API endpoints. You will find `// BACKEND:` comments in the code pointing to these specific integration points.
