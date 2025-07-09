@@ -43,6 +43,11 @@ export function Footer() {
                 Are you a Trip Organizer? <Link href="/auth/login" className="font-bold text-primary hover:underline">Click here to Sign In</Link>.
               </p>
             )}
+            {!user && (
+              <p className="text-sm text-muted-foreground">
+                Admins can <Link href="/admin/login" className="font-bold text-primary hover:underline">sign in here</Link>.
+              </p>
+            )}
             {/* DEV_COMMENT: This link is now conditionally rendered. It only appears to logged-in regular users. */}
              {user?.role === 'USER' && (
                  <p className="text-sm text-muted-foreground">
