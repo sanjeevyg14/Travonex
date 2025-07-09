@@ -257,7 +257,7 @@ export default function AdminLayout({
     if (!loading) {
       if (!isAuthorized) {
         // If, after loading, the user is still not authorized, redirect them.
-        router.push('/auth/login');
+        router.push('/admin/login');
       }
     }
   }, [loading, isAuthorized, router]);

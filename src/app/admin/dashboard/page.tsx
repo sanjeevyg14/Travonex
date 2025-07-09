@@ -55,7 +55,7 @@ export default async function AdminDashboardPage() {
     const sessionCookie = cookieStore.get('userSession');
 
     if (!sessionCookie) {
-        redirect('/auth/login');
+        redirect('/admin/login');
     }
 
     const session: UserSession = JSON.parse(sessionCookie.value);
@@ -67,7 +67,7 @@ export default async function AdminDashboardPage() {
     ];
 
     if (!session || !allowedRoles.includes(session.role)) {
-        redirect('/auth/login');
+        redirect('/admin/login');
     }
 
     const dashboardData = await getDashboardData();
