@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ClientOnlyDate } from "@/components/common/ClientOnlyDate";
+import type { Trip, Organizer } from "@/lib/types";
 
 
 // DEV_COMMENT: Data fetching now happens on the server.
@@ -49,7 +50,7 @@ async function getTripData(slug: string) {
 
 
 export default async function TripDetailsPage({ params }: { params: { slug: string } }) {
-  const { trip, organizer } = await getTripData(params.slug);
+  const { trip, organizer } = await getTripData(params.slug) as { trip: Trip; organizer: Organizer };
 
   if (!trip || !organizer) {
     notFound(); // Redirects to a 404 page if trip is not found or not published.

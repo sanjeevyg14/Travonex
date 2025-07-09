@@ -11,11 +11,13 @@
  * - **Permissions**: The backend must ensure only authorized admins can access and submit changes through this route.
  * - **Audit Trail**: The backend should log that the change was made by an admin, including the admin's ID and the provided remark, in the `tripChangeLogs`.
  */
+"use client";
 import { TripForm } from "@/components/trips/TripForm";
 import { trips } from "@/lib/mock-data";
-import { notFound } from "next/navigation";
+import { useParams, notFound } from "next/navigation";
 
-export default function AdminEditTripPage({ params }: { params: { tripId: string } }) {
+export default function AdminEditTripPage() {
+    const params = useParams<{ tripId: string }>();
     // BACKEND: Fetch trip data using a secure admin endpoint
     const trip = trips.find(t => t.id === params.tripId);
     if (!trip) {
