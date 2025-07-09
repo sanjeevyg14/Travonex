@@ -37,6 +37,7 @@ export const interests: Interest[] = [
 export const organizers: Organizer[] = [
     {
         id: 'VND001',
+        firebaseUid: 'uid-vnd001',
         name: 'Himalayan Adventures',
         email: 'contact@himalayanadventures.com',
         joinDate: '2023-09-15',
@@ -65,6 +66,7 @@ export const organizers: Organizer[] = [
     },
     {
         id: 'VND002',
+        firebaseUid: 'uid-vnd002',
         name: 'Incredible India Tours',
         email: 'hello@incredibleindiatours.co',
         joinDate: '2023-10-02',
@@ -77,6 +79,7 @@ export const organizers: Organizer[] = [
     },
     {
         id: 'VND003',
+        firebaseUid: 'uid-vnd003',
         name: 'Bharat Explorers',
         email: 'support@bharatexplorers.com',
         joinDate: '2024-01-20',
@@ -91,6 +94,7 @@ export const organizers: Organizer[] = [
     },
     {
         id: 'VND004',
+        firebaseUid: 'uid-vnd004',
         name: 'Coastal Escapes',
         email: 'info@coastalescapes.net',
         joinDate: '2024-03-11',
@@ -106,6 +110,7 @@ export const organizers: Organizer[] = [
     },
     {
         id: 'VND005',
+        firebaseUid: 'uid-vnd005',
         name: 'Jungle Journeys',
         email: 'contact@jungle.com',
         joinDate: '2024-05-22',
@@ -121,6 +126,7 @@ export const organizers: Organizer[] = [
     },
     {
         id: 'VND006',
+        firebaseUid: 'uid-vnd006',
         name: 'New Self-Registered Organizer',
         email: 'new-organizer@example.com',
         phone: '+919513626262',
@@ -139,6 +145,7 @@ export const organizers: Organizer[] = [
 export const users: User[] = [
     {
         id: 'USR001',
+        firebaseUid: 'uid-usr001',
         name: 'Rohan Sharma',
         email: 'rohan@example.com',
         phone: '+919876543210',
@@ -170,6 +177,7 @@ export const users: User[] = [
     },
     {
         id: 'USR002',
+        firebaseUid: 'uid-usr002',
         name: 'Priya Patel',
         email: 'priya@example.com',
         phone: '+919876543211',
@@ -195,6 +203,7 @@ export const users: User[] = [
     },
     {
         id: 'USR003',
+        firebaseUid: 'uid-usr003',
         name: 'Arjun Singh',
         email: 'arjun@example.com',
         phone: '+919876543212',
@@ -209,6 +218,7 @@ export const users: User[] = [
     },
     {
         id: 'USR004',
+        firebaseUid: 'uid-usr004',
         name: 'Ananya Gupta',
         email: 'ananya@example.com',
         phone: '+919876543213',

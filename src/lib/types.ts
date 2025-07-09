@@ -126,7 +126,7 @@ export interface Trip {
   faqs: FAQ[];
 
   // --- Metadata & Status ---
-  reviews: { id: string; userId: string; rating: number; comment: string }[];
+  reviews: { id: string; userId: string; userName?: string; rating: number; comment: string }[];
   organizerId: string;
   isFeatured: boolean; // This is set by the Superadmin
   isBannerTrip?: boolean; // Flag to mark this trip for homepage banner carousel

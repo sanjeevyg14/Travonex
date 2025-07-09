@@ -1,8 +1,9 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 
-export async function PATCH(request: Request, { params }: { params: { organizerId: string } }) {
+export async function PATCH(request: NextRequest, context: { params: { organizerId: string } }) {
+  const { params } = context;
   const body = await request.json();
   const res = await fetch(`${BACKEND_URL}/api/admin/organizers/${params.organizerId}/status`, {
     method: 'PATCH',
