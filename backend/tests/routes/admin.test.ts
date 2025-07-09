@@ -32,13 +32,13 @@ describe('admin audit logging', () => {
 
     await request(app).put('/users/u1').send({ name: 'A' });
 
-    expect(AuditLog.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        adminId: 'admin1',
-        action: 'Update',
-        module: 'User',
-      })
-    );
+      expect(AuditLog.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          adminId: 'a1',
+          action: 'Update',
+          module: 'User',
+        })
+      );
   });
 
   it('logs organizer status change', async () => {
@@ -51,7 +51,7 @@ describe('admin audit logging', () => {
 
     expect(AuditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        adminId: 'admin1',
+        adminId: 'a1',
         action: 'Update',
         module: 'Organizer',
       })
@@ -67,8 +67,10 @@ describe('admin audit logging', () => {
     expect(res.status).toBe(200);
     expect(res.body).toEqual([{ id: 'log1' }]);
     expect(sortMock).toHaveBeenCalledWith({ timestamp: -1 });
-describe('admin routes - me profile', () => {
-  it('updates authenticated admin user', async () => {
+  });
+
+  describe('admin routes - me profile', () => {
+    it('updates authenticated admin user', async () => {
     (AdminUser.findByIdAndUpdate as jest.Mock).mockResolvedValue({ id: 'a1', name: 'New' });
 
     const res = await request(app).put('/me/profile').send({ name: 'New' });
@@ -83,5 +85,6 @@ describe('admin routes - me profile', () => {
     const res = await request(app).put('/me/profile').send({ name: 'X' });
 
     expect(res.status).toBe(404);
+  });
   });
 });
