@@ -1,9 +1,12 @@
 import express from 'express';
+import multer from 'multer';
 import Trip from '../models/trip';
 import Organizer from '../models/organizer';
 import { verifyJwt } from '../middleware/verifyJwt';
+import { uploadFile } from '../services/upload';
 
 const router = express.Router();
+const upload = multer({ dest: 'tmp/' });
 
 // List trips with optional filters
 router.get('/', async (req, res, next) => {
@@ -21,9 +24,9 @@ router.get('/', async (req, res, next) => {
 });
 
 // Create a trip (organizer)
-router.post('/', verifyJwt('ORGANIZER'), async (req, res, next) => {
+router.post('/', verifyJwt('ORGANIZER'), upload.single('image'), async (req, res, next) => {
   try {
-    const data = {
+    const data: any = {
       ...req.body,
       organizerId: (req as any).authUser.id,
       batches: (req.body.batches || []).map((b: any) => ({
@@ -31,6 +34,7 @@ router.post('/', verifyJwt('ORGANIZER'), async (req, res, next) => {
         availableSlots: b.availableSlots ?? b.maxParticipants,
       })),
     };
+    if (req.file) data.image = await uploadFile(req.file);
     const trip = await Trip.create(data);
     res.status(201).json(trip);
   } catch (err) {
@@ -39,7 +43,7 @@ router.post('/', verifyJwt('ORGANIZER'), async (req, res, next) => {
 });
 
 // Update a trip (organizer)
-router.put('/:id', verifyJwt('ORGANIZER'), async (req, res, next) => {
+router.put('/:id', verifyJwt('ORGANIZER'), upload.single('image'), async (req, res, next) => {
   try {
     const update: any = { ...req.body };
     if (update.batches) {
@@ -48,6 +52,7 @@ router.put('/:id', verifyJwt('ORGANIZER'), async (req, res, next) => {
         availableSlots: b.availableSlots ?? b.maxParticipants,
       }));
     }
+    if (req.file) update.image = await uploadFile(req.file);
     const trip = await Trip.findOneAndUpdate(
       { _id: req.params.id, organizerId: (req as any).authUser.id },
       update,
@@ -79,9 +84,9 @@ router.patch('/:id/status', verifyJwt('ORGANIZER'), async (req, res, next) => {
 
 
 // Create a trip (organizer)
-router.post('/', verifyJwt('ORGANIZER'), async (req, res, next) => {
+router.post('/', verifyJwt('ORGANIZER'), upload.single('image'), async (req, res, next) => {
   try {
-    const data = {
+    const data: any = {
       ...req.body,
       organizerId: (req as any).authUser.id,
       batches: (req.body.batches || []).map((b: any) => ({
@@ -89,6 +94,7 @@ router.post('/', verifyJwt('ORGANIZER'), async (req, res, next) => {
         availableSlots: b.availableSlots ?? b.maxParticipants,
       })),
     };
+    if (req.file) data.image = await uploadFile(req.file);
     const trip = await Trip.create(data);
     res.status(201).json(trip);
   } catch (err) {
@@ -97,7 +103,7 @@ router.post('/', verifyJwt('ORGANIZER'), async (req, res, next) => {
 });
 
 // Update a trip (organizer)
-router.put('/:id', verifyJwt('ORGANIZER'), async (req, res, next) => {
+router.put('/:id', verifyJwt('ORGANIZER'), upload.single('image'), async (req, res, next) => {
   try {
     const update: any = { ...req.body };
     if (update.batches) {
@@ -106,6 +112,7 @@ router.put('/:id', verifyJwt('ORGANIZER'), async (req, res, next) => {
         availableSlots: b.availableSlots ?? b.maxParticipants,
       }));
     }
+    if (req.file) update.image = await uploadFile(req.file);
     const trip = await Trip.findOneAndUpdate(
       { _id: req.params.id, organizerId: (req as any).authUser.id },
       update,
@@ -153,7 +160,7 @@ router.post('/', verifyJwt('ORGANIZER'), async (req, res, next) => {
 });
 
 // Update a trip (organizer)
-router.put('/:id', verifyJwt('ORGANIZER'), async (req, res, next) => {
+router.put('/:id', verifyJwt('ORGANIZER'), upload.single('image'), async (req, res, next) => {
   try {
     const update: any = { ...req.body };
     if (update.batches) {
@@ -162,6 +169,7 @@ router.put('/:id', verifyJwt('ORGANIZER'), async (req, res, next) => {
         availableSlots: b.availableSlots ?? b.maxParticipants,
       }));
     }
+    if (req.file) update.image = await uploadFile(req.file);
     const trip = await Trip.findOneAndUpdate(
       { _id: req.params.id, organizerId: (req as any).authUser.id },
       update,
