@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import admin from 'firebase-admin';
 import Razorpay from 'razorpay';
+import http from 'http';
 import authRoutes from './routes/auth';
 import tripRoutes from './routes/trips';
 import bookingRoutes from './routes/bookings';
@@ -17,6 +18,7 @@ import adminSettingsRoutes from './routes/adminSettings';
 import userRoutes from './routes/users';
 import contentRoutes from './routes/content';
 import { errorHandler } from './middleware/errorHandler';
+import { initSocket } from './socket';
 
 dotenv.config();
 
@@ -31,6 +33,8 @@ declare global {
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const server = http.createServer(app);
+initSocket(server);
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -97,6 +101,6 @@ app.get('/protected', authenticate, (req, res) => {
 
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

@@ -190,7 +190,6 @@ router.patch('/:id/status', verifyJwt('ORGANIZER'), async (req, res, next) => {
 });
 
 
-});
 
 // Get trip by slug with organizer details
 router.get('/slug/:slug', async (req, res, next) => {

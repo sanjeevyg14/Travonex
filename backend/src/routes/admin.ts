@@ -285,6 +285,10 @@ router.post('/notifications/:id/read', (req, res, next) => {
   Notification.findByIdAndUpdate(req.params.id, { isRead: true }, { new: true })
     .then(n => {
       if (!n) return res.status(404).json({ message: 'Notification not found' });
+      try {
+        const { getIO } = require('../socket');
+        getIO().to(n.userId).emit('notification-read', n);
+      } catch {}
       res.json(n);
     })
     .catch(next);
