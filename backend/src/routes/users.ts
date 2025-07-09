@@ -54,4 +54,35 @@ router.get('/me/wallet-transactions', async (req, res, next) => {
   }
 });
 
+// Create wallet transaction (credit or debit)
+router.post('/me/wallet-transactions', async (req, res, next) => {
+  try {
+    const user = await User.findById((req as any).authUser.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const amount = Number(req.body.amount);
+    if (isNaN(amount) || amount === 0) {
+      return res.status(400).json({ message: 'Invalid amount' });
+    }
+
+    if (amount < 0 && user.walletBalance + amount < 0) {
+      return res.status(400).json({ message: 'Insufficient balance' });
+    }
+
+    user.walletBalance += amount;
+    user.walletTransactions.push({
+      date: new Date(),
+      description: req.body.description || 'Wallet adjustment',
+      amount,
+      type: amount > 0 ? 'Credit' : 'Debit',
+      source: 'USER',
+    } as any);
+    await user.save();
+
+    res.json({ walletBalance: user.walletBalance });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;

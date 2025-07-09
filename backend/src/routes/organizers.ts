@@ -19,6 +19,7 @@ router.get('/dashboard', async (req, res, next) => {
     const pending = await Booking.countDocuments({ tripId: { $in: tripIds }, status: 'Pending' });
     res.json({ revenue, participants, pendingBookings: pending });
 
+
 // Organizer trips CRUD
 router.get('/trips', async (req, res, next) => {
   try {
@@ -34,10 +35,23 @@ router.get('/trips', async (req, res, next) => {
   try {
     const trips = await Trip.find({ organizerId: (req as any).authUser.id });
     res.json(trips);
+
   } catch (err) {
     next(err);
   }
 });
+
+
+// Organizer trips CRUD
+router.get('/trips', async (req, res, next) => {
+  try {
+    const trips = await Trip.find({ organizerId: (req as any).authUser.id });
+    res.json(trips);
+  } catch (err) {
+    next(err);
+  }
+});
+
 
 router.post('/trips', async (req, res, next) => {
   try {
@@ -96,6 +110,11 @@ router.delete('/trips/:id', async (req, res, next) => {
     const trip = await Trip.findOneAndDelete({ _id: req.params.id, organizerId: (req as any).authUser.id });
     if (!trip) return res.status(404).json({ message: 'Trip not found' });
     res.json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
 
 });
 
@@ -177,7 +196,7 @@ router.post('/payouts/request', async (req, res, next) => {
     };
     const payout = await Payout.create(data);
     res.status(201).json(payout);
-
+    
 router.get('/payouts', async (req, res, next) => {
   try {
     const payouts = await Payout.find({ organizerId: (req as any).authUser.id });

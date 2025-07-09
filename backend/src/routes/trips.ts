@@ -3,7 +3,6 @@ import Trip from '../models/trip';
 import Organizer from '../models/organizer';
 import { verifyJwt } from '../middleware/verifyJwt';
 
-
 const router = express.Router();
 
 // List trips with optional filters
@@ -20,6 +19,63 @@ router.get('/', async (req, res, next) => {
     next(err);
   }
 });
+
+// Create a trip (organizer)
+router.post('/', verifyJwt('ORGANIZER'), async (req, res, next) => {
+  try {
+    const data = {
+      ...req.body,
+      organizerId: (req as any).authUser.id,
+      batches: (req.body.batches || []).map((b: any) => ({
+        ...b,
+        availableSlots: b.availableSlots ?? b.maxParticipants,
+      })),
+    };
+    const trip = await Trip.create(data);
+    res.status(201).json(trip);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Update a trip (organizer)
+router.put('/:id', verifyJwt('ORGANIZER'), async (req, res, next) => {
+  try {
+    const update: any = { ...req.body };
+    if (update.batches) {
+      update.batches = update.batches.map((b: any) => ({
+        ...b,
+        availableSlots: b.availableSlots ?? b.maxParticipants,
+      }));
+    }
+    const trip = await Trip.findOneAndUpdate(
+      { _id: req.params.id, organizerId: (req as any).authUser.id },
+      update,
+      { new: true }
+    );
+    if (!trip) return res.status(404).json({ message: 'Trip not found' });
+    res.json(trip);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Update trip status
+router.patch('/:id/status', verifyJwt('ORGANIZER'), async (req, res, next) => {
+  try {
+    const trip = await Trip.findOneAndUpdate(
+      { _id: req.params.id, organizerId: (req as any).authUser.id },
+      { status: req.body.status },
+      { new: true }
+    );
+    if (!trip) return res.status(404).json({ message: 'Trip not found' });
+    res.json(trip);
+  } catch (err) {
+    next(err);
+  }
+});
+
+
 
 
 // Create a trip (organizer)
