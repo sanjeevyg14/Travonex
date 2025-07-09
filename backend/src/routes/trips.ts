@@ -3,6 +3,7 @@ import Trip from '../models/trip';
 import Organizer from '../models/organizer';
 import { verifyJwt } from '../middleware/verifyJwt';
 
+
 const router = express.Router();
 
 // List trips with optional filters
@@ -73,6 +74,9 @@ router.patch('/:id/status', verifyJwt('ORGANIZER'), async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+});
+
+
 });
 
 // Get trip by slug with organizer details
