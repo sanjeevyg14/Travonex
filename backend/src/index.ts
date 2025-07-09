@@ -9,6 +9,7 @@ import authRoutes from './routes/auth';
 import tripRoutes from './routes/trips';
 import bookingRoutes from './routes/bookings';
 import organizerRoutes from './routes/organizers';
+import organizerProfileRoutes from './routes/organizerProfile';
 import adminRoutes from './routes/admin';
 import userRoutes from './routes/users';
 import { errorHandler } from './middleware/errorHandler';
@@ -34,6 +35,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/trips', tripRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/organizers/me', organizerRoutes);
+app.use('/api/organizers', organizerProfileRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/users', userRoutes);
 
