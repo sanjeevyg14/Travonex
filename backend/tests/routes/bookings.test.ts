@@ -15,12 +15,12 @@ jest.mock('../../src/index', () => ({
 import router from '../../src/routes/bookings';
 import Booking from '../../src/models/booking';
 import Trip from '../../src/models/trip';
-import Coupon from '../../src/models/coupon';
+import PromoCode from '../../src/models/promoCode';
 import User from '../../src/models/user';
 
 jest.mock('../../src/models/booking');
 jest.mock('../../src/models/trip');
-jest.mock('../../src/models/coupon');
+jest.mock('../../src/models/promoCode');
 jest.mock('../../src/models/user');
 
 const app = express();
@@ -49,7 +49,14 @@ describe('bookings routes', () => {
       batches: [{ id: 'batch', priceOverride: 100, availableSlots: 5 }],
       price: 100
     });
-    (Coupon.findOne as jest.Mock).mockResolvedValue({ discountType: 'amount', discountValue: 20 });
+    (PromoCode.findOne as jest.Mock).mockResolvedValue({
+      type: 'Percentage',
+      value: 20,
+      usage: 0,
+      limit: 10,
+      expiryDate: new Date(Date.now() + 1000),
+      save: jest.fn().mockResolvedValue(null)
+    });
     const user: any = { walletBalance: 30, save: jest.fn().mockResolvedValue(null) };
     (User.findById as jest.Mock).mockResolvedValue(user);
     (Booking.create as jest.Mock).mockResolvedValue({ id: 'b1' });
@@ -63,5 +70,26 @@ describe('bookings routes', () => {
     );
     expect(user.walletBalance).toBe(20);
     expect(user.save).toHaveBeenCalled();
+  });
+
+  it('rejects promo when usage limit reached', async () => {
+    (Trip.findById as jest.Mock).mockResolvedValue({
+      batches: [{ id: 'batch', priceOverride: 100, availableSlots: 5 }],
+      price: 100
+    });
+    (PromoCode.findOne as jest.Mock).mockResolvedValue({
+      type: 'Fixed',
+      value: 10,
+      usage: 5,
+      limit: 5,
+      expiryDate: new Date(Date.now() + 1000),
+      save: jest.fn()
+    });
+
+    const res = await request(app)
+      .post('/create')
+      .send({ tripId: 't1', batchId: 'batch', travelers: [{}], couponCode: 'CODE' });
+
+    expect(res.status).toBe(400);
   });
 });
