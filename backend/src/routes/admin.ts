@@ -8,10 +8,22 @@ import Dispute from '../models/dispute';
 import AdminRole from '../models/adminRole';
 import Notification from '../models/notification';
 import Banner from '../models/banner';
+import AdminUser from '../models/adminUser';
 import { verifyJwt } from '../middleware/verifyJwt';
 
 const router = express.Router();
 router.use(verifyJwt('ADMIN'));
+
+// Update authenticated admin profile
+router.put('/me/profile', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const admin = await AdminUser.findByIdAndUpdate((req as any).authUser.id, req.body, { new: true });
+    if (!admin) return res.status(404).json({ message: 'Admin not found' });
+    res.json(admin);
+  } catch (err) {
+    next(err);
+  }
+});
 
 router.get('/dashboard', (_req: Request, res: Response, next: NextFunction) => {
   (async () => {
@@ -139,7 +151,7 @@ router.patch('/organizers/:id/documents/:docId', (req, res, next) => {
   (async () => {
     const organizer = await Organizer.findById(req.params.id);
     if (!organizer) return res.status(404).json({ message: 'Organizer not found' });
-    const doc = organizer.documents.id(req.params.docId);
+    const doc = (organizer.documents as any).id(req.params.docId);
     if (!doc) return res.status(404).json({ message: 'Document not found' });
     doc.status = req.body.status;
     doc.rejectionReason = req.body.rejectionReason;
