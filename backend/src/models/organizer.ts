@@ -14,7 +14,6 @@ export interface IOrganizer extends Document {
   name: string;
   email: string;
   phone: string;
-  firebaseUid: string;
   joinDate: Date;
   kycStatus: 'Incomplete' | 'Pending' | 'Verified' | 'Rejected' | 'Suspended';
   organizerType?: string;
@@ -40,7 +39,6 @@ const organizerSchema = new Schema<IOrganizer>({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   phone: { type: String, required: true, unique: true },
-  firebaseUid: { type: String, required: true, unique: true },
   joinDate: { type: Date, default: Date.now },
   kycStatus: {
     type: String,
