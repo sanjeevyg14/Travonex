@@ -10,6 +10,7 @@ export interface IOrganizerDocument {
 }
 
 export interface IOrganizer extends Document {
+  firebaseUid: string;
   name: string;
   email: string;
   phone: string;
@@ -35,6 +36,7 @@ export interface IOrganizer extends Document {
 }
 
 const organizerSchema = new Schema<IOrganizer>({
+  firebaseUid: { type: String, required: true, unique: true },
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   phone: { type: String, required: true, unique: true },

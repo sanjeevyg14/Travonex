@@ -1,55 +1,44 @@
 import request from 'supertest';
 import express from 'express';
 
+jest.mock('firebase-admin', () => ({
+  auth: () => ({
+    verifyIdToken: jest.fn().mockResolvedValue({
+      uid: 'fb1',
+      email: 'test@example.com',
+      phone_number: '+10000000001',
+    })
+  })
+}));
+
 jest.mock('../../src/models/user');
 jest.mock('../../src/models/organizer');
-jest.mock('../../src/models/adminUser');
 
 import router from '../../src/routes/auth';
-import * as otpService from '../../src/services/otp';
-
 import User from '../../src/models/user';
+import Organizer from '../../src/models/organizer';
 
 const app = express();
 app.use(express.json());
 app.use(router);
 
-describe('auth routes - otp flow', () => {
+describe('auth routes - signup with firebase', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('sends otp and stores it', async () => {
-    const res = await request(app).post('/send-otp').send({ phone: '+10000000001' });
-    expect(res.status).toBe(200);
-    expect(otpService._getOtp('+10000000001')).toBeDefined();
-  });
+  it('creates user with firebase uid', async () => {
+    (User.findOne as jest.Mock).mockResolvedValue(null);
+    (Organizer.findOne as jest.Mock).mockResolvedValue(null);
+    (User.create as jest.Mock).mockResolvedValue({ id: 'u1', name: 'Test', email: 'test@example.com' });
 
-  it('resends otp with new code', async () => {
-    await request(app).post('/send-otp').send({ phone: '+10000000002' });
-    const first = otpService._getOtp('+10000000002');
-    await request(app).post('/resend-otp').send({ phone: '+10000000002' });
-    const second = otpService._getOtp('+10000000002');
-    expect(first).not.toBe(second);
-  });
-
-  it('allows login with valid otp', async () => {
-    (User.findOne as jest.Mock).mockResolvedValue({ id: 'u1', name: 'Test', email: 't@test.com' });
-    await request(app).post('/send-otp').send({ phone: '+10000000003' });
-    const code = otpService._getOtp('+10000000003')!;
     const res = await request(app)
-      .post('/login')
-      .send({ identifier: '+10000000003', credential: code });
-    expect(res.status).toBe(200);
-    expect(res.body.token).toBeDefined();
-  });
+      .post('/signup')
+      .send({ name: 'Test', accountType: 'USER', idToken: 'token' });
 
-  it('rejects login with invalid otp', async () => {
-    (User.findOne as jest.Mock).mockResolvedValue({ id: 'u1', name: 'Test', email: 't@test.com' });
-    await request(app).post('/send-otp').send({ phone: '+10000000004' });
-    const res = await request(app)
-      .post('/login')
-      .send({ identifier: '+10000000004', credential: '000000' });
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(201);
+    expect(User.create).toHaveBeenCalledWith(
+      expect.objectContaining({ firebaseUid: 'fb1' })
+    );
   });
 });

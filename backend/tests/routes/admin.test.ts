@@ -34,7 +34,7 @@ describe('admin audit logging', () => {
 
     expect(AuditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        adminId: 'admin1',
+        adminId: 'a1',
         action: 'Update',
         module: 'User',
       })
@@ -51,7 +51,7 @@ describe('admin audit logging', () => {
 
     expect(AuditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        adminId: 'admin1',
+        adminId: 'a1',
         action: 'Update',
         module: 'Organizer',
       })
@@ -68,6 +68,8 @@ describe('admin audit logging', () => {
     expect(res.body).toEqual([{ id: 'log1' }]);
     expect(sortMock).toHaveBeenCalledWith({ timestamp: -1 });
   });
+
+  describe('admin routes - me profile', () => {
 });
 
 describe('admin routes - me profile', () => {
@@ -86,5 +88,6 @@ describe('admin routes - me profile', () => {
     const res = await request(app).put('/me/profile').send({ name: 'X' });
 
     expect(res.status).toBe(404);
+  });
   });
 });
