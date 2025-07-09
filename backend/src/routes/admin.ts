@@ -8,15 +8,33 @@ import Dispute from '../models/dispute';
 import AdminRole from '../models/adminRole';
 import Notification from '../models/notification';
 import Banner from '../models/banner';
+import AuditLog from '../models/auditLog';
 import Category from '../models/category';
 import Interest from '../models/interest';
 import City from '../models/city';
-import AdminUser from '../models/adminUser';
-import { verifyJwt } from '../middleware/verifyJwt';
+import AdminUser from '../models/adminUser';import { verifyJwt } from '../middleware/verifyJwt';
 
 const router = express.Router();
 router.use(verifyJwt('ADMIN'));
 
+async function logAction(
+  req: Request,
+  action: string,
+  module: string,
+  details: string
+) {
+  try {
+    await AuditLog.create({
+      adminId: (req as any).authUser.id,
+      action,
+      module,
+      details,
+    });
+  } catch (err) {
+    // Logging should not block the main operation
+    console.error('Failed to record audit log', err);
+  }
+}
 // Update authenticated admin profile
 router.put('/me/profile', async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -75,8 +93,14 @@ router.get('/users', (_req, res, next) => {
 
 router.put('/users/:id', (req, res, next) => {
   User.findByIdAndUpdate(req.params.id, req.body, { new: true })
-    .then(u => {
+    .then(async u => {
       if (!u) return res.status(404).json({ message: 'User not found' });
+      await logAction(
+        req,
+        'Update',
+        'User',
+        `Updated user ${req.params.id}`
+      );
       res.json(u);
     })
     .catch(next);
@@ -179,6 +203,7 @@ router.patch('/organizers/:id/documents/:docId', (req, res, next) => {
     const organizer = await Organizer.findById(req.params.id);
     if (!organizer) return res.status(404).json({ message: 'Organizer not found' });
     const doc = (organizer as any).documents.id(req.params.docId);
+
     const doc = (organizer.documents as any).id(req.params.docId);
     if (!doc) return res.status(404).json({ message: 'Document not found' });
     doc.status = req.body.status;
@@ -194,6 +219,12 @@ router.patch('/organizers/:id/status', (req: Request, res: Response, next: NextF
   (async () => {
     const organizer = await Organizer.findByIdAndUpdate(req.params.id, { kycStatus: req.body.status }, { new: true });
     if (!organizer) return res.status(404).json({ message: 'Organizer not found' });
+    await logAction(
+      req,
+      'Update',
+      'Organizer',
+      `Changed organizer ${req.params.id} status to ${req.body.status}`
+    );
     res.json(organizer);
   })().catch(next);
 });
@@ -287,6 +318,12 @@ router.delete('/banners/:id', (req, res, next) => {
     .catch(next);
 });
 
+// ----- Audit logs -----
+router.get('/audit-logs', (_req, res, next) => {
+  AuditLog.find()
+    .sort({ timestamp: -1 })
+    .then(logs => res.json(logs))
+=======
 // ----- Categories -----
 router.get('/categories', (_req, res, next) => {
   Category.find()
