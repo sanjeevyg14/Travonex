@@ -8,10 +8,25 @@ import Dispute from '../models/dispute';
 import AdminRole from '../models/adminRole';
 import Notification from '../models/notification';
 import Banner from '../models/banner';
+import Category from '../models/category';
+import Interest from '../models/interest';
+import City from '../models/city';
+import AdminUser from '../models/adminUser';
 import { verifyJwt } from '../middleware/verifyJwt';
 
 const router = express.Router();
 router.use(verifyJwt('ADMIN'));
+
+// Update authenticated admin profile
+router.put('/me/profile', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const admin = await AdminUser.findByIdAndUpdate((req as any).authUser.id, req.body, { new: true });
+    if (!admin) return res.status(404).json({ message: 'Admin not found' });
+    res.json(admin);
+  } catch (err) {
+    next(err);
+  }
+});
 
 router.get('/dashboard', (_req: Request, res: Response, next: NextFunction) => {
   (async () => {
@@ -119,6 +134,30 @@ router.get('/bookings/:id', (req, res, next) => {
     .catch(next);
 });
 
+// ----- Refund management -----
+router.get('/refunds', (_req: Request, res: Response, next: NextFunction) => {
+  Booking.find({ status: 'Cancelled' })
+    .then(b => res.json(b))
+    .catch(next);
+});
+
+router.post('/refunds/:id/process', (req: Request, res: Response, next: NextFunction) => {
+  (async () => {
+    const booking = await Booking.findByIdAndUpdate(
+      req.params.id,
+      {
+        refundStatus: 'Processed',
+        refundPaymentMode: req.body.paymentMode,
+        refundUtrNumber: req.body.utrNumber,
+        refundPaidDate: req.body.paidDate ? new Date(req.body.paidDate) : new Date(),
+      },
+      { new: true }
+    );
+    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+    res.json(booking);
+  })().catch(next);
+});
+
 // ----- Organizer management -----
 router.get('/organizers', (_req, res, next) => {
   Organizer.find()
@@ -139,7 +178,8 @@ router.patch('/organizers/:id/documents/:docId', (req, res, next) => {
   (async () => {
     const organizer = await Organizer.findById(req.params.id);
     if (!organizer) return res.status(404).json({ message: 'Organizer not found' });
-    const doc = organizer.documents.id(req.params.docId);
+    const doc = (organizer as any).documents.id(req.params.docId);
+    const doc = (organizer.documents as any).id(req.params.docId);
     if (!doc) return res.status(404).json({ message: 'Document not found' });
     doc.status = req.body.status;
     doc.rejectionReason = req.body.rejectionReason;
@@ -243,6 +283,90 @@ router.put('/banners/:id', (req, res, next) => {
 
 router.delete('/banners/:id', (req, res, next) => {
   Banner.findByIdAndDelete(req.params.id)
+    .then(() => res.json({ success: true }))
+    .catch(next);
+});
+
+// ----- Categories -----
+router.get('/categories', (_req, res, next) => {
+  Category.find()
+    .then(c => res.json(c))
+    .catch(next);
+});
+
+router.post('/categories', (req, res, next) => {
+  Category.create(req.body)
+    .then(c => res.status(201).json(c))
+    .catch(next);
+});
+
+router.put('/categories/:id', (req, res, next) => {
+  Category.findByIdAndUpdate(req.params.id, req.body, { new: true })
+    .then(c => {
+      if (!c) return res.status(404).json({ message: 'Category not found' });
+      res.json(c);
+    })
+    .catch(next);
+});
+
+router.delete('/categories/:id', (req, res, next) => {
+  Category.findByIdAndDelete(req.params.id)
+    .then(() => res.json({ success: true }))
+    .catch(next);
+});
+
+// ----- Interests -----
+router.get('/interests', (_req, res, next) => {
+  Interest.find()
+    .then(i => res.json(i))
+    .catch(next);
+});
+
+router.post('/interests', (req, res, next) => {
+  Interest.create(req.body)
+    .then(i => res.status(201).json(i))
+    .catch(next);
+});
+
+router.put('/interests/:id', (req, res, next) => {
+  Interest.findByIdAndUpdate(req.params.id, req.body, { new: true })
+    .then(i => {
+      if (!i) return res.status(404).json({ message: 'Interest not found' });
+      res.json(i);
+    })
+    .catch(next);
+});
+
+router.delete('/interests/:id', (req, res, next) => {
+  Interest.findByIdAndDelete(req.params.id)
+    .then(() => res.json({ success: true }))
+    .catch(next);
+});
+
+// ----- Cities -----
+router.get('/cities', (_req, res, next) => {
+  City.find()
+    .then(c => res.json(c))
+    .catch(next);
+});
+
+router.post('/cities', (req, res, next) => {
+  City.create(req.body)
+    .then(c => res.status(201).json(c))
+    .catch(next);
+});
+
+router.put('/cities/:id', (req, res, next) => {
+  City.findByIdAndUpdate(req.params.id, req.body, { new: true })
+    .then(c => {
+      if (!c) return res.status(404).json({ message: 'City not found' });
+      res.json(c);
+    })
+    .catch(next);
+});
+
+router.delete('/cities/:id', (req, res, next) => {
+  City.findByIdAndDelete(req.params.id)
     .then(() => res.json({ success: true }))
     .catch(next);
 });
