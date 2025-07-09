@@ -8,7 +8,8 @@ jest.mock('../../src/middleware/verifyJwt', () => ({
   }
 }));
 
-import router from '../../src/routes/admin';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const router = require('../../src/routes/admin').default;
 import Category from '../../src/models/category';
 import Interest from '../../src/models/interest';
 import City from '../../src/models/city';
