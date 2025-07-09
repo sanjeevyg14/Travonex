@@ -8,9 +8,11 @@ import Razorpay from 'razorpay';
 import authRoutes from './routes/auth';
 import tripRoutes from './routes/trips';
 import bookingRoutes from './routes/bookings';
+import couponRoutes from './routes/coupons';
 import organizerRoutes from './routes/organizers';
 import organizerProfileRoutes from './routes/organizerProfile';
 import adminRoutes from './routes/admin';
+import adminSettingsRoutes from './routes/adminSettings';
 import userRoutes from './routes/users';
 import contentRoutes from './routes/content';
 import { errorHandler } from './middleware/errorHandler';
@@ -38,8 +40,10 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/organizers/me', organizerRoutes);
 app.use('/api/organizers', organizerProfileRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/admin/settings', adminSettingsRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/content', contentRoutes);
+app.use('/api/coupons', couponRoutes);
 
 
 if (!admin.apps.length) {
