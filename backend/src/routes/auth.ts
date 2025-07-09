@@ -4,9 +4,7 @@ import admin from 'firebase-admin';
 import User from '../models/user';
 import Organizer from '../models/organizer';
 import AdminUser from '../models/adminUser';
-import { sendOtp, resendOtp } from '../services/otp';
-=======
-import { validateOtp } from '../services/otp';
+import { sendOtp, resendOtp, validateOtp } from '../services/otp';
 
 const router = express.Router();
 
