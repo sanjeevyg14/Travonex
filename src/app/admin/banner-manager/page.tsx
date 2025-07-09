@@ -23,13 +23,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { PlusCircle, Edit, Trash2 } from "lucide-react";
 import { homeBanners as mockBanners } from "@/lib/mock-data";
 import type { HomeBanner } from "@/lib/types";
 import Image from "next/image";
+import { uploadFile } from "@/lib/upload";
 
 export default function AdminBannerManagerPage() {
   const [banners, setBanners] = React.useState<HomeBanner[]>(mockBanners);
+
+  const handleAddBanner = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = await uploadFile(file, `banners/${Date.now()}-${file.name}`);
+    const newBanner: HomeBanner = { id: `banner-${Date.now()}`, title: file.name, imageUrl: url, linkUrl: '#', isActive: true };
+    setBanners([...banners, newBanner]);
+  };
 
   const handleStatusToggle = (id: string, newStatus: boolean) => {
     // BACKEND: Call `PUT /api/admin/banners/{id}` with `{ isActive: newStatus }`
@@ -47,8 +58,11 @@ export default function AdminBannerManagerPage() {
             Manage homepage banners, featured content, and global alerts.
             </p>
         </div>
-        {/* BACKEND: This should open a dialog to create a new banner record. POST /api/admin/banners */}
-        <Button size="lg"><PlusCircle className="mr-2"/> Add Banner</Button>
+        <Label htmlFor="banner-upload" className="sr-only">Add Banner</Label>
+        <Input id="banner-upload" type="file" accept="image/*" className="hidden" onChange={handleAddBanner} />
+        <Button asChild size="lg">
+          <label htmlFor="banner-upload" className="flex items-center cursor-pointer"><PlusCircle className="mr-2"/> Add Banner</label>
+        </Button>
       </div>
 
       <Card>

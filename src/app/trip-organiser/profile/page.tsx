@@ -43,6 +43,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useAuth } from "@/context/AuthContext";
+import { uploadFile } from "@/lib/upload";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Zod schema for profile form validation.
@@ -82,7 +83,7 @@ function DocumentPreviewDialog({ doc, isOpen, onOpenChange }: { doc: OrganizerDo
 }
 
 // Component to render individual file upload items.
-const FileUploadItem = ({ doc, onUpload, onView, disabled }: { doc: OrganizerDocument; onUpload: (docType: string) => void; onView: (doc: OrganizerDocument) => void; disabled: boolean; }) => (
+const FileUploadItem = ({ doc, onUpload, onView, disabled }: { doc: OrganizerDocument; onUpload: (docType: string, file: File) => void; onView: (doc: OrganizerDocument) => void; disabled: boolean; }) => (
     <div className="flex items-center justify-between rounded-lg border p-4">
         <div>
             <p className="font-medium">{doc.docTitle}</p>
@@ -110,10 +111,15 @@ const FileUploadItem = ({ doc, onUpload, onView, disabled }: { doc: OrganizerDoc
                 </div>
             )}
             {(doc.status === 'Pending' || doc.status === 'Rejected') && (
-                 <Button variant="outline" size="sm" onClick={() => onUpload(doc.docType)} disabled={disabled}>
-                    <UploadCloud className="mr-2 h-4 w-4" />
-                    Upload
-                </Button>
+                <>
+                    <Label htmlFor={`doc-${doc.docType}`} className="sr-only">Upload</Label>
+                    <Input id={`doc-${doc.docType}`} type="file" className="hidden" accept="application/pdf,image/*" onChange={(e) => e.target.files && onUpload(doc.docType, e.target.files[0])} disabled={disabled} />
+                    <Button asChild variant="outline" size="sm" disabled={disabled}>
+                        <label htmlFor={`doc-${doc.docType}`} className="flex items-center">
+                            <UploadCloud className="mr-2 h-4 w-4" />Upload
+                        </label>
+                    </Button>
+                </>
             )}
         </div>
     </div>
@@ -213,12 +219,12 @@ export default function OrganizerProfilePage() {
     form.formState.isSubmitting = false;
   };
   
-  const handleDocumentUpload = (docType: string) => {
-    if (!organizer) return;
-    console.log("Uploading document of type:", docType);
+  const handleDocumentUpload = async (docType: string, file: File) => {
+    if (!organizer || !file) return;
+    const url = await uploadFile(file, `documents/${organizer.id}/${docType}-${Date.now()}`);
     setOrganizer(prev => prev ? {
         ...prev,
-        documents: prev.documents.map(doc => doc.docType === docType ? { ...doc, status: 'Uploaded', fileUrl: '/invoices/invoice.pdf' } : doc)
+        documents: prev.documents.map(doc => doc.docType === docType ? { ...doc, status: 'Uploaded', fileUrl: url } : doc)
     } : null);
     toast({ title: "Document Uploaded", description: "Your document is now ready for verification." });
   };
@@ -228,9 +234,11 @@ export default function OrganizerProfilePage() {
     setIsDocPreviewOpen(true);
   };
   
-  const handleUploadAgreement = () => {
+  const handleUploadAgreement = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!organizer) return;
-    console.log("Uploading signed agreement...");
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await uploadFile(file, `agreements/${organizer.id}-${Date.now()}`);
     setOrganizer(prev => prev ? { ...prev, vendorAgreementStatus: 'Submitted' } : null);
     toast({ title: "Agreement Uploaded", description: "Your signed agreement is now ready for verification." });
   };

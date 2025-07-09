@@ -32,7 +32,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { UploadCloud, PlusCircle, Trash2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import React, { useState } from "react";
 import { useCity } from "@/context/CityContext";
 import { Switch } from "@/components/ui/switch";
 import { DatePicker } from "@/components/ui/datepicker";
@@ -40,6 +40,7 @@ import { Label } from "@/components/ui/label";
 import { interests as mockInterests, categories as mockCategories } from "@/lib/mock-data";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { uploadFile } from "@/lib/upload";
 
 
 interface TripFormProps {
@@ -113,6 +114,8 @@ const TripFormSchema = z.object({
       question: z.string().min(1, "Question cannot be empty"),
       answer: z.string().min(1, "Answer cannot be empty"),
   })).optional(),
+  image: z.string().optional(),
+  gallery: z.array(z.string()).optional(),
 });
 
 type TripFormData = z.infer<typeof TripFormSchema>;
@@ -126,6 +129,22 @@ export function TripForm({ trip, isAdmin = false }: TripFormProps) {
   
   const [coverImageName, setCoverImageName] = useState<string | null>(null);
   const [galleryImageNames, setGalleryImageNames] = useState<string[]>([]);
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCoverImageName(file.name);
+    const url = await uploadFile(file, `trips/cover-${Date.now()}-${file.name}`);
+    form.setValue('image', url);
+  };
+
+  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setGalleryImageNames(files.map(f => f.name));
+    if (files.length === 0) return;
+    const urls = await Promise.all(files.map(f => uploadFile(f, `trips/gallery-${Date.now()}-${f.name}`)));
+    form.setValue('gallery', urls);
+  };
 
   // State for the mandatory remarks dialog
   const [isRemarkDialogOpen, setIsRemarkDialogOpen] = useState(false);
@@ -155,6 +174,8 @@ export function TripForm({ trip, isAdmin = false }: TripFormProps) {
       price: trip?.price || 0,
       taxIncluded: trip?.taxIncluded || false,
       taxPercentage: trip?.taxPercentage || 0,
+      image: trip?.image || '',
+      gallery: trip?.gallery?.map(g => g.url) || [],
       inclusions: trip?.inclusions.map(v => ({value: v})) || [{ value: '' }],
       exclusions: trip?.exclusions.map(v => ({value: v})) || [{ value: '' }],
       itinerary: trip?.itinerary || [{ day: 1, title: "", description: "" }],
@@ -357,7 +378,7 @@ export function TripForm({ trip, isAdmin = false }: TripFormProps) {
                                             <UploadCloud className="w-8 h-8 mb-2 text-muted-foreground" />
                                             {coverImageName ? <p className="text-sm text-foreground font-semibold">{coverImageName}</p> : <p className="text-sm text-muted-foreground">Click to upload (Min 1200x675px)</p>}
                                         </div>
-                                        <Input id="cover-image" type="file" className="hidden" accept="image/png, image/jpeg, image/webp" onChange={(e) => setCoverImageName(e.target.files?.[0].name || null)} />
+                                        <Input id="cover-image" type="file" className="hidden" accept="image/png, image/jpeg, image/webp" onChange={handleCoverUpload} />
                                     </Label>
                                 </FormControl>
                             </FormItem>
@@ -369,7 +390,7 @@ export function TripForm({ trip, isAdmin = false }: TripFormProps) {
                                             <UploadCloud className="w-8 h-8 mb-2 text-muted-foreground" />
                                             {galleryImageNames.length > 0 ? <p className="text-sm text-foreground font-semibold">{galleryImageNames.length} image(s) selected</p> : <p className="text-sm text-muted-foreground">Click to upload (5-8 images)</p>}
                                         </div>
-                                        <Input id="gallery-images" type="file" className="hidden" multiple accept="image/png, image/jpeg, image/webp" onChange={(e) => setGalleryImageNames(Array.from(e.target.files || []).map(f => f.name))} />
+                                        <Input id="gallery-images" type="file" className="hidden" multiple accept="image/png, image/jpeg, image/webp" onChange={handleGalleryUpload} />
                                     </Label>
                                 </FormControl>
                             </FormItem>
