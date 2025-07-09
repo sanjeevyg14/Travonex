@@ -11,10 +11,22 @@ import Banner from '../models/banner';
 import Category from '../models/category';
 import Interest from '../models/interest';
 import City from '../models/city';
+import AdminUser from '../models/adminUser';
 import { verifyJwt } from '../middleware/verifyJwt';
 
 const router = express.Router();
 router.use(verifyJwt('ADMIN'));
+
+// Update authenticated admin profile
+router.put('/me/profile', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const admin = await AdminUser.findByIdAndUpdate((req as any).authUser.id, req.body, { new: true });
+    if (!admin) return res.status(404).json({ message: 'Admin not found' });
+    res.json(admin);
+  } catch (err) {
+    next(err);
+  }
+});
 
 router.get('/dashboard', (_req: Request, res: Response, next: NextFunction) => {
   (async () => {
@@ -122,6 +134,30 @@ router.get('/bookings/:id', (req, res, next) => {
     .catch(next);
 });
 
+// ----- Refund management -----
+router.get('/refunds', (_req: Request, res: Response, next: NextFunction) => {
+  Booking.find({ status: 'Cancelled' })
+    .then(b => res.json(b))
+    .catch(next);
+});
+
+router.post('/refunds/:id/process', (req: Request, res: Response, next: NextFunction) => {
+  (async () => {
+    const booking = await Booking.findByIdAndUpdate(
+      req.params.id,
+      {
+        refundStatus: 'Processed',
+        refundPaymentMode: req.body.paymentMode,
+        refundUtrNumber: req.body.utrNumber,
+        refundPaidDate: req.body.paidDate ? new Date(req.body.paidDate) : new Date(),
+      },
+      { new: true }
+    );
+    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+    res.json(booking);
+  })().catch(next);
+});
+
 // ----- Organizer management -----
 router.get('/organizers', (_req, res, next) => {
   Organizer.find()
@@ -142,6 +178,7 @@ router.patch('/organizers/:id/documents/:docId', (req, res, next) => {
   (async () => {
     const organizer = await Organizer.findById(req.params.id);
     if (!organizer) return res.status(404).json({ message: 'Organizer not found' });
+    const doc = (organizer as any).documents.id(req.params.docId);
     const doc = (organizer.documents as any).id(req.params.docId);
     if (!doc) return res.status(404).json({ message: 'Document not found' });
     doc.status = req.body.status;
