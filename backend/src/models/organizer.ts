@@ -16,6 +16,7 @@ export interface IOrganizer extends Document {
   joinDate: Date;
   kycStatus: 'Incomplete' | 'Pending' | 'Verified' | 'Rejected' | 'Suspended';
   organizerType?: string;
+  logo?: string;
   address?: string;
   website?: string;
   experience?: number;
@@ -23,6 +24,10 @@ export interface IOrganizer extends Document {
   authorizedSignatoryName?: string;
   authorizedSignatoryId?: string;
   emergencyContact?: string;
+  pan?: string;
+  gstin?: string;
+  bankAccountNumber?: string;
+  ifscCode?: string;
   documents: IOrganizerDocument[];
   vendorAgreementStatus: 'Not Submitted' | 'Submitted' | 'Verified' | 'Rejected';
   isProfileComplete: boolean;
@@ -39,6 +44,7 @@ const organizerSchema = new Schema<IOrganizer>({
     default: 'Incomplete',
   },
   organizerType: String,
+  logo: String,
   address: String,
   website: String,
   experience: Number,
@@ -46,6 +52,10 @@ const organizerSchema = new Schema<IOrganizer>({
   authorizedSignatoryName: String,
   authorizedSignatoryId: String,
   emergencyContact: String,
+  pan: String,
+  gstin: String,
+  bankAccountNumber: String,
+  ifscCode: String,
   documents: {
     type: [
       new Schema<IOrganizerDocument>({
