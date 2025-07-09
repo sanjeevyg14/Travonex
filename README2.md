@@ -77,6 +77,16 @@ The application uses environment variables for configuration, both for the AI fe
 3.  **Important**: Replace `YOUR_GOOGLE_API_KEY_HERE` with your actual API key from Google AI Studio. Update `NEXT_PUBLIC_BACKEND_URL` if your backend runs on a different host or port.
 
 
+### Step 3.4: Configure Firebase Storage
+1. Enable **Storage** in your Firebase project and create a default bucket.
+2. Download a service account key with access to Storage. Add the credentials to `backend/.env` (and `.env` if the frontend needs them):
+    ```env
+    FIREBASE_PROJECT_ID=your-project-id
+    FIREBASE_CLIENT_EMAIL=firebase-adminsdk@example.iam.gserviceaccount.com
+    FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYOUR-KEY\n-----END PRIVATE KEY-----\n"
+    ```
+3. Ensure `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` from the previous step matches your bucket name.
+
 ---
 
 ## 4. Running the Application Locally
@@ -159,6 +169,9 @@ The frontend is built to call these (or similar) API endpoints. You will find `/
 *   **Users (Public):** `GET /api/trips`, `GET /api/trips/slug/{slug}`, `POST /api/bookings/create`
 *   **Users (Authenticated):** `GET /api/users/me/profile`, `PUT /api/users/me/profile`, `GET /api/users/me/bookings`
 *   **Organizers:** `GET /api/organizers/me/dashboard`, `GET /api/organizers/me/trips`, `POST /api/trips`, `PUT /api/trips/{id}`, `GET /api/organizers/me/bookings`, `GET /api/organizers/me/payouts`, `POST /api/organizers/me/payouts/request`
+    * `POST /api/organizers/{organizerId}/documents` - save a Firebase Storage URL for KYC documents
+    * `POST /api/organizers/{organizerId}/agreement` - submit the signed agreement URL
+    * `POST /api/organizers/{organizerId}/submit-for-verification`
 *   **Admin:**
     *   `GET /api/admin/dashboard`
     *   `GET /api/admin/trips`, `PATCH /api/admin/trips/{id}`
@@ -213,3 +226,17 @@ npm test
 ```
 
 These tests cover basic Mongoose models, JWT authentication and a simple booking flow using SuperTest.
+
+## 9. Uploading Files with Firebase Storage
+
+1. Upload files from the frontend using the Firebase JS SDK. Use the bucket defined in `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`.
+2. Once the upload completes, obtain the download URL and send it to the backend:
+   * `POST /api/organizers/{organizerId}/documents` with `{ docType, docTitle, fileUrl }`
+   * `POST /api/organizers/{organizerId}/agreement` with `{ fileUrl }`
+   * `POST /api/organizers/{organizerId}/submit-for-verification` to finalize KYC
+3. If you modify storage rules, deploy them with:
+
+```bash
+firebase deploy --only storage
+```
+
