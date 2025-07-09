@@ -4,7 +4,7 @@ This file contains the mock login credentials for testing the different user rol
 
 ## 1. User / Traveler Login
 
--   **Login Method:** Phone Number + OTP
+-   **Login Method:** Phone Number + OTP (select **Sign in with Phone** on `/auth/login`)
 -   **OTP for all users:** `123456`
 
 ### Sample User Accounts:
@@ -14,7 +14,7 @@ This file contains the mock login credentials for testing the different user rol
 
 ## 2. Trip Organizer Login
 
--   **Login Method:** Phone Number + OTP
+-   **Login Method:** Phone Number + OTP (same `/auth/login` page)
 -   **OTP for all organizers:** `123456`
 
 ### Sample Organizer Accounts:
@@ -25,7 +25,7 @@ This file contains the mock login credentials for testing the different user rol
 
 ## 3. Admin Panel Login
 
--   **Login Method:** Email + Password
+-   **Login Route:** [`/admin`](http://localhost:3000/admin) → redirects to the email/password login form
 -   **Password for all admins:** `password`
 
 ### Sample Admin Accounts:
