@@ -8,6 +8,9 @@ import Dispute from '../models/dispute';
 import AdminRole from '../models/adminRole';
 import Notification from '../models/notification';
 import Banner from '../models/banner';
+import Category from '../models/category';
+import Interest from '../models/interest';
+import City from '../models/city';
 import AdminUser from '../models/adminUser';
 import { verifyJwt } from '../middleware/verifyJwt';
 
@@ -280,6 +283,90 @@ router.put('/banners/:id', (req, res, next) => {
 
 router.delete('/banners/:id', (req, res, next) => {
   Banner.findByIdAndDelete(req.params.id)
+    .then(() => res.json({ success: true }))
+    .catch(next);
+});
+
+// ----- Categories -----
+router.get('/categories', (_req, res, next) => {
+  Category.find()
+    .then(c => res.json(c))
+    .catch(next);
+});
+
+router.post('/categories', (req, res, next) => {
+  Category.create(req.body)
+    .then(c => res.status(201).json(c))
+    .catch(next);
+});
+
+router.put('/categories/:id', (req, res, next) => {
+  Category.findByIdAndUpdate(req.params.id, req.body, { new: true })
+    .then(c => {
+      if (!c) return res.status(404).json({ message: 'Category not found' });
+      res.json(c);
+    })
+    .catch(next);
+});
+
+router.delete('/categories/:id', (req, res, next) => {
+  Category.findByIdAndDelete(req.params.id)
+    .then(() => res.json({ success: true }))
+    .catch(next);
+});
+
+// ----- Interests -----
+router.get('/interests', (_req, res, next) => {
+  Interest.find()
+    .then(i => res.json(i))
+    .catch(next);
+});
+
+router.post('/interests', (req, res, next) => {
+  Interest.create(req.body)
+    .then(i => res.status(201).json(i))
+    .catch(next);
+});
+
+router.put('/interests/:id', (req, res, next) => {
+  Interest.findByIdAndUpdate(req.params.id, req.body, { new: true })
+    .then(i => {
+      if (!i) return res.status(404).json({ message: 'Interest not found' });
+      res.json(i);
+    })
+    .catch(next);
+});
+
+router.delete('/interests/:id', (req, res, next) => {
+  Interest.findByIdAndDelete(req.params.id)
+    .then(() => res.json({ success: true }))
+    .catch(next);
+});
+
+// ----- Cities -----
+router.get('/cities', (_req, res, next) => {
+  City.find()
+    .then(c => res.json(c))
+    .catch(next);
+});
+
+router.post('/cities', (req, res, next) => {
+  City.create(req.body)
+    .then(c => res.status(201).json(c))
+    .catch(next);
+});
+
+router.put('/cities/:id', (req, res, next) => {
+  City.findByIdAndUpdate(req.params.id, req.body, { new: true })
+    .then(c => {
+      if (!c) return res.status(404).json({ message: 'City not found' });
+      res.json(c);
+    })
+    .catch(next);
+});
+
+router.delete('/cities/:id', (req, res, next) => {
+  City.findByIdAndDelete(req.params.id)
     .then(() => res.json({ success: true }))
     .catch(next);
 });
