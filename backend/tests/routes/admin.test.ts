@@ -4,12 +4,12 @@ import express from 'express';
 jest.mock('../../src/middleware/verifyJwt', () => ({
   verifyJwt: () => (req: any, _res: any, next: any) => {
     req.authUser = { id: 'admin1', role: 'ADMIN' };
-    req.authUser = { id: 'a1', role: 'Super Admin' };
     next();
   }
 }));
 
-import router from '../../src/routes/admin';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const router = require('../../src/routes/admin').default;
 import User from '../../src/models/user';
 import Organizer from '../../src/models/organizer';
 import AuditLog from '../../src/models/auditLog';
@@ -70,13 +70,16 @@ describe('admin audit logging', () => {
   });
 
   describe('admin routes - me profile', () => {
+});
+
+describe('admin routes - me profile', () => {
   it('updates authenticated admin user', async () => {
-    (AdminUser.findByIdAndUpdate as jest.Mock).mockResolvedValue({ id: 'a1', name: 'New' });
+    (AdminUser.findByIdAndUpdate as jest.Mock).mockResolvedValue({ id: 'admin1', name: 'New' });
 
     const res = await request(app).put('/me/profile').send({ name: 'New' });
 
     expect(res.status).toBe(200);
-    expect(AdminUser.findByIdAndUpdate).toHaveBeenCalledWith('a1', { name: 'New' }, { new: true });
+    expect(AdminUser.findByIdAndUpdate).toHaveBeenCalledWith('admin1', { name: 'New' }, { new: true });
   });
 
   it('returns 404 when admin not found', async () => {
