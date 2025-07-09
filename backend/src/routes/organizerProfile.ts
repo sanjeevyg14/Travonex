@@ -1,8 +1,11 @@
 import express from 'express';
+import multer from 'multer';
 import Organizer from '../models/organizer';
 import { verifyJwt } from '../middleware/verifyJwt';
+import { uploadFile } from '../services/upload';
 
 const router = express.Router();
+const upload = multer({ dest: 'tmp/' });
 router.use(verifyJwt('ORGANIZER'));
 
 router.put('/:id/profile', async (req, res, next) => {
@@ -16,10 +19,12 @@ router.put('/:id/profile', async (req, res, next) => {
   }
 });
 
-router.post('/:id/documents', async (req, res, next) => {
+router.post('/:id/documents', upload.single('file'), async (req, res, next) => {
   if (req.params.id !== (req as any).authUser.id) return res.status(403).json({ message: 'Forbidden' });
   try {
-    const { docType, docTitle, fileUrl } = req.body;
+    const { docType, docTitle } = req.body;
+    if (!req.file) return res.status(400).json({ message: 'File is required' });
+    const fileUrl = await uploadFile(req.file);
     const organizer = await Organizer.findById(req.params.id);
     if (!organizer) return res.status(404).json({ message: 'Organizer not found' });
     const existing = organizer.documents.find(d => d.docType === docType);

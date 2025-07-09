@@ -1,4 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
+import multer from 'multer';
 import Booking from '../models/booking';
 import Payout from '../models/payout';
 import User from '../models/user';
@@ -14,8 +15,10 @@ import Interest from '../models/interest';
 import City from '../models/city';
 import AdminUser from '../models/adminUser';
 import { verifyJwt } from '../middleware/verifyJwt';
+import { uploadFile } from '../services/upload';
 
 const router = express.Router();
+const upload = multer({ dest: 'tmp/' });
 router.use(verifyJwt('ADMIN'));
 
 async function logAction(
@@ -307,19 +310,27 @@ router.get('/banners', (_req, res, next) => {
     .catch(next);
 });
 
-router.post('/banners', (req, res, next) => {
-  Banner.create(req.body)
-    .then(b => res.status(201).json(b))
-    .catch(next);
+router.post('/banners', upload.single('image'), async (req, res, next) => {
+  try {
+    const data: any = { title: req.body.title, linkUrl: req.body.linkUrl };
+    if (req.file) data.imageUrl = await uploadFile(req.file);
+    const banner = await Banner.create(data);
+    res.status(201).json(banner);
+  } catch (err) {
+    next(err);
+  }
 });
 
-router.put('/banners/:id', (req, res, next) => {
-  Banner.findByIdAndUpdate(req.params.id, req.body, { new: true })
-    .then(b => {
-      if (!b) return res.status(404).json({ message: 'Banner not found' });
-      res.json(b);
-    })
-    .catch(next);
+router.put('/banners/:id', upload.single('image'), async (req, res, next) => {
+  try {
+    const update: any = { title: req.body.title, linkUrl: req.body.linkUrl };
+    if (req.file) update.imageUrl = await uploadFile(req.file);
+    const banner = await Banner.findByIdAndUpdate(req.params.id, update, { new: true });
+    if (!banner) return res.status(404).json({ message: 'Banner not found' });
+    res.json(banner);
+  } catch (err) {
+    next(err);
+  }
 });
 
 router.delete('/banners/:id', (req, res, next) => {
