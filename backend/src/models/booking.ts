@@ -12,6 +12,11 @@ export interface IBooking extends Document {
   batchId: string;
   bookingDate: Date;
   status: 'Confirmed' | 'Completed' | 'Cancelled' | 'Pending';
+  refundStatus: 'None' | 'Pending' | 'Processed';
+  cancellationReason?: string;
+  refundPaymentMode?: string;
+  refundUtrNumber?: string;
+  refundPaidDate?: Date;
   amount: number;
   couponCodeUsed?: string;
   couponDiscount?: number;
@@ -37,7 +42,16 @@ const bookingSchema = new Schema<IBooking>({
     enum: ['Confirmed', 'Completed', 'Cancelled', 'Pending'],
     default: 'Pending',
   },
+  refundStatus: {
+    type: String,
+    enum: ['None', 'Pending', 'Processed'],
+    default: 'None',
+  },
   amount: Number,
+  cancellationReason: String,
+  refundPaymentMode: String,
+  refundUtrNumber: String,
+  refundPaidDate: Date,
   couponCodeUsed: String,
   couponDiscount: Number,
   walletAmountUsed: Number,
