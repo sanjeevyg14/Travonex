@@ -12,6 +12,7 @@ import organizerRoutes from './routes/organizers';
 import organizerProfileRoutes from './routes/organizerProfile';
 import adminRoutes from './routes/admin';
 import userRoutes from './routes/users';
+import contentRoutes from './routes/content';
 import { errorHandler } from './middleware/errorHandler';
 
 dotenv.config();
@@ -38,6 +39,7 @@ app.use('/api/organizers/me', organizerRoutes);
 app.use('/api/organizers', organizerProfileRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/content', contentRoutes);
 
 
 if (!admin.apps.length) {

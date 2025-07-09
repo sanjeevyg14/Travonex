@@ -18,6 +18,7 @@ router.get('/dashboard', async (req, res, next) => {
     const participants = bookings.reduce((acc, b) => acc + (b.travelers?.length || 0), 0);
     const pending = await Booking.countDocuments({ tripId: { $in: tripIds }, status: 'Pending' });
     res.json({ revenue, participants, pendingBookings: pending });
+
 // Organizer trips CRUD
 router.get('/trips', async (req, res, next) => {
   try {
@@ -48,6 +49,7 @@ router.post('/trips', async (req, res, next) => {
         availableSlots: b.availableSlots ?? b.maxParticipants,
       })),
     };
+
 router.post('/trips', async (req, res, next) => {
   try {
     const data = { ...req.body, organizerId: (req as any).authUser.id };
@@ -82,6 +84,18 @@ router.patch('/trips/:id/status', async (req, res, next) => {
       { status: req.body.status },
       { new: true }
     );
+    if (!trip) return res.status(404).json({ message: 'Trip not found' });
+    res.json(trip);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete('/trips/:id', async (req, res, next) => {
+  try {
+    const trip = await Trip.findOneAndDelete({ _id: req.params.id, organizerId: (req as any).authUser.id });
+    if (!trip) return res.status(404).json({ message: 'Trip not found' });
+    res.json({ success: true });
 
 });
 
@@ -94,6 +108,7 @@ router.put('/trips/:id', async (req, res, next) => {
     next(err);
   }
 });
+
 
 router.delete('/trips/:id', async (req, res, next) => {
   try {
@@ -162,6 +177,7 @@ router.post('/payouts/request', async (req, res, next) => {
     };
     const payout = await Payout.create(data);
     res.status(201).json(payout);
+
 router.get('/payouts', async (req, res, next) => {
   try {
     const payouts = await Payout.find({ organizerId: (req as any).authUser.id });

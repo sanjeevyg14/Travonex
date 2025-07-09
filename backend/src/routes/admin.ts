@@ -5,6 +5,9 @@ import User from '../models/user';
 import Organizer from '../models/organizer';
 import Trip from '../models/trip';
 import Dispute from '../models/dispute';
+import AdminRole from '../models/adminRole';
+import Notification from '../models/notification';
+import Banner from '../models/banner';
 import { verifyJwt } from '../middleware/verifyJwt';
 
 const router = express.Router();
@@ -19,6 +22,133 @@ router.get('/dashboard', (_req: Request, res: Response, next: NextFunction) => {
     res.json({ bookings, payouts, users, organizers });
   })().catch(next);
 });
+
+// ----- Roles CRUD -----
+router.get('/roles', (_req, res, next) => {
+  AdminRole.find()
+    .then(r => res.json(r))
+    .catch(next);
+});
+
+router.post('/roles', (req, res, next) => {
+  AdminRole.create(req.body)
+    .then(role => res.status(201).json(role))
+    .catch(next);
+});
+
+router.put('/roles/:id', (req, res, next) => {
+  AdminRole.findByIdAndUpdate(req.params.id, req.body, { new: true })
+    .then(role => {
+      if (!role) return res.status(404).json({ message: 'Not found' });
+      res.json(role);
+    })
+    .catch(next);
+});
+
+router.delete('/roles/:id', (req, res, next) => {
+  AdminRole.findByIdAndDelete(req.params.id)
+    .then(() => res.json({ success: true }))
+    .catch(next);
+});
+
+// ----- User management -----
+router.get('/users', (_req, res, next) => {
+  User.find()
+    .then(u => res.json(u))
+    .catch(next);
+});
+
+router.put('/users/:id', (req, res, next) => {
+  User.findByIdAndUpdate(req.params.id, req.body, { new: true })
+    .then(u => {
+      if (!u) return res.status(404).json({ message: 'User not found' });
+      res.json(u);
+    })
+    .catch(next);
+});
+
+router.patch('/users/:id/wallet', (req, res, next) => {
+  (async () => {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    const amount = Number(req.body.amount || 0);
+    user.walletBalance += amount;
+    user.walletTransactions.push({
+      date: new Date(),
+      description: 'Admin adjustment',
+      amount,
+      type: amount >= 0 ? 'Credit' : 'Debit',
+      source: 'ADMIN',
+    } as any);
+    await user.save();
+    res.json(user);
+  })().catch(next);
+});
+
+// ----- Trips -----
+router.get('/trips', (req, res, next) => {
+  const query: any = {};
+  if (req.query.status) query.status = req.query.status;
+  Trip.find(query)
+    .then(t => res.json(t))
+    .catch(next);
+});
+
+router.patch('/trips/:id', (req, res, next) => {
+  Trip.findByIdAndUpdate(req.params.id, req.body, { new: true })
+    .then(t => {
+      if (!t) return res.status(404).json({ message: 'Trip not found' });
+      res.json(t);
+    })
+    .catch(next);
+});
+
+// ----- Bookings -----
+router.get('/bookings', (_req, res, next) => {
+  Booking.find()
+    .then(b => res.json(b))
+    .catch(next);
+});
+
+router.get('/bookings/:id', (req, res, next) => {
+  Booking.findById(req.params.id)
+    .then(b => {
+      if (!b) return res.status(404).json({ message: 'Booking not found' });
+      res.json(b);
+    })
+    .catch(next);
+});
+
+// ----- Organizer management -----
+router.get('/organizers', (_req, res, next) => {
+  Organizer.find()
+    .then(o => res.json(o))
+    .catch(next);
+});
+
+router.get('/organizers/:id', (req, res, next) => {
+  Organizer.findById(req.params.id)
+    .then(o => {
+      if (!o) return res.status(404).json({ message: 'Organizer not found' });
+      res.json(o);
+    })
+    .catch(next);
+});
+
+router.patch('/organizers/:id/documents/:docId', (req, res, next) => {
+  (async () => {
+    const organizer = await Organizer.findById(req.params.id);
+    if (!organizer) return res.status(404).json({ message: 'Organizer not found' });
+    const doc = organizer.documents.id(req.params.docId);
+    if (!doc) return res.status(404).json({ message: 'Document not found' });
+    doc.status = req.body.status;
+    doc.rejectionReason = req.body.rejectionReason;
+    organizer.markModified('documents');
+    await organizer.save();
+    res.json(doc);
+  })().catch(next);
+});
+
 
 router.patch('/organizers/:id/status', (req: Request, res: Response, next: NextFunction) => {
   (async () => {
@@ -52,6 +182,69 @@ router.post('/payouts/:id/process', (req: Request, res: Response, next: NextFunc
     if (!payout) return res.status(404).json({ message: 'Payout not found' });
     res.json(payout);
   })().catch(next);
+});
+
+// ----- Payout listing -----
+router.get('/payouts', (_req, res, next) => {
+  Payout.find()
+    .then(p => res.json(p))
+    .catch(next);
+});
+
+// ----- Revenue summary -----
+router.get('/reports/summary', async (_req, res, next) => {
+  try {
+    const [result] = await Booking.aggregate([
+      { $group: { _id: null, total: { $sum: '$amount' } } },
+    ]);
+    res.json({ totalRevenue: result ? result.total : 0 });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ----- Notifications -----
+router.get('/notifications', (req, res, next) => {
+  Notification.find({ userId: (req as any).authUser.id })
+    .then(n => res.json(n))
+    .catch(next);
+});
+
+router.post('/notifications/:id/read', (req, res, next) => {
+  Notification.findByIdAndUpdate(req.params.id, { isRead: true }, { new: true })
+    .then(n => {
+      if (!n) return res.status(404).json({ message: 'Notification not found' });
+      res.json(n);
+    })
+    .catch(next);
+});
+
+// ----- Banner management -----
+router.get('/banners', (_req, res, next) => {
+  Banner.find()
+    .then(b => res.json(b))
+    .catch(next);
+});
+
+router.post('/banners', (req, res, next) => {
+  Banner.create(req.body)
+    .then(b => res.status(201).json(b))
+    .catch(next);
+});
+
+router.put('/banners/:id', (req, res, next) => {
+  Banner.findByIdAndUpdate(req.params.id, req.body, { new: true })
+    .then(b => {
+      if (!b) return res.status(404).json({ message: 'Banner not found' });
+      res.json(b);
+    })
+    .catch(next);
+});
+
+router.delete('/banners/:id', (req, res, next) => {
+  Banner.findByIdAndDelete(req.params.id)
+    .then(() => res.json({ success: true }))
+    .catch(next);
 });
 
 export default router;
