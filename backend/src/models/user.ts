@@ -9,9 +9,11 @@ export interface IWalletTransaction {
 }
 
 export interface IUser extends Document {
+  firebaseUid: string;
   name: string;
   email: string;
   phone: string;
+  firebaseUid: string;
   joinDate: Date;
   status: 'Active' | 'Suspended';
   avatar: string;
@@ -22,9 +24,11 @@ export interface IUser extends Document {
 }
 
 const userSchema = new Schema<IUser>({
+  firebaseUid: { type: String, required: true, unique: true },
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   phone: { type: String, required: true, unique: true },
+  firebaseUid: { type: String, required: true, unique: true },
   joinDate: { type: Date, default: Date.now },
   status: { type: String, enum: ['Active', 'Suspended'], default: 'Active' },
   avatar: { type: String, default: '' },

@@ -12,7 +12,8 @@ import AuditLog from '../models/auditLog';
 import Category from '../models/category';
 import Interest from '../models/interest';
 import City from '../models/city';
-import AdminUser from '../models/adminUser';import { verifyJwt } from '../middleware/verifyJwt';
+import AdminUser from '../models/adminUser';
+import { verifyJwt } from '../middleware/verifyJwt';
 
 const router = express.Router();
 router.use(verifyJwt('ADMIN'));
@@ -204,6 +205,13 @@ router.get('/organizers/:id', (req, res, next) => {
       if (!organizer) return res.status(404).json({ message: 'Organizer not found' });
       const doc = (organizer as any).documents.id(req.params.docId);
       if (!doc) return res.status(404).json({ message: 'Document not found' });
+router.patch('/organizers/:id/documents/:docId', (req, res, next) => {
+  (async () => {
+    const organizer = await Organizer.findById(req.params.id);
+    if (!organizer) return res.status(404).json({ message: 'Organizer not found' });
+    const doc = (organizer.documents as any).id(req.params.docId);
+  const doc = (organizer.documents as any).id(req.params.docId);
+    if (!doc) return res.status(404).json({ message: 'Document not found' });
     doc.status = req.body.status;
     doc.rejectionReason = req.body.rejectionReason;
     organizer.markModified('documents');

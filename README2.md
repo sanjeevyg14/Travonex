@@ -63,6 +63,15 @@ The application uses environment variables for configuration, both for the AI fe
 
     # Base URL of the Node.js/Express backend
     NEXT_PUBLIC_BACKEND_URL=http://localhost:5000
+
+    # Firebase configuration for the frontend
+    NEXT_PUBLIC_FIREBASE_API_KEY=your-firebase-api-key
+    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+    NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
+    NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
+    NEXT_PUBLIC_FIREBASE_APP_ID=your-app-id
+    NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=your-measurement-id
     ```
 
 3.  **Important**: Replace `YOUR_GOOGLE_API_KEY_HERE` with your actual API key from Google AI Studio. Update `NEXT_PUBLIC_BACKEND_URL` if your backend runs on a different host or port.
@@ -140,6 +149,8 @@ Your database schema should align with the TypeScript types defined in `src/lib/
 *   **Logic:** This endpoint should check the user's credentials against the `AdminUser`, `Organizer`, and `User` tables to determine their role.
 *   **Response:** On successful login, the API should return a session token (e.g., JWT) and a user object containing `id`, `name`, `email`, `role`, and `avatar`.
 *   **Session Management:** The frontend uses `localStorage` to persist the session. All subsequent API calls should include the token in the `Authorization` header for validation.
+*   **Admin Login URL:** Visit [`/admin`](http://localhost:3000/admin) to access the Super Admin panel. Unauthenticated users are automatically redirected to `/auth/login`.
+*   **Firebase Authentication Flow:** Phone-based logins (for users and organizers) rely on Firebase to send an OTP to the provided number. After the OTP is verified, the backend issues a JWT session token. Admins sign in with email and password on the same `/auth/login` page.
 
 ### 6.3. Key API Endpoints Expected by the Frontend
 The frontend is built to call these (or similar) API endpoints. You will find `// BACKEND:` comments in the code pointing to these specific integration points.
@@ -185,7 +196,7 @@ A: Currently, all data is mocked and lives in `src/lib/mock-data.ts`. The next s
 
 ## 8. Backend Integration & Testing
 
-The repository includes a minimal Express backend in the `backend/` directory. Copy `backend/.env.example` to `backend/.env` and update the connection details for MongoDB, Firebase and Razorpay.
+The repository includes a minimal Express backend in the `backend/` directory. Copy `backend/.env.example` to `backend/.env` and update the connection details for MongoDB, Firebase and Razorpay. The `.env.example` file now also includes the Firebase frontend keys so you can run the Next.js app locally with Firebase authentication.
 
 To run the backend in development mode:
 

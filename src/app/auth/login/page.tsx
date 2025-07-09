@@ -18,13 +18,11 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Mail, Phone } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { useAuth } from "@/context/AuthContext";
-import { useRouter } from 'next/navigation';
+import { RecaptchaVerifier, signInWithPhoneNumber, signInWithEmailAndPassword, ConfirmationResult } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 export default function LoginPage() {
   const { toast } = useToast();
-  const { login } = useAuth();
-  const router = useRouter();
   
   const [step, setStep] = React.useState(1); // 1: Enter details, 2: Enter OTP/Password
   const [loginMode, setLoginMode] = React.useState<'phone' | 'email'>('phone');
@@ -44,6 +42,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [isResending, setIsResending] = React.useState(false);
   const [countdown, setCountdown] = React.useState(0);
+  const confirmationResult = React.useRef<ConfirmationResult | null>(null);
 
   const isEmailMode = loginMode === 'email';
 
@@ -66,17 +65,39 @@ export default function LoginPage() {
     const currentIdentifier = isEmailMode ? email : `${countryCode}${phoneNumber}`;
     setIdentifier(currentIdentifier);
 
-    // BACKEND: This should call POST /api/auth/send-otp if it's a phone number.
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    if (isEmailMode) {
+    try {
+      if (isEmailMode) {
         setStep(2);
-    } else {
-        toast({ title: "OTP Sent", description: `A verification code has been sent to ${currentIdentifier}.` });
+      } else {
+        if (!(window as any).recaptchaVerifier) {
+          (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
+          await (window as any).recaptchaVerifier.render();
+        }
+        confirmationResult.current = await signInWithPhoneNumber(auth, currentIdentifier, (window as any).recaptchaVerifier);
+        toast({ title: 'OTP Sent', description: `A verification code has been sent to ${currentIdentifier}.` });
         setStep(2);
         startResendTimer();
+      }
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message || 'Failed to send OTP' });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
+  };
+
+  const loginWithIdToken = async (token: string) => {
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.message || 'Login failed');
+    }
+    localStorage.setItem('userSession', JSON.stringify(result.user));
+    localStorage.setItem('authToken', result.token);
+    return { redirectPath: result.redirectPath };
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -84,18 +105,27 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const { redirectPath } = await login(identifier, isEmailMode ? password : otp);
-      toast({ title: "Login Successful", description: "Redirecting..." });
-      // DEV_COMMENT: Using window.location.href for a full-page reload is the most reliable way
-      // to ensure the browser has processed the new session cookie before making the next request.
-      // This solves the race condition that caused the login/logout loop.
+      let idToken: string | null = null;
+      if (isEmailMode) {
+        const cred = await signInWithEmailAndPassword(auth, identifier, password);
+        idToken = await cred.user.getIdToken();
+      } else {
+        if (!confirmationResult.current) {
+          throw new Error('Please request a new OTP');
+        }
+        const cred = await confirmationResult.current.confirm(otp);
+        idToken = await cred.user.getIdToken();
+      }
+
+      const { redirectPath } = await loginWithIdToken(idToken);
+      toast({ title: 'Login Successful', description: 'Redirecting...' });
       window.location.href = redirectPath || '/';
     } catch (error: any) {
-        toast({
-            variant: 'destructive',
-            title: 'Login Failed',
-            description: error.message || 'Invalid credentials or OTP. Please try again.',
-        });
+      toast({
+        variant: 'destructive',
+        title: 'Login Failed',
+        description: error.message || 'Invalid credentials or OTP. Please try again.',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -103,11 +133,19 @@ export default function LoginPage() {
 
   const handleResendOtp = async () => {
     setIsResending(true);
-    // BACKEND: Call POST /api/auth/resend-otp
-    await new Promise(resolve => setTimeout(resolve, 300));
-    toast({ title: "OTP Resent" });
-    startResendTimer();
-    setIsResending(false);
+    try {
+      if (!(window as any).recaptchaVerifier) {
+        (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
+        await (window as any).recaptchaVerifier.render();
+      }
+      confirmationResult.current = await signInWithPhoneNumber(auth, identifier, (window as any).recaptchaVerifier);
+      toast({ title: 'OTP Resent' });
+      startResendTimer();
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message || 'Failed to resend OTP' });
+    } finally {
+      setIsResending(false);
+    }
   };
 
   const toggleLoginMode = () => {
@@ -115,6 +153,7 @@ export default function LoginPage() {
   }
 
   return (
+    <>
     <Card className="w-full max-w-sm shadow-2xl">
       <form onSubmit={step === 1 ? handleIdentifierSubmit : handleLogin}>
         <CardHeader className="text-center">
@@ -240,5 +279,7 @@ export default function LoginPage() {
         </CardFooter>
       </form>
     </Card>
+    <div id="recaptcha-container" className="hidden" />
+    </>
   );
 }

@@ -8,7 +8,7 @@ Travonex is a multi-faceted travel platform designed to connect adventurous trav
 
 1.  **User Panel:** For travelers to explore, book, and manage trips.
 2.  **Trip Organizer Panel:** For vendors to create listings, manage bookings, and track earnings.
-3.  **Super Admin Panel:** For platform administrators to oversee all operations, from user management to financial reporting.
+3.  **Super Admin Panel:** For platform administrators to oversee all operations, from user management to financial reporting. Access the admin panel by signing in at `/admin/login`.
 
 ## Getting Started
 
