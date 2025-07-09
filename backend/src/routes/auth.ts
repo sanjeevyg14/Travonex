@@ -1,52 +1,59 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
+import admin from 'firebase-admin';
 import User from '../models/user';
 import Organizer from '../models/organizer';
 import AdminUser from '../models/adminUser';
-import { sendOtp, resendOtp, validateOtp } from '../services/otp';
+import { validateOtp } from '../services/otp';
 
 const router = express.Router();
 
-// Send OTP
-router.post('/send-otp', async (req, res) => {
-  const phone = req.body.phone;
-  if (!phone) return res.status(400).json({ message: 'Phone required' });
-  const code = await sendOtp(phone);
-  const resp: any = { success: true };
-  if (process.env.NODE_ENV === 'test') resp.otp = code;
-  res.json(resp);
-});
-
-// Resend OTP
-router.post('/resend-otp', async (req, res) => {
-  const phone = req.body.phone;
-  if (!phone) return res.status(400).json({ message: 'Phone required' });
-  const code = await resendOtp(phone);
-  const resp: any = { success: true };
-  if (process.env.NODE_ENV === 'test') resp.otp = code;
-  res.json(resp);
-});
 
 // Signup endpoint
 router.post('/signup', async (req, res, next) => {
   try {
-    const { name, email, phone, accountType } = req.body;
-    if (!name || !email || !phone || !accountType) {
+    const { name, accountType, idToken } = req.body;
+    if (!name || !accountType || !idToken) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
+
+    const decoded = await admin.auth().verifyIdToken(idToken);
+    const firebaseUid = decoded.uid;
+    const email = decoded.email;
+    const phone = decoded.phone_number;
+
     const existingUser =
-      (await User.findOne({ $or: [{ email }, { phone }] })) ||
-      (await Organizer.findOne({ $or: [{ email }, { phone }] }));
+      (await User.findOne({ firebaseUid })) ||
+      (await Organizer.findOne({ firebaseUid }));
+
     if (existingUser) {
       return res.status(409).json({ message: 'Account already exists' });
     }
+
     if (accountType === 'ORGANIZER') {
-      const organizer = await Organizer.create({ name, email, phone });
-      const token = jwt.sign({ id: organizer.id, role: 'ORGANIZER' }, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
-      return res.status(201).json({ token, user: { id: organizer.id, name: organizer.name, email: organizer.email, role: 'ORGANIZER' } });
+      const organizer = await Organizer.create({
+        firebaseUid,
+        name,
+        email,
+        phone,
+      });
+      const token = jwt.sign(
+        { id: organizer.id, role: 'ORGANIZER' },
+        process.env.JWT_SECRET || 'secret',
+        { expiresIn: '7d' }
+      );
+      return res.status(201).json({
+        token,
+        user: { id: organizer.id, name: organizer.name, email: organizer.email, role: 'ORGANIZER' },
+      });
     }
-    const user = await User.create({ name, email, phone });
-    const token = jwt.sign({ id: user.id, role: 'USER' }, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
+
+    const user = await User.create({ firebaseUid, name, email, phone });
+    const token = jwt.sign(
+      { id: user.id, role: 'USER' },
+      process.env.JWT_SECRET || 'secret',
+      { expiresIn: '7d' }
+    );
     return res.status(201).json({ token, user: { id: user.id, name: user.name, email: user.email, role: 'USER' } });
   } catch (err) {
     next(err);

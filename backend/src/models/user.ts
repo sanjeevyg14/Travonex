@@ -9,6 +9,7 @@ export interface IWalletTransaction {
 }
 
 export interface IUser extends Document {
+  firebaseUid: string;
   name: string;
   email: string;
   phone: string;
@@ -22,6 +23,7 @@ export interface IUser extends Document {
 }
 
 const userSchema = new Schema<IUser>({
+  firebaseUid: { type: String, required: true, unique: true },
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   phone: { type: String, required: true, unique: true },
