@@ -3,8 +3,7 @@ import express from 'express';
 
 jest.mock('../../src/middleware/verifyJwt', () => ({
   verifyJwt: () => (req: any, _res: any, next: any) => {
-    req.authUser = { id: 'admin1', role: 'ADMIN' };
-    req.authUser = { id: 'a1', role: 'Super Admin' };
+    req.authUser = { id: 'admin1', role: 'Super Admin' };
     next();
   }
 }));
@@ -67,6 +66,9 @@ describe('admin audit logging', () => {
     expect(res.status).toBe(200);
     expect(res.body).toEqual([{ id: 'log1' }]);
     expect(sortMock).toHaveBeenCalledWith({ timestamp: -1 });
+  });
+});
+
 describe('admin routes - me profile', () => {
   it('updates authenticated admin user', async () => {
     (AdminUser.findByIdAndUpdate as jest.Mock).mockResolvedValue({ id: 'a1', name: 'New' });
@@ -74,7 +76,7 @@ describe('admin routes - me profile', () => {
     const res = await request(app).put('/me/profile').send({ name: 'New' });
 
     expect(res.status).toBe(200);
-    expect(AdminUser.findByIdAndUpdate).toHaveBeenCalledWith('a1', { name: 'New' }, { new: true });
+    expect(AdminUser.findByIdAndUpdate).toHaveBeenCalledWith('admin1', { name: 'New' }, { new: true });
   });
 
   it('returns 404 when admin not found', async () => {

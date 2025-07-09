@@ -202,8 +202,6 @@ router.patch('/organizers/:id/documents/:docId', (req, res, next) => {
   (async () => {
     const organizer = await Organizer.findById(req.params.id);
     if (!organizer) return res.status(404).json({ message: 'Organizer not found' });
-    const doc = (organizer as any).documents.id(req.params.docId);
-
     const doc = (organizer.documents as any).id(req.params.docId);
     if (!doc) return res.status(404).json({ message: 'Document not found' });
     doc.status = req.body.status;
@@ -327,7 +325,9 @@ router.get('/audit-logs', (_req, res, next) => {
   AuditLog.find()
     .sort({ timestamp: -1 })
     .then(logs => res.json(logs))
-=======
+    .catch(next);
+});
+
 // ----- Categories -----
 router.get('/categories', (_req, res, next) => {
   Category.find()
