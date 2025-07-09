@@ -18,7 +18,15 @@ jest.mock('firebase-admin', () => ({
 
 jest.mock('../../src/models/user');
 jest.mock('../../src/models/organizer');
+jest.mock('../../src/models/adminUser');
+jest.mock('firebase-admin', () => {
+  const verify = jest.fn();
+  return { __esModule: true, default: { auth: () => ({ verifyIdToken: verify }) } };
+});
 
+import router from '../../src/routes/auth';
+import * as otpService from '../../src/services/otp';
+import admin from 'firebase-admin';
 import router from '../../src/routes/auth';
 import User from '../../src/models/user';
 import Organizer from '../../src/models/organizer';
@@ -27,11 +35,37 @@ const app = express();
 app.use(express.json());
 app.use(router);
 
+const firebaseApp = express();
+firebaseApp.use(express.json());
+function authenticate(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const header = req.headers.authorization;
+  if (!header || !header.startsWith('Bearer ')) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+  const token = header.split(' ')[1];
+  admin
+    .auth()
+    .verifyIdToken(token)
+    .then(decoded => {
+      (req as any).user = decoded;
+      next();
+    })
+    .catch(() => {
+      res.status(401).json({ error: 'Invalid token' });
+    });
+}
+firebaseApp.get('/protected', authenticate, (req, res) => {
+  res.json({ user: (req as any).user });
+});
+
+describe('auth routes - otp flow', () => {
 describe('auth routes - firebase login', () => {
 describe('auth routes - signup with firebase', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
+
 
   it('creates user with firebase uid', async () => {
     (User.findOne as jest.Mock).mockResolvedValue(null);
@@ -72,5 +106,30 @@ describe('auth routes - signup with firebase', () => {
     expect(User.create).toHaveBeenCalledWith(
       expect.objectContaining({ firebaseUid: 'fb1' })
     );
+  });
+});
+
+describe('firebase token auth', () => {
+  const verify = admin.auth().verifyIdToken as jest.Mock;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('grants access with valid token', async () => {
+    verify.mockResolvedValue({ uid: 'user1' });
+    const res = await request(firebaseApp)
+      .get('/protected')
+      .set('Authorization', 'Bearer valid');
+    expect(res.status).toBe(200);
+    expect(res.body.user).toEqual({ uid: 'user1' });
+  });
+
+  it('rejects invalid token', async () => {
+    verify.mockRejectedValue(new Error('invalid'));
+    const res = await request(firebaseApp)
+      .get('/protected')
+      .set('Authorization', 'Bearer bad');
+    expect(res.status).toBe(401);
   });
 });

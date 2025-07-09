@@ -33,6 +33,13 @@ describe('admin audit logging', () => {
 
     await request(app).put('/users/u1').send({ name: 'A' });
 
+      expect(AuditLog.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          adminId: 'a1',
+          action: 'Update',
+          module: 'User',
+        })
+      );
     expect(AuditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({
         adminId: 'a1',
@@ -71,6 +78,8 @@ describe('admin audit logging', () => {
   });
 
   describe('admin routes - me profile', () => {
+    it('updates authenticated admin user', async () => {
+    (AdminUser.findByIdAndUpdate as jest.Mock).mockResolvedValue({ id: 'a1', name: 'New' });
 });
 
 describe('admin routes - me profile', () => {
