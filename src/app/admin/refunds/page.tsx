@@ -11,7 +11,7 @@
  *   `GET /api/admin/refunds` should join with user data to display names and cancellation reasons.
  * - **State Management**: Client component to manage dialog states for refund processing.
  * - **API Integration**:
- *   - "Process Refund": Triggers `PATCH /api/admin/bookings/{id}/refund` with payment details.
+ *   - "Process Refund": Triggers `POST /api/admin/refunds/{id}/process` with payment details.
  *   - Backend should update the booking's `refundStatus` to 'Processed' and store UTR, payment mode, etc.
  *   - An audit log should be created for every refund processed.
  */

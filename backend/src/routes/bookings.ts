@@ -125,6 +125,8 @@ router.post('/:id/cancel', (req: Request, res: Response, next: NextFunction) => 
     }
 
     booking.status = 'Cancelled';
+    booking.refundStatus = 'Pending';
+    if (req.body.reason) booking.cancellationReason = req.body.reason;
     await booking.save();
     res.json({ refundAmount: refund });
   })().catch(next);

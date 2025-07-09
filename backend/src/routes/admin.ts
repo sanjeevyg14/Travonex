@@ -119,6 +119,30 @@ router.get('/bookings/:id', (req, res, next) => {
     .catch(next);
 });
 
+// ----- Refund management -----
+router.get('/refunds', (_req: Request, res: Response, next: NextFunction) => {
+  Booking.find({ status: 'Cancelled' })
+    .then(b => res.json(b))
+    .catch(next);
+});
+
+router.post('/refunds/:id/process', (req: Request, res: Response, next: NextFunction) => {
+  (async () => {
+    const booking = await Booking.findByIdAndUpdate(
+      req.params.id,
+      {
+        refundStatus: 'Processed',
+        refundPaymentMode: req.body.paymentMode,
+        refundUtrNumber: req.body.utrNumber,
+        refundPaidDate: req.body.paidDate ? new Date(req.body.paidDate) : new Date(),
+      },
+      { new: true }
+    );
+    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+    res.json(booking);
+  })().catch(next);
+});
+
 // ----- Organizer management -----
 router.get('/organizers', (_req, res, next) => {
   Organizer.find()
@@ -139,7 +163,7 @@ router.patch('/organizers/:id/documents/:docId', (req, res, next) => {
   (async () => {
     const organizer = await Organizer.findById(req.params.id);
     if (!organizer) return res.status(404).json({ message: 'Organizer not found' });
-    const doc = organizer.documents.id(req.params.docId);
+    const doc = (organizer as any).documents.id(req.params.docId);
     if (!doc) return res.status(404).json({ message: 'Document not found' });
     doc.status = req.body.status;
     doc.rejectionReason = req.body.rejectionReason;
