@@ -4,7 +4,7 @@
 import { useState, useEffect, Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { TripCard, TripCardSkeleton } from "@/components/common/TripCard";
-import { trips, categories as mockCategories, interests as mockInterests, organizers as mockOrganizers } from "@/lib/mock-data";
+import { categories as mockCategories, interests as mockInterests, organizers as mockOrganizers } from "@/lib/mock-data";
 import type { Trip } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Frown, X, SlidersHorizontal } from "lucide-react";
@@ -23,7 +23,6 @@ import { Slider } from "@/components/ui/slider";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
-const maxPrice = Math.max(...trips.map(t => t.price), 100000);
 
 // DEV_COMMENT: To avoid duplicating the filter UI for desktop and mobile,
 // it's extracted into its own component. The filter data (categories, interests)
@@ -36,7 +35,8 @@ function FilterSidebarContent({
   selectedInterests, handleInterestChange,
   selectedOrganizer, setSelectedOrganizer,
   selectedRating, setSelectedRating,
-  activeFilterCount, resetFilters
+  activeFilterCount, resetFilters,
+  maxPrice
 }: any) {
   
   const handleRatingChange = (value: string) => {
@@ -147,96 +147,60 @@ function SearchPageComponent() {
   const [sortedTrips, setSortedTrips] = useState<Trip[]>([]);
   const [sortKey, setSortKey] = useState("relevance");
   const [isLoading, setIsLoading] = useState(true);
+  const [maxPrice, setMaxPrice] = useState(100000);
 
   // Filter states
   const [selectedCategories, setSelectedCategories] = useState<string[]>(searchParams.get('category')?.split(',').filter(Boolean) || []);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [dateRange, setDateRange] = useState<{from?: Date, to?: Date}>({});
-  const [priceRange, setPriceRange] = useState([0, maxPrice]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000]);
   const [selectedDuration, setSelectedDuration] = useState('all');
   const [selectedOrganizer, setSelectedOrganizer] = useState('all');
   const [selectedRating, setSelectedRating] = useState(0);
 
-  const getAverageRating = (trip: Trip) => {
-    if (!trip.reviews || trip.reviews.length === 0) return 0;
-    const total = trip.reviews.reduce((acc, review) => acc + review.rating, 0);
-    return total / trip.reviews.length;
-  };
 
   useEffect(() => {
     setSearchTerm(searchParams.get('q') || "");
   }, [searchParams]);
 
   useEffect(() => {
-    setIsLoading(true);
-    // BACKEND: This entire filtering logic should be handled by a backend API endpoint
-    // that accepts these filter parameters. e.g., GET /api/trips?q=...&category=...&price_min=...
-    const timer = setTimeout(() => {
-        let results = trips
-        .filter(trip => trip.status === 'Published')
-        // Search term filter
-        .filter(trip => {
-            const term = searchTerm.toLowerCase();
-            if (!term) return true;
-            return (
-            trip.title.toLowerCase().includes(term) ||
-            trip.location.toLowerCase().includes(term) ||
-            (trip.interests && trip.interests.some(interest => interest.toLowerCase().includes(term)))
-            );
-        })
-        // Category filter
-        .filter(trip => selectedCategories.length === 0 || selectedCategories.includes(trip.tripType))
-        // Interest filter
-        .filter(trip => selectedInterests.length === 0 || (trip.interests && trip.interests.some(i => selectedInterests.includes(i))))
-        // Price range filter
-        .filter(trip => trip.price >= priceRange[0] && trip.price <= priceRange[1])
-        // Date range filter
-        .filter(trip => {
-            if (!dateRange.from && !dateRange.to) return true;
-            return trip.batches.some(batch => {
-                const startDate = new Date(batch.startDate);
-                const endDate = new Date(batch.endDate);
-                if(dateRange.from && dateRange.to) return startDate <= dateRange.to && endDate >= dateRange.from;
-                if(dateRange.from) return endDate >= dateRange.from;
-                if(dateRange.to) return startDate <= dateRange.to;
-                return false;
-            });
-        })
-        // Duration filter
-        .filter(trip => {
-            if (selectedDuration === 'all') return true;
-            const durationDays = parseInt(trip.duration.split(' ')[0]); // simplified assumption
-            if (selectedDuration === 'short') return durationDays <= 3;
-            if (selectedDuration === 'weekend') return durationDays > 3 && durationDays <= 5;
-            if (selectedDuration === 'long') return durationDays > 5;
-            return true;
-        })
-        // Organizer filter
-        .filter(trip => selectedOrganizer === 'all' || trip.organizerId === selectedOrganizer)
-        // Rating filter
-        .filter(trip => getAverageRating(trip) >= selectedRating);
-        
-        // BACKEND: Sorting should also be done on the backend via query parameters.
-        let sorted = [...results];
-        switch (sortKey) {
-            case 'price-asc':
-                sorted.sort((a, b) => a.price - b.price);
-                break;
-            case 'price-desc':
-                sorted.sort((a, b) => b.price - a.price);
-                break;
-            case 'newest':
-                sorted.sort((a,b) => new Date(b.batches[0]?.startDate || 0).getTime() - new Date(a.batches[0]?.startDate || 0).getTime());
-                break;
-            case 'relevance':
-            default:
-                break;
-        }
-        setSortedTrips(sorted);
-        setIsLoading(false);
-    }, 500); // Simulate network delay
+    const controller = new AbortController();
+    const fetchTrips = async () => {
+      setIsLoading(true);
+      try {
+        const params = new URLSearchParams();
+        if (searchTerm) params.set('q', searchTerm);
+        if (selectedCategories.length) params.set('category', selectedCategories.join(','));
+        if (selectedInterests.length) params.set('interests', selectedInterests.join(','));
+        if (priceRange[0] > 0) params.set('priceMin', String(priceRange[0]));
+        if (priceRange[1] < maxPrice) params.set('priceMax', String(priceRange[1]));
+        if (dateRange.from) params.set('start', dateRange.from.toISOString());
+        if (dateRange.to) params.set('end', dateRange.to.toISOString());
+        if (selectedDuration !== 'all') params.set('duration', selectedDuration);
+        if (selectedOrganizer !== 'all') params.set('organizer', selectedOrganizer);
+        if (selectedRating > 0) params.set('rating', String(selectedRating));
+        if (sortKey) params.set('sort', sortKey);
 
-    return () => clearTimeout(timer);
+        const res = await fetch(`/api/trips?${params.toString()}`, { signal: controller.signal });
+        if (res.ok) {
+          const data: Trip[] = await res.json();
+          setSortedTrips(data);
+          const mp = data.reduce((m, t) => Math.max(m, t.price), 100000);
+          setMaxPrice(mp);
+        } else {
+          setSortedTrips([]);
+        }
+      } catch (err) {
+        if ((err as any).name !== 'AbortError') {
+          console.error('Failed to fetch trips', err);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTrips();
+    return () => controller.abort();
   }, [searchTerm, selectedCategories, selectedInterests, priceRange, dateRange, selectedDuration, sortKey, selectedOrganizer, selectedRating]);
 
   const handleCategoryChange = (category: string, checked: boolean) => {
@@ -268,8 +232,23 @@ function SearchPageComponent() {
   ), [selectedCategories, selectedInterests, dateRange, priceRange, selectedDuration, selectedOrganizer, selectedRating]);
 
   const filterProps = {
-    priceRange, setPriceRange, dateRange, setDateRange, selectedDuration, setSelectedDuration, selectedCategories, handleCategoryChange,
-    selectedInterests, handleInterestChange, selectedOrganizer, setSelectedOrganizer, selectedRating, setSelectedRating, activeFilterCount, resetFilters
+    priceRange,
+    setPriceRange,
+    dateRange,
+    setDateRange,
+    selectedDuration,
+    setSelectedDuration,
+    selectedCategories,
+    handleCategoryChange,
+    selectedInterests,
+    handleInterestChange,
+    selectedOrganizer,
+    setSelectedOrganizer,
+    selectedRating,
+    setSelectedRating,
+    activeFilterCount,
+    resetFilters,
+    maxPrice,
   };
 
   return (
