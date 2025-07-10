@@ -50,6 +50,8 @@ npm install
 ```
 This will install all the necessary packages defined in `package.json`, including Next.js, React, Tailwind, and Genkit.
 
+> **Important**: `npm install` must run with lifecycle scripts enabled. The `postinstall` script executes `patch-package`, which applies `patches/@opentelemetry+sdk-node@0.51.1.patch`. Avoid using `--ignore-scripts` or disabling npm scripts, or the project may fail to build.
+
 ### Step 3.3: Configure Environment Variables
 The application uses environment variables for configuration, both for the AI features powered by Genkit and for connecting to the backend server.
 
