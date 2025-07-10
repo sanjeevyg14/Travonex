@@ -16,7 +16,6 @@ import Link from "next/link";
 import * as React from "react";
 import { TripCard, TripCardSkeleton } from "@/components/common/TripCard";
 import { DestinationSuggestionForm } from "@/components/ai/DestinationSuggestionForm";
-import { categories as mockCategories } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { useCity } from "@/context/CityContext";
@@ -59,8 +58,11 @@ export default function HomePage() {
           setFeaturedTrips(await featureRes.json());
         }
 
-        const activeCategories = mockCategories.filter(c => c.status === 'Active');
-        setCategories(activeCategories);
+        const categoryRes = await fetch('/api/reference/categories');
+        if (categoryRes.ok) {
+          const data = await categoryRes.json();
+          setCategories(data.filter((c: Category) => c.status === 'Active'));
+        }
       } catch (err) {
         console.error('Failed to load homepage data', err);
       } finally {
