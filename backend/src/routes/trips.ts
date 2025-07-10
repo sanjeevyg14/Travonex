@@ -11,12 +11,58 @@ const upload = multer({ dest: 'tmp/' });
 // List trips with optional filters
 router.get('/', async (req, res, next) => {
   try {
-    const { city, category, featured } = req.query as Record<string, string>;
+    const {
+      city,
+      category,
+      featured,
+      q,
+      priceMin,
+      priceMax,
+      start,
+      end,
+      organizer,
+      rating,
+    } = req.query as Record<string, string>;
+
     const query: any = { status: 'Published' };
     if (city) query.city = city;
     if (category) query.tripType = category;
     if (featured) query.isFeatured = featured === 'true';
-    const trips = await Trip.find(query);
+    if (organizer) query.organizerId = organizer;
+
+    if (q) {
+      const regex = new RegExp(q, 'i');
+      query.$or = [
+        { title: regex },
+        { location: regex },
+        { interests: regex },
+      ];
+    }
+
+    if (priceMin || priceMax) {
+      query.price = {};
+      if (priceMin) query.price.$gte = Number(priceMin);
+      if (priceMax) query.price.$lte = Number(priceMax);
+    }
+
+    if (start || end) {
+      query.batches = { $elemMatch: {} };
+      if (start) (query.batches.$elemMatch as any).endDate = { $gte: start };
+      if (end) (query.batches.$elemMatch as any).startDate = { $lte: end };
+    }
+
+    let trips = await Trip.find(query);
+
+    if (rating) {
+      const minRating = Number(rating);
+      trips = trips.filter(t => {
+        if (!t.reviews || t.reviews.length === 0) return false;
+        const avg =
+          t.reviews.reduce((acc, r) => acc + r.rating, 0) / t.reviews.length;
+        return avg >= minRating;
+      });
+    }
+
     res.json(trips);
   } catch (err) {
     next(err);
