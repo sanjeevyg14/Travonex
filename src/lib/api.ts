@@ -31,3 +31,4 @@ export function getMonthlyReports() {
     `/api/admin/reports/monthly`
   );
 }
+
