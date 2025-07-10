@@ -9,6 +9,41 @@ import crypto from 'crypto';
 import { verifyJwt } from '../middleware/verifyJwt';
 
 const router = express.Router();
+
+
+router.post('/payment-callback', (req: Request, res: Response, next: NextFunction) => {
+  (async () => {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const body = `${razorpay_order_id}|${razorpay_payment_id}`;
+    const expected = crypto
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || '')
+      .update(body)
+      .digest('hex');
+
+    if (expected !== razorpay_signature) {
+      return res.status(400).json({ message: 'Invalid signature' });
+    }
+
+    const booking = await Booking.findOne({ razorpayOrderId: razorpay_order_id });
+    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+
+    booking.status = 'Confirmed';
+    booking.transactionId = razorpay_payment_id;
+    await booking.save();
+
+    const trip = await Trip.findById(booking.tripId);
+    if (trip) {
+      const batch = trip.batches.find(b => b.id === booking.batchId);
+      if (batch) {
+        batch.availableSlots -= booking.travelers.length;
+        if (batch.availableSlots < 0) batch.availableSlots = 0;
+      }
+      await trip.save();
+    }
+
+    res.json({ success: true });
+  })().catch(next);
+});
 router.use(verifyJwt());
 
 router.post('/create', (req: Request, res: Response, next: NextFunction) => {
@@ -77,39 +112,6 @@ router.post('/create', (req: Request, res: Response, next: NextFunction) => {
   })().catch(next);
 });
 
-router.post('/payment-callback', (req: Request, res: Response, next: NextFunction) => {
-  (async () => {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
-    const body = `${razorpay_order_id}|${razorpay_payment_id}`;
-    const expected = crypto
-      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || '')
-      .update(body)
-      .digest('hex');
-
-    if (expected !== razorpay_signature) {
-      return res.status(400).json({ message: 'Invalid signature' });
-    }
-
-    const booking = await Booking.findOne({ razorpayOrderId: razorpay_order_id });
-    if (!booking) return res.status(404).json({ message: 'Booking not found' });
-
-    booking.status = 'Confirmed';
-    booking.transactionId = razorpay_payment_id;
-    await booking.save();
-
-    const trip = await Trip.findById(booking.tripId);
-    if (trip) {
-      const batch = trip.batches.find(b => b.id === booking.batchId);
-      if (batch) {
-        batch.availableSlots -= booking.travelers.length;
-        if (batch.availableSlots < 0) batch.availableSlots = 0;
-      }
-      await trip.save();
-    }
-
-    res.json({ success: true });
-  })().catch(next);
-});
 
 router.post('/:id/cancel', (req: Request, res: Response, next: NextFunction) => {
   (async () => {
