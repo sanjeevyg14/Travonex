@@ -32,7 +32,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { bookings as mockBookings, trips, users } from "@/lib/mock-data";
+// Data will be fetched from the backend APIs
 import { cn } from "@/lib/utils";
 import type { Booking, Trip } from "@/lib/types";
 import { Users } from "lucide-react";
@@ -160,7 +160,14 @@ function BookingDetailsDialog({ booking, trip }: { booking: Booking; trip: Trip 
 
 
 export default function AdminBookingsPage() {
-  const [bookings, setBookings] = React.useState<Booking[]>(mockBookings);
+  const [bookings, setBookings] = React.useState<Booking[]>([]);
+
+  React.useEffect(() => {
+    fetch('/api/admin/bookings')
+      .then(res => res.json())
+      .then(setBookings)
+      .catch(err => console.error('Failed to load bookings', err));
+  }, []);
   
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
@@ -192,21 +199,18 @@ export default function AdminBookingsPage() {
             </TableHeader>
             <TableBody>
               {bookings.length > 0 ? bookings.map((booking) => {
-                const trip = trips.find(t => t.id === booking.tripId);
-                const user = users.find(u => u.id === booking.userId);
-                const batch = trip?.batches.find(b => b.id === booking.batchId);
                 
                 return (
                     <TableRow key={booking.id}>
                     <TableCell className="font-mono text-xs">{booking.id}</TableCell>
                     <TableCell>
-                      <div className="font-medium">{user?.name || 'N/A'}</div>
-                      <div className="text-sm text-muted-foreground">{user?.phone || 'N/A'}</div>
+                      <div className="font-medium">{booking.userName || 'N/A'}</div>
+                      <div className="text-sm text-muted-foreground">{booking.userPhone || 'N/A'}</div>
                     </TableCell>
                     <TableCell>
-                      <div className="font-medium">{trip?.title || 'N/A'}</div>
+                      <div className="font-medium">{booking.tripTitle || 'N/A'}</div>
                       <div className="text-sm text-muted-foreground">
-                        {batch ? <ClientOnlyDate dateString={batch.startDate} type="date" /> : 'N/A'}
+                        {booking.startDate ? <ClientOnlyDate dateString={booking.startDate} type="date" /> : 'N/A'}
                       </div>
                     </TableCell>
                     <TableCell className="text-center font-medium">{booking.travelers.length}</TableCell>
