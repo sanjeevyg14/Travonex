@@ -81,7 +81,7 @@ export default function BookingPage() {
   const batchId = searchParams.get('batch');
   const { toast } = useToast();
   
-  const { user: sessionUser, loading: authLoading } = useAuth();
+  const { user: sessionUser, loading: authLoading, token } = useAuth();
   
   // DEV_COMMENT: The component now uses the actual logged-in user's data from the AuthContext.
   // We find the full user profile from the mock data array based on the session ID.
@@ -195,47 +195,87 @@ export default function BookingPage() {
   // DEV_COMMENT: END - Dynamic Fare Calculation
 
   // DEV_COMMENT: This function prepares the final payload for the backend.
+
   const handleProceedToPayment = async () => {
-    // Basic validation
     if (!selectedPickup || !selectedDropoff) {
-      toast({ variant: 'destructive', title: 'Missing Information', description: 'Please select a pickup and drop-off point.' });
+      toast({
+        variant: 'destructive',
+        title: 'Missing Information',
+        description: 'Please select a pickup and drop-off point.',
+      });
       return;
     }
 
     setIsProcessing(true);
 
-    // BACKEND: This payload is sent to POST /api/bookings/create after successful payment.
-    const finalPayload = {
-      tripId: trip.id,
-      batchId: batch.id,
-      pickup: trip.pickupPoints.find(p => p.label === selectedPickup),
-      dropoff: trip.dropoffPoints.find(p => p.label === selectedDropoff),
-      travelers: travelers,
-      walletUsedAmount: fareDetails.walletDiscount,
-      couponUsed: appliedCoupon?.code || null,
-      couponDiscount: fareDetails.couponDiscount,
-      subtotal: fareDetails.subtotal,
-      tax: fareDetails.tax,
-      totalAmount: fareDetails.totalPayable,
-      bookingStatus: 'pending', // Becomes 'confirmed' after payment
-      paymentStatus: 'pending',
-    };
-    
-    console.log("BACKEND BOOKING PAYLOAD:", JSON.stringify(finalPayload, null, 2));
-    
-    toast({
-      title: "Redirecting to Payment...",
-      description: "Preparing your booking summary to proceed with payment.",
-    });
+    try {
+      const createRes = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'}/api/bookings/create`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            tripId: trip.id,
+            batchId: batch.id,
+            travelers,
+            couponCode: appliedCoupon?.code,
+            walletAmount: fareDetails.walletDiscount,
+          }),
+        }
+      );
+      if (!createRes.ok) throw new Error('Failed to initiate payment');
+      const { razorpayOrder } = await createRes.json();
 
-    // FRONTEND: Simulate network delay for payment gateway
-    await new Promise(resolve => setTimeout(resolve, 300));
+      if (!(window as any).Razorpay) {
+        await new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+          script.onload = resolve;
+          script.onerror = reject;
+          document.body.appendChild(script);
+        });
+      }
 
-    // TODO: Replace this with actual payment gateway integration (e.g., Razorpay, Stripe).
-    // The payment gateway's success callback would trigger the final booking creation.
-    // For this prototype, we redirect directly to the success page.
-    router.push('/booking/success');
-    setIsProcessing(false);
+      const rzp = new (window as any).Razorpay({
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        order_id: razorpayOrder.id,
+        amount: razorpayOrder.amount,
+        currency: razorpayOrder.currency,
+        name: 'Travonex',
+        handler: async (response: any) => {
+          try {
+            await fetch(
+              `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000'}/api/bookings/payment-callback`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(response),
+              }
+            );
+            router.push('/booking/success');
+          } catch (err) {
+            console.error(err);
+            toast({ variant: 'destructive', title: 'Payment verification failed' });
+          } finally {
+            setIsProcessing(false);
+          }
+        },
+      });
+
+      rzp.on('payment.failed', (res: any) => {
+        toast({ variant: 'destructive', title: 'Payment Failed', description: res.error?.description });
+        setIsProcessing(false);
+      });
+
+      rzp.open();
+    } catch (error) {
+      console.error(error);
+      toast({ variant: 'destructive', title: 'Payment Error', description: 'Unable to process payment.' });
+      setIsProcessing(false);
+    }
   };
 
   return (

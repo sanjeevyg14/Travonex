@@ -92,4 +92,46 @@ describe('bookings routes', () => {
 
     expect(res.status).toBe(400);
   });
+
+  describe('payment callback', () => {
+    beforeEach(() => {
+      process.env.RAZORPAY_KEY_SECRET = 'secret';
+    });
+
+    it('confirms booking on valid signature', async () => {
+      const save = jest.fn().mockResolvedValue(null);
+      (Booking.findOne as jest.Mock).mockResolvedValue({
+        tripId: 't1',
+        batchId: 'b1',
+        travelers: [{}],
+        save
+      });
+      (Trip.findById as jest.Mock).mockResolvedValue({
+        batches: [{ id: 'b1', availableSlots: 5 }],
+        save: jest.fn().mockResolvedValue(null)
+      });
+      const signature = require('crypto')
+        .createHmac('sha256', 'secret')
+        .update('order|pay')
+        .digest('hex');
+
+      const res = await request(app).post('/payment-callback').send({
+        razorpay_order_id: 'order',
+        razorpay_payment_id: 'pay',
+        razorpay_signature: signature
+      });
+
+      expect(res.status).toBe(200);
+      expect(save).toHaveBeenCalled();
+    });
+
+    it('rejects invalid signature', async () => {
+      const res = await request(app).post('/payment-callback').send({
+        razorpay_order_id: 'o',
+        razorpay_payment_id: 'p',
+        razorpay_signature: 'bad'
+      });
+      expect(res.status).toBe(400);
+    });
+  });
 });
