@@ -20,18 +20,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { PlusCircle, Edit, Eye, Lock, Loader2 } from "lucide-react";
-import { trips as mockTrips, bookings } from "@/lib/mock-data";
+import { PlusCircle, Edit, Eye, Lock, Loader2, AlertTriangle } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 import type { Trip } from "@/lib/types";
 import { Switch } from "@/components/ui/switch";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClientOnlyDate } from "@/components/common/ClientOnlyDate";
 
 
-// Mock organizer ID
-const MOCK_ORGANIZER_ID = 'VND001';
 
 const getStatusBadgeVariant = (status: Trip['status']) => {
     switch (status) {
@@ -60,30 +59,84 @@ const TripsTableSkeleton = () => (
 
 
 export default function OrganizerTripsPage() {
+  const { token } = useAuth();
   const [organizerTrips, setOrganizerTrips] = React.useState<Trip[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    // FRONTEND: Simulate fetching data
-    // BACKEND: Call `GET /api/organizers/me/trips`
-    setIsLoading(true);
-    setTimeout(() => {
-        setOrganizerTrips(mockTrips.filter(t => t.organizerId === MOCK_ORGANIZER_ID));
+    if (!token) return;
+    const fetchTrips = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const res = await fetch('/api/organizers/me/trips', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Failed to fetch trips');
+        setOrganizerTrips(data);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
         setIsLoading(false);
-    }, 300);
-  }, []);
+      }
+    };
+    fetchTrips();
+  }, [token]);
 
-  const handlePauseToggle = (tripId: string, isPublished: boolean) => {
-    // BACKEND: Call `PATCH /api/trips/{tripId}/status` with the new status
-    setOrganizerTrips(prevTrips => 
-        prevTrips.map(trip => 
-            trip.id === tripId 
-            ? { ...trip, status: isPublished ? 'Published' : 'Unlisted' }
-            : trip
-        )
+  const handlePauseToggle = async (tripId: string, isPublished: boolean) => {
+    if (!token) return;
+    setOrganizerTrips(prev =>
+      prev.map(trip =>
+        trip.id === tripId ? { ...trip, status: isPublished ? 'Published' : 'Unlisted' } : trip
+      )
     );
+    try {
+      await fetch(`/api/trips/${tripId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: isPublished ? 'Published' : 'Unlisted' }),
+      });
+    } catch (err) {
+      console.error('Failed to update status', err);
+    }
   };
 
+
+  if (isLoading) {
+    return (
+      <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+        <div className="space-y-2">
+            <Skeleton className="h-10 w-1/3" />
+        </div>
+        <Card>
+          <CardContent>
+            <Table>
+              <TableBody>
+                <TripsTableSkeleton />
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Error Loading Trips</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      </main>
+    );
+  }
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
@@ -123,7 +176,9 @@ export default function OrganizerTripsPage() {
             </TableHeader>
             <TableBody>
               {isLoading ? <TripsTableSkeleton /> : organizerTrips.length > 0 ? organizerTrips.map((trip) => {
-                const tripBookings = bookings.filter(b => b.tripId === trip.id && b.status !== 'Cancelled');
+                const tripBookings = Array.isArray((trip as any).bookings)
+                  ? (trip as any).bookings.filter((b: any) => b.status !== 'Cancelled')
+                  : [];
                 const totalCapacity = trip.batches.reduce((acc, batch) => acc + batch.maxParticipants, 0);
                 const isEditable = trip.status === 'Draft' || trip.status === 'Published' || trip.status === 'Unlisted';
                 const nextBatch = trip.batches.filter(b => new Date(b.startDate) > new Date()).sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())[0];
