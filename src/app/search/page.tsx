@@ -4,8 +4,7 @@
 import { useState, useEffect, Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { TripCard, TripCardSkeleton } from "@/components/common/TripCard";
-import { categories as mockCategories, interests as mockInterests, organizers as mockOrganizers } from "@/lib/mock-data";
-import type { Trip } from "@/lib/types";
+import type { Trip, Category, Interest, Organizer } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Frown, X, SlidersHorizontal } from "lucide-react";
 import {
@@ -28,6 +27,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 // it's extracted into its own component. The filter data (categories, interests)
 // is sourced from the same mock data that organizers use, ensuring consistency.
 function FilterSidebarContent({
+  categories,
+  interests,
+  organizers,
   priceRange, setPriceRange,
   dateRange, setDateRange,
   selectedDuration, setSelectedDuration,
@@ -98,7 +100,7 @@ function FilterSidebarContent({
                     <SelectTrigger><SelectValue placeholder="All Organizers"/></SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All Organizers</SelectItem>
-                        {mockOrganizers.map(o => <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>)}
+                        {organizers.map(o => <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>)}
                     </SelectContent>
                 </Select>
             </div>
@@ -115,7 +117,7 @@ function FilterSidebarContent({
             <div>
                 <h3 className="font-semibold mb-3 text-sm">Category</h3>
                 <div className="space-y-2">
-                    {mockCategories.filter(c=>c.status==='Active').map(cat => (
+                    {categories.filter(c=>c.status==='Active').map(cat => (
                         <div key={cat.id} className="flex items-center space-x-2">
                             <Checkbox id={`cat-${cat.id}`} onCheckedChange={(checked) => handleCategoryChange(cat.name, !!checked)} checked={selectedCategories.includes(cat.name)} />
                             <Label htmlFor={`cat-${cat.id}`} className="font-normal">{cat.name}</Label>
@@ -127,7 +129,7 @@ function FilterSidebarContent({
             <div>
                 <h3 className="font-semibold mb-3 text-sm">Interests</h3>
                 <div className="space-y-2">
-                    {mockInterests.filter(i=>i.status==='Active').map(interest => (
+                    {interests.filter(i=>i.status==='Active').map(interest => (
                         <div key={interest.id} className="flex items-center space-x-2">
                             <Checkbox id={`int-${interest.id}`} onCheckedChange={(checked) => handleInterestChange(interest.name, !!checked)} checked={selectedInterests.includes(interest.name)} />
                             <Label htmlFor={`int-${interest.id}`} className="font-normal">{interest.name}</Label>
@@ -149,6 +151,10 @@ function SearchPageComponent() {
   const [isLoading, setIsLoading] = useState(true);
   const [maxPrice, setMaxPrice] = useState(100000);
 
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [interests, setInterests] = useState<Interest[]>([]);
+  const [organizers, setOrganizers] = useState<Organizer[]>([]);
+
   // Filter states
   const [selectedCategories, setSelectedCategories] = useState<string[]>(searchParams.get('category')?.split(',').filter(Boolean) || []);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
@@ -157,6 +163,24 @@ function SearchPageComponent() {
   const [selectedDuration, setSelectedDuration] = useState('all');
   const [selectedOrganizer, setSelectedOrganizer] = useState('all');
   const [selectedRating, setSelectedRating] = useState(0);
+
+  useEffect(() => {
+    async function fetchReference() {
+      try {
+        const [catRes, intRes, orgRes] = await Promise.all([
+          fetch('/api/reference/categories'),
+          fetch('/api/reference/interests'),
+          fetch('/api/admin/organizers'),
+        ]);
+        if (catRes.ok) setCategories(await catRes.json());
+        if (intRes.ok) setInterests(await intRes.json());
+        if (orgRes.ok) setOrganizers(await orgRes.json());
+      } catch (err) {
+        console.error('Failed to fetch reference data', err);
+      }
+    }
+    fetchReference();
+  }, []);
 
 
   useEffect(() => {
@@ -232,6 +256,9 @@ function SearchPageComponent() {
   ), [selectedCategories, selectedInterests, dateRange, priceRange, selectedDuration, selectedOrganizer, selectedRating]);
 
   const filterProps = {
+    categories,
+    interests,
+    organizers,
     priceRange,
     setPriceRange,
     dateRange,
