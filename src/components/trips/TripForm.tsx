@@ -32,12 +32,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { UploadCloud, PlusCircle, Trash2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useCity } from "@/context/CityContext";
 import { Switch } from "@/components/ui/switch";
 import { DatePicker } from "@/components/ui/datepicker";
 import { Label } from "@/components/ui/label";
-import { interests as mockInterests, categories as mockCategories } from "@/lib/mock-data";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { uploadFile } from "@/lib/upload";
@@ -126,6 +125,44 @@ export function TripForm({ trip, isAdmin = false }: TripFormProps) {
   const router = useRouter();
   const { cities } = useCity();
   const availableCities = cities.filter(c => c.name !== 'All Cities');
+
+  const [categories, setCategories] = useState<{ id: string; name: string; status?: 'Active' | 'Inactive' }[]>([]);
+  const [interests, setInterests] = useState<{ id: string; name: string; status?: 'Active' | 'Inactive' }[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [loadingInterests, setLoadingInterests] = useState(true);
+
+  useEffect(() => {
+    async function fetchReferenceData() {
+      try {
+        const [catRes, intRes] = await Promise.all([
+          fetch('/api/reference/categories'),
+          fetch('/api/reference/interests'),
+        ]);
+        const catData = await catRes.json();
+        const intData = await intRes.json();
+        setCategories(
+          (catData || []).map((c: any) => ({
+            id: c.id || c._id || c.name,
+            name: c.name,
+            status: c.status,
+          }))
+        );
+        setInterests(
+          (intData || []).map((i: any) => ({
+            id: i.id || i._id || i.name,
+            name: i.name,
+            status: i.status,
+          }))
+        );
+      } catch (err) {
+        console.error('Failed to fetch reference data', err);
+      } finally {
+        setLoadingCategories(false);
+        setLoadingInterests(false);
+      }
+    }
+    fetchReferenceData();
+  }, []);
   
   const [coverImageName, setCoverImageName] = useState<string | null>(null);
   const [galleryImageNames, setGalleryImageNames] = useState<string[]>([]);
@@ -276,7 +313,40 @@ export function TripForm({ trip, isAdmin = false }: TripFormProps) {
                         <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Trip Title</FormLabel><FormControl><Input placeholder="e.g., Summer in Santorini" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         <FormField control={form.control} name="location" render={({ field }) => (<FormItem><FormLabel>Display Location</FormLabel><FormControl><Input placeholder="e.g., Himalayas, India" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>Destination City</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a destination city" /></SelectTrigger></FormControl><SelectContent>{availableCities.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="tripType" render={({ field }) => (<FormItem><FormLabel>Trip Category</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a trip category" /></SelectTrigger></FormControl><SelectContent>{mockCategories.filter(c => c.status === 'Active').map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+                        <FormField
+                            control={form.control}
+                            name="tripType"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Trip Category</FormLabel>
+                                    <Select
+                                        onValueChange={field.onChange}
+                                        defaultValue={field.value}
+                                        disabled={loadingCategories}
+                                    >
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select a trip category" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {loadingCategories ? (
+                                                <SelectItem value="" disabled>Loading...</SelectItem>
+                                            ) : (
+                                                categories
+                                                    .filter(c => c.status === 'Active')
+                                                    .map(c => (
+                                                        <SelectItem key={c.id} value={c.name}>
+                                                            {c.name}
+                                                        </SelectItem>
+                                                    ))
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                         <FormField control={form.control} name="difficulty" render={({ field }) => (<FormItem><FormLabel>Difficulty Level</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select difficulty" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Easy">Easy</SelectItem><SelectItem value="Moderate">Moderate</SelectItem><SelectItem value="Hard">Hard</SelectItem><SelectItem value="Challenging">Challenging</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
                         <FormField control={form.control} name="duration" render={({ field }) => (<FormItem><FormLabel>Duration</FormLabel><FormControl><Input placeholder="e.g., 3 Days, 2 Nights" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         <div className="grid grid-cols-2 gap-4">
@@ -293,39 +363,43 @@ export function TripForm({ trip, isAdmin = false }: TripFormProps) {
                                 <FormLabel>Interest Tags</FormLabel>
                                 <FormDescription>Select tags that best describe your trip. This helps users find your trip when they filter.</FormDescription>
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
-                                    {mockInterests.filter(i => i.status === 'Active').map((interest) => (
-                                        <FormField
-                                        key={interest.id}
-                                        control={form.control}
-                                        name="interests"
-                                        render={({ field }) => {
-                                            return (
-                                            <FormItem
-                                                key={interest.id}
-                                                className="flex flex-row items-start space-x-3 space-y-0"
-                                            >
-                                                <FormControl>
-                                                <Checkbox
-                                                    checked={field.value?.includes(interest.name)}
-                                                    onCheckedChange={(checked) => {
-                                                    return checked
-                                                        ? field.onChange([...(field.value || []), interest.name])
-                                                        : field.onChange(
-                                                            field.value?.filter(
-                                                            (value) => value !== interest.name
-                                                            )
-                                                        )
-                                                    }}
+                                    {loadingInterests ? (
+                                        <p className="text-sm text-muted-foreground col-span-2">Loading...</p>
+                                    ) : (
+                                        interests
+                                            .filter(i => i.status === 'Active')
+                                            .map((interest) => (
+                                                <FormField
+                                                    key={interest.id}
+                                                    control={form.control}
+                                                    name="interests"
+                                                    render={({ field }) => (
+                                                        <FormItem
+                                                            key={interest.id}
+                                                            className="flex flex-row items-start space-x-3 space-y-0"
+                                                        >
+                                                            <FormControl>
+                                                                <Checkbox
+                                                                    checked={field.value?.includes(interest.name)}
+                                                                    onCheckedChange={(checked) => {
+                                                                        return checked
+                                                                            ? field.onChange([...(field.value || []), interest.name])
+                                                                            : field.onChange(
+                                                                                  field.value?.filter(
+                                                                                      (value) => value !== interest.name
+                                                                                  )
+                                                                              );
+                                                                    }}
+                                                                />
+                                                            </FormControl>
+                                                            <FormLabel className="font-normal">
+                                                                {interest.name}
+                                                            </FormLabel>
+                                                        </FormItem>
+                                                    )}
                                                 />
-                                                </FormControl>
-                                                <FormLabel className="font-normal">
-                                                {interest.name}
-                                                </FormLabel>
-                                            </FormItem>
-                                            )
-                                        }}
-                                        />
-                                    ))}
+                                            ))
+                                    )}
                                 </div>
                                 <FormMessage />
                                 </FormItem>
