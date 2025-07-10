@@ -37,7 +37,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { UploadCloud, CheckCircle, AlertCircle, FileText, Download, ShieldCheck, ShieldAlert, ShieldX, Eye, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { organizers as mockOrganizers } from "@/lib/mock-data";
+import { fetchData } from "@/lib/api";
 import type { Organizer, OrganizerDocument } from "@/lib/types";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import Image from 'next/image';
@@ -187,8 +187,9 @@ export default function OrganizerProfilePage() {
   // Fetch organizer data based on the authenticated user session.
   React.useEffect(() => {
       if (sessionUser) {
-          const currentOrganizer = mockOrganizers.find(o => o.id === sessionUser.id);
-          if (currentOrganizer) {
+          fetchData<Organizer>(`/api/admin/organizers/${sessionUser.id}`)
+            .then(currentOrganizer => {
+              if (!currentOrganizer) return;
               setOrganizer(currentOrganizer);
               form.reset({
                   name: currentOrganizer.name || '',
@@ -202,7 +203,8 @@ export default function OrganizerProfilePage() {
                   authorizedSignatoryId: currentOrganizer.authorizedSignatoryId || '',
                   emergencyContact: currentOrganizer.emergencyContact || '',
               });
-          }
+            })
+            .catch(() => {});
       }
   }, [sessionUser, form]);
 

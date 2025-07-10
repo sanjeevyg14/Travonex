@@ -41,7 +41,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Payout } from "@/lib/types";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { trips } from "@/lib/mock-data";
+import { fetchData } from "@/lib/api";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClientOnlyDate } from "@/components/common/ClientOnlyDate";
@@ -156,17 +156,27 @@ export default function OrganizerPayoutsPage() {
     const { toast } = useToast();
     const [eligible, setEligible] = React.useState<EligibleBatch[]>([]);
     const [history, setHistory] = React.useState<Payout[]>([]);
+    const [trips, setTrips] = React.useState<any[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
 
     React.useEffect(() => {
-        // FRONTEND: Simulate fetching payout data
-        // BACKEND: Should be two API calls: `GET /api/organizers/me/eligible-payouts` and `GET /api/organizers/me/payout-history`
         setIsLoading(true);
-        setTimeout(() => {
-            setEligible(initialEligibleBatches);
-            setHistory(initialPayoutHistory);
-            setIsLoading(false);
-        }, 300);
+        Promise.all([
+            fetchData<EligibleBatch[]>('/api/organizers/me/eligible-payouts'),
+            fetchData<Payout[]>('/api/organizers/me/payouts'),
+            fetchData<any[]>('/api/trips'),
+        ])
+        .then(([eligibleData, historyData, tripData]) => {
+            setEligible(eligibleData);
+            setHistory(historyData);
+            setTrips(tripData);
+        })
+        .catch(() => {
+            setEligible([]);
+            setHistory([]);
+            setTrips([]);
+        })
+        .finally(() => setIsLoading(false));
     }, []);
 
     const availableForPayout = eligible.reduce((acc, batch) => acc + batch.netPayout, 0);

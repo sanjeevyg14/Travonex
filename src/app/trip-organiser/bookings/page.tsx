@@ -37,11 +37,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { bookings as mockBookings, trips, users } from "@/lib/mock-data";
+import { fetchData } from "@/lib/api";
 import { Users as UsersIcon, Calendar, User, Mail, Phone, Info } from "lucide-react";
-import type { Booking } from "@/lib/types";
+import type { Booking, Trip, User as AppUser } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClientOnlyDate } from "@/components/common/ClientOnlyDate";
+import { fetchData } from "@/lib/api";
 
 // Mock organizer ID for demonstration purposes.
 const MOCK_ORGANIZER_ID = 'VND001';
@@ -57,19 +58,29 @@ const BookingsSkeleton = () => (
 
 export default function OrganizerBookingsPage() {
     const [organizerBookings, setOrganizerBookings] = React.useState<Booking[]>([]);
+    const [trips, setTrips] = React.useState<Trip[]>([]);
+    const [users, setUsers] = React.useState<AppUser[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
 
     React.useEffect(() => {
-        // FRONTEND: Simulate fetching data
-        // BACKEND: In a real app, this filtering would be done on the backend.
-        // The API (`/api/organizers/me/bookings`) should only return bookings for the authenticated organizer.
         setIsLoading(true);
-        setTimeout(() => {
-            const organizerTripIds = trips.filter(t => t.organizerId === MOCK_ORGANIZER_ID).map(t => t.id);
-            const fetchedBookings = mockBookings.filter(b => organizerTripIds.includes(b.tripId));
-            setOrganizerBookings(fetchedBookings);
-            setIsLoading(false);
-        }, 300);
+        Promise.all([
+            fetchData<Booking[]>('/api/admin/bookings'),
+            fetchData<Trip[]>('/api/trips'),
+            fetchData<AppUser[]>('/api/admin/users'),
+        ])
+        .then(([bookingData, tripData, userData]) => {
+            const organizerTripIds = tripData.filter(t => t.organizerId === MOCK_ORGANIZER_ID).map(t => t.id);
+            setOrganizerBookings(bookingData.filter(b => organizerTripIds.includes(b.tripId)));
+            setTrips(tripData);
+            setUsers(userData);
+        })
+        .catch(() => {
+            setOrganizerBookings([]);
+            setTrips([]);
+            setUsers([]);
+        })
+        .finally(() => setIsLoading(false));
     }, []);
 
   return (

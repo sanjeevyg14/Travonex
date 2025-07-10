@@ -1,9 +1,11 @@
 import { TripForm } from "@/components/trips/TripForm";
-import { trips } from "@/lib/mock-data";
+import { fetchData } from "@/lib/api";
+import type { Trip } from "@/lib/types";
 import { notFound } from "next/navigation";
 
-export default function EditTripPage({ params }: { params: { tripId: string } }) {
-    const trip = trips.find(t => t.id === params.tripId);
+export default async function EditTripPage({ params }: { params: { tripId: string } }) {
+    const allTrips = await fetchData<Trip[]>('/api/trips');
+    const trip = allTrips.find(t => t.id === params.tripId);
     if (!trip) {
         notFound();
     }

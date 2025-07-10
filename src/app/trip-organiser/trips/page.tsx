@@ -21,7 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PlusCircle, Edit, Eye, Lock, Loader2 } from "lucide-react";
-import { trips as mockTrips, bookings } from "@/lib/mock-data";
+import { fetchData } from "@/lib/api";
 import type { Trip } from "@/lib/types";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -64,13 +64,11 @@ export default function OrganizerTripsPage() {
   const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
-    // FRONTEND: Simulate fetching data
-    // BACKEND: Call `GET /api/organizers/me/trips`
     setIsLoading(true);
-    setTimeout(() => {
-        setOrganizerTrips(mockTrips.filter(t => t.organizerId === MOCK_ORGANIZER_ID));
-        setIsLoading(false);
-    }, 300);
+    fetchData<Trip[]>(`/api/organizers/me/trips`)
+      .then(data => setOrganizerTrips(data))
+      .catch(() => setOrganizerTrips([]))
+      .finally(() => setIsLoading(false));
   }, []);
 
   const handlePauseToggle = (tripId: string, isPublished: boolean) => {

@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { trips, users } from "@/lib/mock-data";
+import { fetchData } from "@/lib/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -53,17 +53,11 @@ export default function OrganizerReviewsPage() {
     const [isLoading, setIsLoading] = React.useState(true);
 
     React.useEffect(() => {
-        // FRONTEND: Simulate fetching review data
-        // BACKEND: This should be an API call like `GET /api/organizers/me/reviews`
         setIsLoading(true);
-        setTimeout(() => {
-            const organizerTrips = trips.filter(t => t.organizerId === MOCK_ORGANIZER_ID);
-            const fetchedReviews = organizerTrips.flatMap(trip => 
-                trip.reviews.map(review => ({...review, tripTitle: trip.title}))
-            );
-            setAllReviews(fetchedReviews);
-            setIsLoading(false);
-        }, 300);
+        fetchData<ReviewWithTripTitle[]>('/api/organizers/me/reviews')
+            .then(setAllReviews)
+            .catch(() => setAllReviews([]))
+            .finally(() => setIsLoading(false));
     }, []);
 
   return (
