@@ -21,3 +21,14 @@ export function updateTrip(id: string, data: Partial<Trip>) {
     body: JSON.stringify(data),
   });
 }
+
+export function getReportsSummary() {
+  return fetchData<{ totalRevenue: number }>(`/api/admin/reports/summary`);
+}
+
+export function getMonthlyReports() {
+  return fetchData<Array<{ month: string; revenue: number; bookings: number }>>(
+    `/api/admin/reports/monthly`
+  );
+}
+

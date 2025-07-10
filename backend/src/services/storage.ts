@@ -1,6 +1,14 @@
 import admin from 'firebase-admin';
 
-const bucket = admin.storage().bucket();
+let bucket: any | null = null;
+
+function getBucket() {
+  if (!bucket) {
+    if (!admin.apps.length) return null;
+    bucket = admin.storage().bucket();
+  }
+  return bucket;
+}
 
 /**
  * Upload a file buffer to Firebase Storage and return the public URL.
@@ -9,7 +17,12 @@ const bucket = admin.storage().bucket();
  * @returns Public URL of the uploaded file.
  */
 export async function uploadFile(buffer: Buffer, destinationPath: string): Promise<string> {
-  const file = bucket.file(destinationPath);
+  const b = getBucket();
+  if (!b) {
+    console.warn('Firebase not initialized, returning placeholder URL');
+    return `https://placehold.co/600x400?text=upload`;
+  }
+  const file = b.file(destinationPath);
   await file.save(buffer);
   await file.makePublic();
   return file.publicUrl();

@@ -296,6 +296,24 @@ router.get('/reports/summary', async (_req, res, next) => {
   }
 });
 
+router.get('/reports/monthly', async (_req, res, next) => {
+  try {
+    const data = await Booking.aggregate([
+      {
+        $group: {
+          _id: { $substr: ['$createdAt', 0, 7] },
+          revenue: { $sum: '$amount' },
+          bookings: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+    res.json(data.map(d => ({ month: d._id, revenue: d.revenue, bookings: d.bookings })));
+  } catch (err) {
+    next(err);
+  }
+});
+
 // ----- Notifications -----
 router.get('/notifications', (req, res, next) => {
   Notification.find({ userId: (req as any).authUser.id })
