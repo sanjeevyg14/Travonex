@@ -1,6 +1,7 @@
 import express from 'express';
 import User from '../models/user';
 import Booking from '../models/booking';
+import Trip from '../models/trip';
 import { verifyJwt } from '../middleware/verifyJwt';
 
 const router = express.Router();
@@ -38,9 +39,16 @@ router.get('/me/bookings', async (req, res, next) => {
   }
 });
 
-// Placeholder wishlist endpoint
-router.get('/me/wishlist', async (_req, res) => {
-  res.json([]);
+// Get full trip objects for user's wishlist
+router.get('/me/wishlist', async (req, res, next) => {
+  try {
+    const user = await User.findById((req as any).authUser.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    const trips = await Trip.find({ _id: { $in: user.wishlist } });
+    res.json(trips);
+  } catch (err) {
+    next(err);
+  }
 });
 
 // Wallet transactions
