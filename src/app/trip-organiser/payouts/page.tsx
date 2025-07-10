@@ -42,6 +42,7 @@ import type { Payout } from "@/lib/types";
 import { useAuth } from "@/context/AuthContext";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { fetchData } from "@/lib/api";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClientOnlyDate } from "@/components/common/ClientOnlyDate";
@@ -142,10 +143,29 @@ export default function OrganizerPayoutsPage() {
     const { token, user } = useAuth();
     const [eligible, setEligible] = React.useState<EligibleBatch[]>([]);
     const [history, setHistory] = React.useState<Payout[]>([]);
+    const [trips, setTrips] = React.useState<any[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
     const [error, setError] = React.useState<string | null>(null);
 
     React.useEffect(() => {
+        setIsLoading(true);
+        Promise.all([
+            fetchData<EligibleBatch[]>('/api/organizers/me/eligible-payouts'),
+            fetchData<Payout[]>('/api/organizers/me/payouts'),
+            fetchData<any[]>('/api/trips'),
+        ])
+        .then(([eligibleData, historyData, tripData]) => {
+            setEligible(eligibleData);
+            setHistory(historyData);
+            setTrips(tripData);
+        })
+        .catch(() => {
+            setEligible([]);
+            setHistory([]);
+            setTrips([]);
+        })
+        .finally(() => setIsLoading(false));
+    }, []);
         if (!token) return;
         const fetchPayouts = async () => {
             setIsLoading(true);

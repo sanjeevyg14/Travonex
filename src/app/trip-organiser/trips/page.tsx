@@ -20,6 +20,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PlusCircle, Edit, Eye, Lock, Loader2 } from "lucide-react";
+import { fetchData } from "@/lib/api";
 import { PlusCircle, Edit, Eye, Lock, Loader2, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import type { Trip } from "@/lib/types";
@@ -65,6 +67,13 @@ export default function OrganizerTripsPage() {
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
+    setIsLoading(true);
+    fetchData<Trip[]>(`/api/organizers/me/trips`)
+      .then(data => setOrganizerTrips(data))
+      .catch(() => setOrganizerTrips([]))
+      .finally(() => setIsLoading(false));
+  }, []);
+
     if (!token) return;
     const fetchTrips = async () => {
       setIsLoading(true);

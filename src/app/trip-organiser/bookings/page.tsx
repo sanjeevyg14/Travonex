@@ -37,6 +37,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { fetchData } from "@/lib/api";
+import { Users as UsersIcon, Calendar, User, Mail, Phone, Info } from "lucide-react";
+import type { Booking, Trip, User as AppUser } from "@/lib/types";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ClientOnlyDate } from "@/components/common/ClientOnlyDate";
+import { fetchData } from "@/lib/api";
 import { Users as UsersIcon, Calendar, User, Mail, Phone, Info, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import type { Booking } from "@/lib/types";
@@ -56,11 +62,32 @@ const BookingsSkeleton = () => (
 
 export default function OrganizerBookingsPage() {
     const [organizerBookings, setOrganizerBookings] = React.useState<Booking[]>([]);
+    const [trips, setTrips] = React.useState<Trip[]>([]);
+    const [users, setUsers] = React.useState<AppUser[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
     const [error, setError] = React.useState<string | null>(null);
 
     const { token } = useAuth();
     React.useEffect(() => {
+        setIsLoading(true);
+        Promise.all([
+            fetchData<Booking[]>('/api/admin/bookings'),
+            fetchData<Trip[]>('/api/trips'),
+            fetchData<AppUser[]>('/api/admin/users'),
+        ])
+        .then(([bookingData, tripData, userData]) => {
+            const organizerTripIds = tripData.filter(t => t.organizerId === MOCK_ORGANIZER_ID).map(t => t.id);
+            setOrganizerBookings(bookingData.filter(b => organizerTripIds.includes(b.tripId)));
+            setTrips(tripData);
+            setUsers(userData);
+        })
+        .catch(() => {
+            setOrganizerBookings([]);
+            setTrips([]);
+            setUsers([]);
+        })
+        .finally(() => setIsLoading(false));
+    }, []);
         if (!token) return;
         const fetchBookings = async () => {
             setIsLoading(true);
