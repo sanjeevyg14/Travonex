@@ -27,8 +27,8 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useParams, notFound, useRouter } from "next/navigation";
-import { trips as mockTrips, organizers } from "@/lib/mock-data";
-import type { Trip, TripBatch } from "@/lib/types";
+import { getTrip, updateTrip, fetchData } from "@/lib/api";
+import type { Trip, TripBatch, Organizer } from "@/lib/types";
 
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
@@ -71,36 +71,50 @@ export default function AdminTripDetailPage() {
     const params = useParams<{ tripId: string }>();
     const router = useRouter();
     const { toast } = useToast();
-    const initialTrip = mockTrips.find(t => t.id === params.tripId);
-    
-    if (!initialTrip) {
-        notFound();
-    }
 
-    const [trip, setTrip] = React.useState<Trip>(initialTrip);
+    const [trip, setTrip] = React.useState<Trip | null>(null);
+    const [organizer, setOrganizer] = React.useState<Organizer | null>(null);
     const [rejectionReason, setRejectionReason] = React.useState("");
     const [isRejectDialogOpen, setIsRejectDialogOpen] = React.useState(false);
 
-    const organizer = organizers.find(o => o.id === trip.organizerId);
+    React.useEffect(() => {
+        getTrip(params.tripId)
+            .then(async data => {
+                setTrip(data);
+                const org = await fetchData<Organizer>(`/api/admin/organizers/${data.organizerId}`);
+                setOrganizer(org);
+            })
+            .catch(() => notFound());
+    }, [params.tripId]);
 
-    const handleStatusChange = (newStatus: Trip['status']) => {
-        // BACKEND: Call `PATCH /api/admin/trips/{trip.id}` with { status: newStatus }
-        setTrip(prev => ({ ...prev, status: newStatus }));
-        toast({ title: "Trip Status Updated", description: `The trip has been marked as ${newStatus}.` });
-        if (newStatus === 'Rejected') {
-            setIsRejectDialogOpen(false);
+    const handleStatusChange = async (newStatus: Trip['status']) => {
+        if (!trip) return;
+        try {
+            const updated = await updateTrip(trip.id, { status: newStatus });
+            setTrip(updated);
+            toast({ title: "Trip Status Updated", description: `The trip has been marked as ${newStatus}.` });
+            if (newStatus === 'Rejected') {
+                setIsRejectDialogOpen(false);
+            }
+        } catch {
+            toast({ variant: 'destructive', title: 'Update failed' });
         }
     };
 
-    const handleRejectSubmit = () => {
+    const handleRejectSubmit = async () => {
         if (!rejectionReason) {
             toast({ variant: 'destructive', title: "Reason Required", description: "Please provide a reason for rejection."});
             return;
         }
-        // BACKEND: The PATCH call would also include `{ adminNotes: rejectionReason }`
-        console.log("Rejection Reason:", rejectionReason);
-        handleStatusChange('Rejected');
-        // TODO: Backend should trigger an email to the organizer with the rejection reason.
+        if (!trip) return;
+        try {
+            const updated = await updateTrip(trip.id, { status: 'Rejected', adminNotes: rejectionReason });
+            setTrip(updated);
+            toast({ title: "Trip Status Updated", description: "The trip has been marked as Rejected." });
+            setIsRejectDialogOpen(false);
+        } catch {
+            toast({ variant: 'destructive', title: 'Update failed' });
+        }
     }
     
     // DEV_COMMENT: This function handles the logic for featuring a trip.
@@ -115,6 +129,10 @@ export default function AdminTripDetailPage() {
         // BACKEND: Call `PATCH /api/admin/trips/{trip.id}` with { isBannerTrip: isBanner }
         setTrip(prev => ({...prev, isBannerTrip: isBanner}));
         toast({ title: "Homepage Banner Status Updated" });
+    }
+
+    if (!trip || !organizer) {
+        return <div className="p-8">Loading...</div>;
     }
 
     const incompleteSections = [];

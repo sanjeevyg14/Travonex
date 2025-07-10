@@ -16,6 +16,7 @@ import City from '../models/city';
 import AdminUser from '../models/adminUser';
 import { verifyJwt } from '../middleware/verifyJwt';
 import { uploadFile } from '../services/upload';
+import { sendOrganizerRejectionEmail } from '../utils/email';
 
 const router = express.Router();
 const upload = multer({ dest: 'tmp/' });
@@ -137,10 +138,29 @@ router.get('/trips', (req, res, next) => {
     .catch(next);
 });
 
-router.patch('/trips/:id', (req, res, next) => {
-  Trip.findByIdAndUpdate(req.params.id, req.body, { new: true })
+router.get('/trips/:id', (req, res, next) => {
+  Trip.findById(req.params.id)
     .then(t => {
       if (!t) return res.status(404).json({ message: 'Trip not found' });
+      res.json(t);
+    })
+    .catch(next);
+});
+
+router.patch('/trips/:id', (req, res, next) => {
+  Trip.findByIdAndUpdate(req.params.id, req.body, { new: true })
+    .then(async t => {
+      if (!t) return res.status(404).json({ message: 'Trip not found' });
+      if (req.body.status === 'Rejected' && req.body.adminNotes) {
+        const organizer = await Organizer.findById(t.organizerId);
+        if (organizer?.email) {
+          sendOrganizerRejectionEmail(
+            organizer.email,
+            t.title,
+            req.body.adminNotes
+          ).catch(err => console.error('email error', err));
+        }
+      }
       res.json(t);
     })
     .catch(next);
