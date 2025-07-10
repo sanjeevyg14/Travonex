@@ -17,6 +17,7 @@ import promotionsRoutes from './routes/promotions';
 import adminSettingsRoutes from './routes/adminSettings';
 import userRoutes from './routes/users';
 import contentRoutes from './routes/content';
+import referenceRoutes from './routes/reference';
 import { errorHandler } from './middleware/errorHandler';
 import { initSocket } from './socket';
 
@@ -50,6 +51,7 @@ app.use('/api/admin/settings', adminSettingsRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/content', contentRoutes);
 app.use('/api/coupons', couponRoutes);
+app.use('/api/reference', referenceRoutes);
 
 
 if (!admin.apps.length) {
