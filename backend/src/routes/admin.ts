@@ -138,6 +138,15 @@ router.get('/trips', (req, res, next) => {
     .catch(next);
 });
 
+router.get('/trips/:id', (req, res, next) => {
+  Trip.findById(req.params.id)
+    .then(t => {
+      if (!t) return res.status(404).json({ message: 'Trip not found' });
+      res.json(t);
+    })
+    .catch(next);
+});
+
 router.patch('/trips/:id', (req, res, next) => {
   Trip.findByIdAndUpdate(req.params.id, req.body, { new: true })
     .then(async t => {
