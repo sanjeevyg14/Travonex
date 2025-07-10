@@ -42,6 +42,12 @@ git clone <your-repository-url>
 cd travonex-platform
 ```
 
+Use Node.js 20 or later. If you have `nvm` installed, run:
+
+```bash
+nvm use
+```
+
 ### Step 3.2: Install Dependencies
 Open the project folder in VS Code and run the following command in the integrated terminal (`Ctrl + \` or `Cmd + \``):
 
