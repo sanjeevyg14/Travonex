@@ -3,6 +3,7 @@
 import type { City } from '@/lib/types';
 import { fetchData } from '@/lib/api';
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 type CityContextType = {
   cities: City[];
@@ -25,6 +26,20 @@ export const CityProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .catch(() => {
         setCities([{ id: 'all', name: 'All Cities', enabled: true }]);
       });
+
+  const [cities, setCities] = useState<City[]>([{ id: 'all', name: 'All Cities', enabled: true }]);
+
+  useEffect(() => {
+    async function fetchCities() {
+      try {
+        const response = await fetch('/api/reference/cities');
+        const data: City[] = await response.json();
+        setCities([{ id: 'all', name: 'All Cities', enabled: true }, ...(data || []).filter(c => c.enabled)]);
+      } catch (err) {
+        console.error('Failed to fetch cities', err);
+      }
+    }
+    fetchCities();
   }, []);
 
   const value = useMemo(() => ({

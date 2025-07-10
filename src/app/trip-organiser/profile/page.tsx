@@ -206,19 +206,62 @@ export default function OrganizerProfilePage() {
             })
             .catch(() => {});
       }
+      if (!sessionUser) return;
+      const loadOrganizer = async () => {
+          try {
+              const res = await fetch('/api/organizers/me', {
+                  headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` }
+              });
+              const data: Organizer = await res.json();
+              if (res.ok) {
+                  setOrganizer(data);
+                  form.reset({
+                      name: data.name || '',
+                      organizerType: data.organizerType || undefined,
+                      phone: data.phone || '',
+                      address: data.address || '',
+                      website: data.website || '',
+                      experience: data.experience || 0,
+                      specializations: data.specializations || [],
+                      authorizedSignatoryName: data.authorizedSignatoryName || '',
+                      authorizedSignatoryId: data.authorizedSignatoryId || '',
+                      emergencyContact: data.emergencyContact || '',
+                  });
+              }
+          } catch (err) {
+              console.error('Failed to load organizer profile', err);
+          }
+      };
+      loadOrganizer();
   }, [sessionUser, form]);
 
   const handleProfileSave = async (data: ProfileFormData) => {
     if (!organizer) return;
     form.formState.isSubmitting = true;
-    console.log("Profile Save Payload:", data);
-    await new Promise(resolve => setTimeout(resolve, 300));
-    setOrganizer(prev => prev ? { ...prev, ...data, isProfileComplete: true } : null);
-    toast({
-      title: "Profile Saved!",
-      description: "Your business information has been updated. The Vendor Agreement will be sent to your registered email.",
-    });
-    form.formState.isSubmitting = false;
+    try {
+      const res = await fetch('/api/organizers/me', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+        },
+        body: JSON.stringify(data),
+      });
+      const updated = await res.json();
+      if (res.ok) {
+        setOrganizer(updated);
+        toast({
+          title: 'Profile Saved!',
+          description: 'Your business information has been updated. The Vendor Agreement will be sent to your registered email.',
+        });
+      } else {
+        throw new Error(updated.message || 'Failed to save profile');
+      }
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } finally {
+      form.formState.isSubmitting = false;
+    }
   };
   
   const handleDocumentUpload = async (docType: string, file: File) => {

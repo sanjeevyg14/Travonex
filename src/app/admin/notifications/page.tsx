@@ -19,20 +19,27 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { adminNotifications as mockNotifications } from "@/lib/mock-data";
+// Data will be loaded from the API
 import { CheckCircle, Eye } from "lucide-react";
 import Link from "next/link";
 import { ClientOnlyDate } from "@/components/common/ClientOnlyDate";
 
 
 export default function AdminNotificationsPage() {
-    const [notifications, setNotifications] = React.useState(mockNotifications);
+    const [notifications, setNotifications] = React.useState<any[]>([]);
+
+    React.useEffect(() => {
+        fetch('/api/admin/notifications')
+            .then(res => res.json())
+            .then(setNotifications)
+            .catch(err => console.error('Failed to load notifications', err));
+    }, []);
 
     const unreadNotifications = notifications.filter(n => !n.isRead);
     const allNotifications = notifications;
 
-    const handleMarkAsRead = (id: string) => {
-        // BACKEND: Call `POST /api/admin/notifications/{id}/read`
+    const handleMarkAsRead = async (id: string) => {
+        await fetch(`/api/admin/notifications/${id}/read`, { method: 'POST' });
         setNotifications(
             notifications.map(n => n.id === id ? { ...n, isRead: true } : n)
         );

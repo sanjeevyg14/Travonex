@@ -11,6 +11,12 @@
  * - `isBanner`: boolean
  * - `city`: string
  * - `category`: string
+ * - `priceMin`: number
+ * - `priceMax`: number
+ * - `start`: ISO date string
+ * - `end`: ISO date string
+ * - `organizer`: string
+ * - `rating`: number
  * - `limit`: number
  *
  * @returns
