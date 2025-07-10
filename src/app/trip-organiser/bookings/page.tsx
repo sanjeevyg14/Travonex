@@ -37,14 +37,13 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { bookings as mockBookings, trips, users } from "@/lib/mock-data";
-import { Users as UsersIcon, Calendar, User, Mail, Phone, Info } from "lucide-react";
+import { Users as UsersIcon, Calendar, User, Mail, Phone, Info, AlertTriangle } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 import type { Booking } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClientOnlyDate } from "@/components/common/ClientOnlyDate";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-// Mock organizer ID for demonstration purposes.
-const MOCK_ORGANIZER_ID = 'VND001';
 
 const BookingsSkeleton = () => (
     <div className="space-y-2">
@@ -58,19 +57,49 @@ const BookingsSkeleton = () => (
 export default function OrganizerBookingsPage() {
     const [organizerBookings, setOrganizerBookings] = React.useState<Booking[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
+    const [error, setError] = React.useState<string | null>(null);
 
+    const { token } = useAuth();
     React.useEffect(() => {
-        // FRONTEND: Simulate fetching data
-        // BACKEND: In a real app, this filtering would be done on the backend.
-        // The API (`/api/organizers/me/bookings`) should only return bookings for the authenticated organizer.
-        setIsLoading(true);
-        setTimeout(() => {
-            const organizerTripIds = trips.filter(t => t.organizerId === MOCK_ORGANIZER_ID).map(t => t.id);
-            const fetchedBookings = mockBookings.filter(b => organizerTripIds.includes(b.tripId));
-            setOrganizerBookings(fetchedBookings);
-            setIsLoading(false);
-        }, 300);
-    }, []);
+        if (!token) return;
+        const fetchBookings = async () => {
+            setIsLoading(true);
+            setError(null);
+            try {
+                const res = await fetch('/api/organizers/me/bookings', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Failed to fetch bookings');
+                setOrganizerBookings(data);
+            } catch (err: any) {
+                setError(err.message);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchBookings();
+    }, [token]);
+
+  if (isLoading) {
+      return (
+          <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+              <BookingsSkeleton />
+          </main>
+      );
+  }
+
+  if (error) {
+      return (
+          <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+              <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Error Loading Bookings</AlertTitle>
+                  <AlertDescription>{error}</AlertDescription>
+              </Alert>
+          </main>
+      );
+  }
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
@@ -88,14 +117,11 @@ export default function OrganizerBookingsPage() {
           <CardDescription>A complete list of all bookings for your trips, including participant details.</CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <BookingsSkeleton />
-          ) : organizerBookings.length > 0 ? (
+          {organizerBookings.length > 0 ? (
             <Accordion type="single" collapsible className="w-full">
-              {organizerBookings.map((booking) => {
-                const trip = trips.find(t => t.id === booking.tripId);
-                const user = users.find(u => u.id === booking.userId);
-                const batch = trip?.batches.find(b => b.id === booking.batchId);
+              {organizerBookings.map((booking: any) => {
+                const trip = booking.trip || {};
+                const user = booking.user || {};
                 return (
                   <AccordionItem value={booking.id} key={booking.id}>
                     <AccordionTrigger className="hover:bg-muted/50 px-4 rounded-md">
@@ -103,8 +129,8 @@ export default function OrganizerBookingsPage() {
                             <div className="flex items-center gap-4">
                                 <UsersIcon className="h-5 w-5 text-primary" />
                                 <div className="text-left">
-                                    <p className="font-semibold">{user?.name}</p>
-                                    <p className="text-muted-foreground">{trip?.title}</p>
+                                    <p className="font-semibold">{user.name}</p>
+                                    <p className="text-muted-foreground">{trip.title}</p>
                                 </div>
                             </div>
                              <div className="flex items-center gap-4 md:gap-6">

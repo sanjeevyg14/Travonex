@@ -36,19 +36,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Download, Send, CheckCircle, Loader2 } from "lucide-react";
+import { Download, Send, CheckCircle, Loader2, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Payout } from "@/lib/types";
+import { useAuth } from "@/context/AuthContext";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { trips } from "@/lib/mock-data";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClientOnlyDate } from "@/components/common/ClientOnlyDate";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-
-// Mock Data for Prototyping
-const MOCK_ORGANIZER_ID = 'VND001';
 
 type EligibleBatch = {
     tripId: string;
@@ -61,19 +59,6 @@ type EligibleBatch = {
     netPayout: number;
 };
 
-// Represents batches that are completed and ready for payout request.
-// In a real app, this would be fetched from `GET /api/organizers/me/eligible-payouts`.
-const initialEligibleBatches: EligibleBatch[] = [
-    { tripId: '3', batchId: 'batch-3-1', tripTitle: 'Rishikesh Adventure Rush', batchDates: 'Sep 15, 2024 - Sep 19, 2024', participants: 8, grossRevenue: 1600000, commission: 160000, netPayout: 1440000 },
-    { tripId: '5', batchId: 'batch-5-1', tripTitle: 'Munnar Tea Gardens Escape', batchDates: 'Aug 10, 2024 - Aug 13, 2024', participants: 12, grossRevenue: 1728000, commission: 172800, netPayout: 1555200 },
-];
-
-// Represents payouts that have been requested or paid.
-// Fetched from `GET /api/organizers/me/payout-history`.
-const initialPayoutHistory: Payout[] = [
-    { id: 'PAY004', tripId: '6', batchId: 'batch-6-1', organizerId: MOCK_ORGANIZER_ID, requestDate: '2024-08-01', totalRevenue: 150000, platformCommission: 15000, netPayout: 135000, status: 'Paid', utrNumber: 'upi-ref-29834u', invoiceUrl: '/invoices/invoice.pdf', paidDate: '2024-08-02' },
-    { id: 'PAY002', tripId: '3', batchId: 'batch-3-1', organizerId: 'VND001', totalRevenue: 1600000, platformCommission: 160000, netPayout: 1440000, status: 'Pending', requestDate: '2024-07-18', notes: 'Awaiting organizer confirmation' }
-];
 
 // A dedicated dialog component for the payout request confirmation.
 function RequestPayoutDialog({ batch, onConfirm, disabled, disabledReason }: { batch: EligibleBatch, onConfirm: (batch: EligibleBatch, notes: string) => void, disabled: boolean, disabledReason: string }) {
@@ -154,49 +139,79 @@ const TableSkeleton = ({ columns }: { columns: number }) => (
 
 export default function OrganizerPayoutsPage() {
     const { toast } = useToast();
+    const { token, user } = useAuth();
     const [eligible, setEligible] = React.useState<EligibleBatch[]>([]);
     const [history, setHistory] = React.useState<Payout[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
+    const [error, setError] = React.useState<string | null>(null);
 
     React.useEffect(() => {
-        // FRONTEND: Simulate fetching payout data
-        // BACKEND: Should be two API calls: `GET /api/organizers/me/eligible-payouts` and `GET /api/organizers/me/payout-history`
-        setIsLoading(true);
-        setTimeout(() => {
-            setEligible(initialEligibleBatches);
-            setHistory(initialPayoutHistory);
-            setIsLoading(false);
-        }, 300);
-    }, []);
+        if (!token) return;
+        const fetchPayouts = async () => {
+            setIsLoading(true);
+            setError(null);
+            try {
+                const res = await fetch('/api/organizers/me/payouts', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Failed to fetch payouts');
+                setEligible(data.eligible || []);
+                setHistory(data.history || []);
+            } catch (err: any) {
+                setError(err.message);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchPayouts();
+    }, [token]);
+
+    if (isLoading) {
+        return (
+            <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+                <TableSkeleton columns={4} />
+            </main>
+        );
+    }
+
+    if (error) {
+        return (
+            <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+                <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Error Loading Payouts</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
+            </main>
+        );
+    }
 
     const availableForPayout = eligible.reduce((acc, batch) => acc + batch.netPayout, 0);
     const totalPaid = history.filter(p => p.status === 'Paid').reduce((acc, p) => acc + p.netPayout, 0);
     
-    const handleRequestConfirm = (batch: EligibleBatch, notes: string) => {
-        // API Integration Point for requesting a payout.
-        // This should call `POST /api/organizers/me/payouts/request`.
-        // On success, the backend should return the new pending payout object.
-        const newPayout: Payout = {
-            id: `PAY${Math.floor(Math.random() * 9000) + 1000}`,
-            tripId: batch.tripId,
-            batchId: batch.batchId,
-            organizerId: MOCK_ORGANIZER_ID,
-            totalRevenue: batch.grossRevenue,
-            platformCommission: batch.commission,
-            netPayout: batch.netPayout,
-            status: 'Pending',
-            requestDate: new Date().toISOString(),
-            notes: notes,
-        };
-        
-        // Simulate frontend state update
-        setHistory(prev => [newPayout, ...prev]);
-        setEligible(prev => prev.filter(b => b.batchId !== batch.batchId));
-
-        toast({
-            title: "Payout Requested!",
-            description: `Your request for ₹${batch.netPayout.toLocaleString('en-IN')} has been submitted.`,
-        });
+    const handleRequestConfirm = async (batch: EligibleBatch, notes: string) => {
+        if (!token) return;
+        try {
+            const res = await fetch('/api/organizers/me/payouts/request', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ tripId: batch.tripId, batchId: batch.batchId, notes })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || 'Failed to request payout');
+            setHistory(prev => [data, ...prev]);
+            setEligible(prev => prev.filter(b => b.batchId !== batch.batchId));
+            toast({
+                title: "Payout Requested!",
+                description: `Your request for ₹${batch.netPayout.toLocaleString('en-IN')} has been submitted.`,
+            });
+        } catch (err: any) {
+            toast({ title: 'Error', description: err.message, variant: 'destructive' });
+        }
     };
   
     const getStatusBadge = (status: Payout['status']) => {
@@ -305,11 +320,11 @@ export default function OrganizerPayoutsPage() {
                     </TableHeader>
                     <TableBody>
                         {isLoading ? <TableSkeleton columns={6} /> : history.length > 0 ? history.map((payout) => {
-                            const trip = trips.find(b => b.id === payout.tripId);
+                            const tripTitle = (payout as any).tripTitle || 'Aggregated Payout';
                             return (
                             <TableRow key={payout.id}>
                                 <TableCell><ClientOnlyDate dateString={payout.requestDate} type="date" /></TableCell>
-                                <TableCell>{trip?.title || 'Aggregated Payout'}</TableCell>
+                                <TableCell>{tripTitle}</TableCell>
                                 <TableCell><Badge variant={'default'} className={getStatusBadge(payout.status)}>{payout.status}</Badge></TableCell>
                                 <TableCell className="font-mono text-xs">{payout.utrNumber || 'N/A'}</TableCell>
                                 <TableCell className="text-right font-mono">₹{payout.netPayout.toLocaleString('en-IN')}</TableCell>
