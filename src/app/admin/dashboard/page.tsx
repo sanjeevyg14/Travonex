@@ -12,40 +12,43 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Users, ShieldCheck, Briefcase, AlertTriangle, ListChecks, Banknote, CheckCircle, Loader2 } from "lucide-react";
 import { ClientOnlyDate } from '@/components/common/ClientOnlyDate';
 import type { UserSession } from '@/lib/types';
-import { users as mockUsers, organizers as mockOrganizers, trips as mockTrips, bookings as mockBookings, payouts as mockPayouts, disputes as mockDisputes } from '@/lib/mock-data';
+// Data will now be loaded from the API instead of local mocks
 
 // Server-side data fetching function
 async function getDashboardData() {
-  // These would be efficient aggregate queries in a real database.
-  const totalRevenue = mockBookings.filter(b => b.status !== 'Cancelled').reduce((acc, b) => acc + b.amount, 0);
-  const pendingKycs = mockOrganizers.filter(o => o.kycStatus === 'Pending' || o.vendorAgreementStatus === 'Submitted').length;
-  const pendingTrips = mockTrips.filter(t => t.status === 'Pending Approval').length;
-  const pendingPayouts = mockPayouts.filter(p => p.status === 'Pending').length;
-  const pendingDisputes = mockDisputes.filter(d => d.status === 'Open').length;
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/api/admin/dashboard`, { cache: 'no-store' });
+  if (!res.ok) {
+    throw new Error('Failed to load dashboard data');
+  }
+  const data = await res.json();
 
-  const recentBookings = mockBookings.slice(0, 5).map(booking => {
-      const user = mockUsers.find(u => u.id === booking.userId);
-      const trip = mockTrips.find(t => t.id === booking.tripId);
-      return {
-          id: booking.id,
-          userName: user?.name,
-          tripTitle: trip?.title,
-          bookingDate: booking.bookingDate,
-          amount: booking.amount,
-      }
-  });
+  // Recent bookings list
+  const bookingsRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/api/admin/bookings`);
+  const bookingsData = bookingsRes.ok ? await bookingsRes.json() : [];
 
   return {
-      totalRevenue,
-      totalUsers: mockUsers.length,
-      totalOrganizers: mockOrganizers.length,
-      totalBookings: mockBookings.length,
-      pendingKycs,
-      pendingTrips,
-      pendingPayouts,
-      pendingDisputes,
-      totalPending: pendingKycs + pendingTrips + pendingPayouts + pendingDisputes,
-      recentBookings,
+    totalRevenue: data.totalRevenue || 0,
+    totalUsers: data.users || 0,
+    totalOrganizers: data.organizers || 0,
+    totalBookings: data.bookings || 0,
+    pendingKycs: data.pendingKycs || 0,
+    pendingTrips: data.pendingTrips || 0,
+    pendingPayouts: data.pendingPayouts || 0,
+    pendingDisputes: data.pendingDisputes || 0,
+    totalPending:
+      (data.pendingKycs || 0) +
+      (data.pendingTrips || 0) +
+      (data.pendingPayouts || 0) +
+      (data.pendingDisputes || 0),
+    recentBookings: Array.isArray(bookingsData)
+      ? bookingsData.slice(0, 5).map((b: any) => ({
+          id: b.id,
+          userName: b.userName,
+          tripTitle: b.tripTitle,
+          bookingDate: b.bookingDate,
+          amount: b.amount,
+        }))
+      : [],
   };
 }
 
