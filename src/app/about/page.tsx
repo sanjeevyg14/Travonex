@@ -20,7 +20,7 @@ export default function AboutUsPage() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">
-              Our mission is to make unique, curated travel accessible to everyone. We believe that travel is more than just visiting a new place; it's about creating lasting memories, forging new connections, and discovering yourself along the way. We partner with passionate, local organizers to offer authentic experiences that you won't find anywhere else.
+              Our mission is to make unique, curated travel accessible to everyone. We believe that travel is more than just visiting a new place; it&apos;s about creating lasting memories, forging new connections, and discovering yourself along the way. We partner with passionate, local organizers to offer authentic experiences that you won&apos;t find anywhere else.
             </p>
           </CardContent>
         </Card>

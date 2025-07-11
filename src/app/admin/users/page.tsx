@@ -116,9 +116,8 @@ function AdjustWalletDialog({ user, onSave, isOpen, onOpenChange }: { user: User
 
 // DEV_COMMENT: A dedicated dialog to show comprehensive user information.
 function UserDetailsDialog({ user, onAdjustWalletClick, isOpen, onOpenChange }: { user: User | null, onAdjustWalletClick: () => void, isOpen: boolean, onOpenChange: (open: boolean) => void }) {
-    if (!user) return null;
-
     const [userBookings, setUserBookings] = React.useState<Booking[]>([]);
+    if (!user) return null;
 
     React.useEffect(() => {
         fetch(`/api/admin/bookings?userId=${user.id}`)

@@ -16,6 +16,7 @@ import City from '../models/city';
 import AdminUser from '../models/adminUser';
 import { verifyJwt } from '../middleware/verifyJwt';
 import { uploadFile } from '../services/upload';
+import { sendOrganizerRejectionEmail } from '../utils/email';
 
 const router = express.Router();
 const upload = multer({ dest: 'tmp/' });
@@ -137,10 +138,29 @@ router.get('/trips', (req, res, next) => {
     .catch(next);
 });
 
-router.patch('/trips/:id', (req, res, next) => {
-  Trip.findByIdAndUpdate(req.params.id, req.body, { new: true })
+router.get('/trips/:id', (req, res, next) => {
+  Trip.findById(req.params.id)
     .then(t => {
       if (!t) return res.status(404).json({ message: 'Trip not found' });
+      res.json(t);
+    })
+    .catch(next);
+});
+
+router.patch('/trips/:id', (req, res, next) => {
+  Trip.findByIdAndUpdate(req.params.id, req.body, { new: true })
+    .then(async t => {
+      if (!t) return res.status(404).json({ message: 'Trip not found' });
+      if (req.body.status === 'Rejected' && req.body.adminNotes) {
+        const organizer = await Organizer.findById(t.organizerId);
+        if (organizer?.email) {
+          sendOrganizerRejectionEmail(
+            organizer.email,
+            t.title,
+            req.body.adminNotes
+          ).catch(err => console.error('email error', err));
+        }
+      }
       res.json(t);
     })
     .catch(next);
@@ -271,6 +291,24 @@ router.get('/reports/summary', async (_req, res, next) => {
       { $group: { _id: null, total: { $sum: '$amount' } } },
     ]);
     res.json({ totalRevenue: result ? result.total : 0 });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/reports/monthly', async (_req, res, next) => {
+  try {
+    const data = await Booking.aggregate([
+      {
+        $group: {
+          _id: { $substr: ['$createdAt', 0, 7] },
+          revenue: { $sum: '$amount' },
+          bookings: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+    res.json(data.map(d => ({ month: d._id, revenue: d.revenue, bookings: d.bookings })));
   } catch (err) {
     next(err);
   }
