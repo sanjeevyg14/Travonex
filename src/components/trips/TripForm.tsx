@@ -464,7 +464,21 @@ export function TripForm({ trip, isAdmin = false }: TripFormProps) {
                             <div className="space-y-4">
                                 <FormField control={form.control} name="price" render={({ field }) => (<FormItem><FormLabel>Default Base Price (per person)</FormLabel><FormControl><div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-sans">₹</span><Input type="number" placeholder="0.00" className="pl-8" {...field} /></div></FormControl><FormMessage /></FormItem>)} />
                                 <FormField control={form.control} name="taxIncluded" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel>Is tax included in this price?</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-                                {!form.watch('taxIncluded') && <FormField control={form.control} name="taxPercentage" render={({ field }) => (<FormItem><FormLabel>Tax Percentage (%)</FormLabel><FormControl><Input type="number" placeholder="e.g., 5" {...field} /></FormControl><FormMessage /></FormItem>)} />}
+                                {!form.watch('taxIncluded') && (
+                                    <FormField
+                                        control={form.control}
+                                        name="taxPercentage"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Tax Percentage (%)</FormLabel>
+                                                <FormControl>
+                                                    <Input type="number" placeholder="e.g., 5" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
                             </div>
                             <Card className="bg-muted/50">
                                 <CardHeader><CardTitle className="text-lg">Pricing Summary</CardTitle></CardHeader>

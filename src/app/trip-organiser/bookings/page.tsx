@@ -38,16 +38,11 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { fetchData } from "@/lib/api";
-import { Users as UsersIcon, Calendar, User, Mail, Phone, Info } from "lucide-react";
+import { Users as UsersIcon, Calendar, User, Mail, Phone, Info, AlertTriangle } from "lucide-react";
 import type { Booking, Trip, User as AppUser } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClientOnlyDate } from "@/components/common/ClientOnlyDate";
-import { fetchData } from "@/lib/api";
-import { Users as UsersIcon, Calendar, User, Mail, Phone, Info, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import type { Booking } from "@/lib/types";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ClientOnlyDate } from "@/components/common/ClientOnlyDate";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 
@@ -88,6 +83,8 @@ export default function OrganizerBookingsPage() {
         })
         .finally(() => setIsLoading(false));
     }, []);
+
+    React.useEffect(() => {
         if (!token) return;
         const fetchBookings = async () => {
             setIsLoading(true);
