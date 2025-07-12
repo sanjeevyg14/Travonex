@@ -6,6 +6,7 @@
  * - Uses react-hook-form and Zod for robust validation.
  * - Allows users to select their account type (Traveler or Trip Organizer).
  * - Calls a new backend endpoint `/api/auth/signup` to create the account.
+ * - Sends the Firebase ID token (`idToken`) for secure verification on the backend.
  * - After successful signup, redirects the user to the login page.
  */
 "use client";
@@ -86,8 +87,8 @@ export default function SignupPage() {
     },
   });
 
-  const submitToBackend = async (uid: string, data: SignupFormData) => {
-    const payload = { ...data, phone: `${countryCode}${data.phone}`, uid };
+  const submitToBackend = async (idToken: string, data: SignupFormData) => {
+    const payload = { ...data, phone: `${countryCode}${data.phone}`, idToken };
     const response = await fetch('/api/auth/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -123,7 +124,8 @@ export default function SignupPage() {
           throw new Error('Please enter the 6-digit OTP.');
         }
         const cred = await confirmationResult.confirm(otp);
-        await submitToBackend(cred.user.uid, data);
+        const token = await cred.user.getIdToken();
+        await submitToBackend(token, data);
         await signOut(auth);
         toast({
           title: 'Account Created!',
@@ -138,7 +140,8 @@ export default function SignupPage() {
           throw new Error('Passwords do not match.');
         }
         const cred = await createUserWithEmailAndPassword(auth, data.email, password);
-        await submitToBackend(cred.user.uid, data);
+        const token = await cred.user.getIdToken();
+        await submitToBackend(token, data);
         await signOut(auth);
         toast({
           title: 'Account Created!',
