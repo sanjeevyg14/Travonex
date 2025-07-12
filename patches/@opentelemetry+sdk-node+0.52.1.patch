@@ -1,0 +1,18 @@
+diff --git a/node_modules/@opentelemetry/sdk-node/build/src/TracerProviderWithEnvExporter.js b/node_modules/@opentelemetry/sdk-node/build/src/TracerProviderWithEnvExporter.js
+index 13b7cc1..e18a9d4 100644
+--- a/node_modules/@opentelemetry/sdk-node/build/src/TracerProviderWithEnvExporter.js
++++ b/node_modules/@opentelemetry/sdk-node/build/src/TracerProviderWithEnvExporter.js
+@@ -131,8 +131,10 @@ exports.TracerProviderWithEnvExporters = TracerProviderWithEnvExporters;
+ _a = TracerProviderWithEnvExporters;
+ TracerProviderWithEnvExporters._registeredExporters = new Map([
+     ['otlp', () => _a.configureOtlp()],
+-    ['zipkin', () => new exporter_zipkin_1.ZipkinExporter()],
+-    ['jaeger', () => _a.configureJaeger()],
++    // DEV_COMMENT: The Zipkin exporter is disabled to avoid optional dependency issues
++    // ['zipkin', () => new exporter_zipkin_1.ZipkinExporter()],
++    // DEV_COMMENT: The Jaeger exporter is disabled to avoid optional dependency issues
++    // ['jaeger', () => _a.configureJaeger()],
+     ['console', () => new sdk_trace_base_1.ConsoleSpanExporter()],
+ ]);
+ //# sourceMappingURL=TracerProviderWithEnvExporter.js.map
+\ No newline at end of file
