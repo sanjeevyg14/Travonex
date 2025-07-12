@@ -10,7 +10,8 @@
  *   "name": "string",
  *   "email": "string",
  *   "phone": "string",
- *   "accountType": "'USER' | 'ORGANIZER'"
+ *   "accountType": "'USER' | 'ORGANIZER'",
+ *   "idToken": "string"
  * }
  *
  * @returns
