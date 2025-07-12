@@ -69,6 +69,7 @@ export default function SignupPage() {
     if (typeof window === 'undefined') return;
     if (!recaptcha.current) {
       recaptcha.current = new RecaptchaVerifier(auth, 'signup-recaptcha', { size: 'invisible' });
+      recaptcha.current.render();
     }
   }, []);
 
