@@ -12,6 +12,12 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
+if (!firebaseConfig.apiKey) {
+  console.warn(
+    'Firebase config missing. Copy .env.example to .env and add your Firebase keys.'
+  );
+}
+
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
