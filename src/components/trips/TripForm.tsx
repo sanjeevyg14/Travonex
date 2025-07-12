@@ -376,30 +376,6 @@ export function TripForm({ trip, isAdmin = false }: TripFormProps) {
                                 <FormLabel>Interest Tags</FormLabel>
                                 <FormDescription>Select tags that best describe your trip. This helps users find your trip when they filter.</FormDescription>
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
-                                    {interests.filter(i => i.status === 'Active').map((interest) => (
-                                        <FormField
-                                        key={interest.id}
-                                        control={form.control}
-                                        name="interests"
-                                        render={({ field }) => {
-                                            return (
-                                            <FormItem
-                                                key={interest.id}
-                                                className="flex flex-row items-start space-x-3 space-y-0"
-                                            >
-                                                <FormControl>
-                                                <Checkbox
-                                                    checked={field.value?.includes(interest.name)}
-                                                    onCheckedChange={(checked) => {
-                                                    return checked
-                                                        ? field.onChange([...(field.value || []), interest.name])
-                                                        : field.onChange(
-                                                            field.value?.filter(
-                                                            (value) => value !== interest.name
-                                                            )
-                                                        )
-                                                    }}
-
                                     {loadingInterests ? (
                                         <p className="text-sm text-muted-foreground col-span-2">Loading...</p>
                                     ) : (
