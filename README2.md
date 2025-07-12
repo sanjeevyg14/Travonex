@@ -149,7 +149,7 @@ Here's a brief overview of the key directories:
 
 ## 6. Notes for Backend Developers
 
-This frontend prototype is designed to be "backend-ready." All UI components and data flows are built with the expectation of being connected to a robust backend API. Here are the key integration points:
+The frontend is designed for production and is fully "backend-ready." All UI components and data flows are built with the expectation of being connected to a robust backend API. Here are the key integration points:
 
 ### 6.1. Core Data Models
 Your database schema should align with the TypeScript types defined in `src/lib/types.ts`. The most critical models to implement are:
@@ -220,7 +220,7 @@ A: Currently, all data is mocked and lives in `src/lib/mock-data.ts`. The next s
 
 ## 8. Backend Integration & Testing
 
-The repository includes a minimal Express backend in the `backend/` directory. Copy `backend/.env.example` to `backend/.env` and update the connection details for MongoDB, Firebase and Razorpay. The `.env.example` file now also includes the Firebase frontend keys so you can run the Next.js app locally with Firebase authentication.
+The repository includes a full Express backend in the `backend/` directory. Copy `backend/.env.example` to `backend/.env` and update the connection details for MongoDB, Firebase and Razorpay. The `.env.example` file now also includes the Firebase frontend keys so you can run the Next.js app locally with Firebase authentication.
 
 To run the backend in development mode:
 

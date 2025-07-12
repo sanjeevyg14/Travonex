@@ -1,11 +1,14 @@
 import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
-import dotenv from 'dotenv';
+import helmet from 'helmet';
+import compression from 'compression';
+import morgan from 'morgan';
 import mongoose from 'mongoose';
 import admin from 'firebase-admin';
 import Razorpay from 'razorpay';
 import http from 'http';
+import env from './config';
 import authRoutes from './routes/auth';
 import tripRoutes from './routes/trips';
 import bookingRoutes from './routes/bookings';
@@ -21,8 +24,6 @@ import referenceRoutes from './routes/reference';
 import { errorHandler } from './middleware/errorHandler';
 import { initSocket } from './socket';
 
-dotenv.config();
-
 declare global {
   namespace Express {
     interface Request {
@@ -33,10 +34,13 @@ declare global {
 }
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = Number(env.PORT);
 const server = http.createServer(app);
 initSocket(server);
 
+app.use(helmet());
+app.use(compression());
+app.use(morgan('combined'));
 app.use(cors());
 app.use(bodyParser.json());
 
@@ -57,21 +61,21 @@ app.use('/api/reference', referenceRoutes);
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      projectId: env.FIREBASE_PROJECT_ID,
+      clientEmail: env.FIREBASE_CLIENT_EMAIL,
+      privateKey: env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
     }),
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+    storageBucket: env.FIREBASE_STORAGE_BUCKET,
   });
 }
 
 export const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || '',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || '',
+  key_id: env.RAZORPAY_KEY_ID,
+  key_secret: env.RAZORPAY_KEY_SECRET,
 });
 
 mongoose
-  .connect(process.env.MONGODB_URI || '')
+  .connect(env.MONGODB_URI)
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
