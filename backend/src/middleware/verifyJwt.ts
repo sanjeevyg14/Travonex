@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import env from '../config';
 
 export interface AuthUser {
   id: string;
@@ -15,7 +16,7 @@ export function verifyJwt(requiredRole?: string | string[]) {
     }
     const token = header.split(' ')[1];
     try {
-      const payload = jwt.verify(token, process.env.JWT_SECRET || 'secret') as AuthUser;
+      const payload = jwt.verify(token, env.JWT_SECRET) as AuthUser;
       (req as any).authUser = payload;
       if (requiredRole) {
         let allowed = Array.isArray(requiredRole) ? requiredRole : [requiredRole];

@@ -1,5 +1,6 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
+import env from '../config';
 import admin from 'firebase-admin';
 import User from '../models/user';
 import Organizer from '../models/organizer';
@@ -39,7 +40,7 @@ router.post('/signup', async (req, res, next) => {
       });
       const token = jwt.sign(
         { id: organizer.id, role: 'ORGANIZER' },
-        process.env.JWT_SECRET || 'secret',
+        env.JWT_SECRET,
         { expiresIn: '7d' }
       );
       return res.status(201).json({
@@ -51,7 +52,7 @@ router.post('/signup', async (req, res, next) => {
     const user = await User.create({ firebaseUid, name, email, phone });
     const token = jwt.sign(
       { id: user.id, role: 'USER' },
-      process.env.JWT_SECRET || 'secret',
+      env.JWT_SECRET,
       { expiresIn: '7d' }
     );
     return res.status(201).json({ token, user: { id: user.id, name: user.name, email: user.email, role: 'USER' } });
@@ -72,7 +73,7 @@ router.post('/login', async (req, res, next) => {
       if (credential !== 'password') {
         return res.status(401).json({ message: 'Invalid credentials' });
       }
-      const token = jwt.sign({ id: adminUser.id, role: 'ADMIN' }, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
+      const token = jwt.sign({ id: adminUser.id, role: 'ADMIN' }, env.JWT_SECRET, { expiresIn: '7d' });
       return res.json({ token, user: { id: adminUser.id, name: adminUser.name, email: adminUser.email, role: 'ADMIN' } });
     }
 
@@ -103,7 +104,7 @@ router.post('/login', async (req, res, next) => {
 
     if (!user) return res.status(404).json({ message: 'Account not found' });
 
-    const token = jwt.sign({ id: user.id, role }, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
+    const token = jwt.sign({ id: user.id, role }, env.JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, user: { id: user.id, name: user.name, email: user.email, role } });
   } catch (err) {
     next(err);

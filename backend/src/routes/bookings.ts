@@ -7,6 +7,7 @@ import Dispute from '../models/dispute';
 import { razorpay } from '../index';
 import crypto from 'crypto';
 import { verifyJwt } from '../middleware/verifyJwt';
+import env from '../config';
 
 const router = express.Router();
 
@@ -16,7 +17,7 @@ router.post('/payment-callback', (req: Request, res: Response, next: NextFunctio
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
     const body = `${razorpay_order_id}|${razorpay_payment_id}`;
     const expected = crypto
-      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || '')
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || env.RAZORPAY_KEY_SECRET)
       .update(body)
       .digest('hex');
 
