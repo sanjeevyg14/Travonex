@@ -166,6 +166,8 @@ export default function OrganizerPayoutsPage() {
         })
         .finally(() => setIsLoading(false));
     }, []);
+
+    React.useEffect(() => {
         if (!token) return;
         const fetchPayouts = async () => {
             setIsLoading(true);

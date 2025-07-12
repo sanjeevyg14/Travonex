@@ -20,9 +20,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { PlusCircle, Edit, Eye, Lock, Loader2 } from "lucide-react";
-import { fetchData } from "@/lib/api";
 import { PlusCircle, Edit, Eye, Lock, Loader2, AlertTriangle } from "lucide-react";
+import { fetchData } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import type { Trip } from "@/lib/types";
 import { Switch } from "@/components/ui/switch";
@@ -74,6 +73,7 @@ export default function OrganizerTripsPage() {
       .finally(() => setIsLoading(false));
   }, []);
 
+  React.useEffect(() => {
     if (!token) return;
     const fetchTrips = async () => {
       setIsLoading(true);
