@@ -35,7 +35,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { auth } from "@/lib/firebase";
-import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, createUserWithEmailAndPassword } from "firebase/auth";
+import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, createUserWithEmailAndPassword, signOut } from "firebase/auth";
 
 
 const SignupFormSchema = z.object({
@@ -99,12 +99,6 @@ export default function SignupPage() {
     if (!response.ok) {
       throw new Error(result.message || 'Signup failed.');
     }
-
-    toast({
-      title: 'Account Created!',
-      description: 'Your account has been created successfully. Please log in to continue.',
-    });
-    router.push('/auth/login');
   };
 
   const handleSignup = async (data: SignupFormData) => {
@@ -119,6 +113,7 @@ export default function SignupPage() {
       if (signupMode === 'phone') {
         if (!confirmationResult) {
           const fullPhone = `${countryCode}${data.phone}`;
+          await recaptcha.current!.verify();
           const result = await signInWithPhoneNumber(auth, fullPhone, recaptcha.current!);
           setConfirmationResult(result);
           toast({ title: 'OTP Sent', description: `A verification code has been sent to ${fullPhone}.` });
@@ -129,6 +124,12 @@ export default function SignupPage() {
         }
         const cred = await confirmationResult.confirm(otp);
         await submitToBackend(cred.user.uid, data);
+        await signOut(auth);
+        toast({
+          title: 'Account Created!',
+          description: 'You can now log in with your phone number.',
+        });
+        setTimeout(() => router.push('/auth/login'), 500);
       } else {
         if (password.length < 6) {
           throw new Error('Password must be at least 6 characters.');
@@ -138,6 +139,12 @@ export default function SignupPage() {
         }
         const cred = await createUserWithEmailAndPassword(auth, data.email, password);
         await submitToBackend(cred.user.uid, data);
+        await signOut(auth);
+        toast({
+          title: 'Account Created!',
+          description: 'Please log in to continue.',
+        });
+        setTimeout(() => router.push('/auth/login'), 500);
       }
     } catch (error: any) {
       toast({

@@ -206,6 +206,9 @@ A: The main application is a Next.js app (`localhost:3000`). The AI features are
 **Q: I get an error about a missing `GOOGLE_API_KEY`. What do I do?**
 A: You need to create a `.env` file in the project root and add your Google AI Studio API key to it, as described in Step 3.3.
 
+**Q: Firebase returns `auth/invalid-api-key` on the login page. What's wrong?**
+A: Your Firebase environment variables are missing or incorrect. Copy `.env.example` to `.env` and replace all `NEXT_PUBLIC_FIREBASE_*` placeholders with the values from your Firebase project. Restart the Next.js server after updating.
+
 **Q: Some images are placeholders. How do I change them?**
 A: The project uses `https://placehold.co` for mock images. In a production environment, you would integrate a file storage service (like Firebase Storage, AWS S3, or Cloudinary) for image uploads and replace the placeholder URLs with the URLs from your storage service.
 
