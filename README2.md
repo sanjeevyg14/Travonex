@@ -155,6 +155,8 @@ Your database schema should align with the TypeScript types defined in `src/lib/
     dashboard (`/trip-organiser/dashboard` for organizers, `/` for regular users, or
     `/admin/dashboard` for admins). The frontend automatically navigates to this
     path after storing the session token.
+*   **Signup:** Users and organizers register with their name, email, and password. Phone verification is not required.
+*   **Phone Verification:** During signup, the client verifies the phone number with Firebase and sends the resulting `idToken` to `POST /api/auth/signup`. The backend validates this token using the Firebase Admin SDK before creating the account.
 
 ### 6.3. Key API Endpoints Expected by the Frontend
 The frontend is built to call these (or similar) API endpoints. You will find `// BACKEND:` comments in the code pointing to these specific integration points.

@@ -1,6 +1,7 @@
 import express from 'express';
 import User from '../models/User.js';
 import Organizer from '../models/Organizer.js';
+import { firebaseAuth } from '../utils/firebase.js';
 import { generateReferralCode } from '../utils/referral.js';
 
 const router = express.Router();
@@ -10,9 +11,23 @@ const router = express.Router();
 router.post('/', async (req, res) => {
     const { name, email, password, accountType, referralCode, terms } = req.body;
     if (!name || !email || !password || !accountType || terms !== true) {
+
+
+
+// Body: { name, email, idToken, accountType, referralCode, terms }
+// `idToken` must come from Firebase Phone Auth (verifying the OTP)
+router.post('/', async (req, res) => {
+    const { name, email, idToken, accountType, referralCode, terms } = req.body;
+    if (!name || !email || !idToken || !accountType || terms !== true) {
         return res.status(400).json({ message: 'Missing required fields or terms not accepted' });
     }
     try {
+        // Verify Firebase ID token and extract phone number
+        const decoded = await firebaseAuth.verifyIdToken(idToken);
+        const phone = decoded.phone_number;
+        if (!phone) {
+            return res.status(400).json({ message: 'Invalid phone verification token' });
+        }
         // Check for duplicates
         const userExists = await User.findOne({ email });
         const organizerExists = await Organizer.findOne({ email });
@@ -31,6 +46,7 @@ router.post('/', async (req, res) => {
                 name,
                 email,
                 password,
+                phone,
                 kycStatus: 'Incomplete',
                 vendorAgreementStatus: 'Not Submitted',
             });
@@ -40,6 +56,7 @@ router.post('/', async (req, res) => {
                 name,
                 email,
                 password,
+                phone,
                 referralCode: generateReferralCode(),
                 referredBy,
             });

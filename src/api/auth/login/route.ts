@@ -8,8 +8,8 @@
  *
  * @body
  * {
- *   "identifier": "string (phone number or email)",
- *   "credential": "string (OTP or password)"
+ *   "email": "string",
+ *   "password": "string"
  * }
  *
  * @returns
@@ -23,68 +23,52 @@ import type { UserSession } from '@/lib/types';
 
 export async function POST(request: Request) {
   try {
-    const { identifier, credential } = await request.json();
+    const { email, password } = await request.json();
 
-    if (!identifier || !credential) {
-      return NextResponse.json({ message: 'Identifier and credential are required' }, { status: 400 });
+    if (!email || !password) {
+      return NextResponse.json({ message: 'Email and password are required' }, { status: 400 });
     }
-    
-    const isEmail = identifier.includes('@');
+
     let sessionData: UserSession | null = null;
     let redirectPath = '/';
 
-    if (isEmail) {
-      // --- Handle Admin Login ---
-      const admin = adminUsers.find(admin => admin.email === identifier);
-      
-      if (!admin) {
-        return NextResponse.json({ message: 'Admin account not found.' }, { status: 401 });
-      }
+    const admin = adminUsers.find(admin => admin.email === email);
+    if (admin) {
       if (admin.status !== 'Active') {
         return NextResponse.json({ message: `Admin account is ${admin.status}. Please contact support.` }, { status: 403 });
       }
-      if (credential !== 'password') { // Mock password check
+      if (password !== 'password') {
         return NextResponse.json({ message: 'Invalid password.' }, { status: 401 });
       }
-      
-      sessionData = { 
-          id: admin.id, 
-          name: admin.name, 
-          email: admin.email, 
-          role: admin.role, 
-          avatar: `https://placehold.co/40x40.png?text=${admin.name.charAt(0)}` 
+      sessionData = {
+        id: admin.id,
+        name: admin.name,
+        email: admin.email,
+        role: admin.role,
+        avatar: `https://placehold.co/40x40.png?text=${admin.name.charAt(0)}`
       };
-      
       redirectPath = '/admin/dashboard';
-      
     } else {
-      // --- Handle User/Organizer OTP Login ---
-      if (credential !== '123456') { // Mock OTP check
-        return NextResponse.json({ message: 'Invalid OTP.' }, { status: 401 });
-      }
-      
-      const organizer = mockOrganizers.find(o => o.phone === identifier);
-      if (organizer) {
-        // --- STABLE V1.1.0 LOGIC ---
-        // Allow organizer to log in, but redirect based on verification status.
-        sessionData = { 
-            id: organizer.id, 
-            name: organizer.name, 
-            email: organizer.email, 
-            role: 'ORGANIZER', 
-            avatar: `https://placehold.co/40x40.png?text=${organizer.name.charAt(0)}` 
+      const organizer = mockOrganizers.find(o => o.email === email);
+      if (organizer && password === 'password') {
+        sessionData = {
+          id: organizer.id,
+          name: organizer.name,
+          email: organizer.email,
+          role: 'ORGANIZER',
+          avatar: `https://placehold.co/40x40.png?text=${organizer.name.charAt(0)}`
         };
-        
-        if (organizer.kycStatus === 'Verified') {
-            redirectPath = '/trip-organiser/dashboard';
-        } else {
-            // For 'Incomplete', 'Pending', 'Rejected', or 'Suspended' statuses, send to profile page.
-            redirectPath = '/trip-organiser/profile';
-        }
+        redirectPath = organizer.kycStatus === 'Verified' ? '/trip-organiser/dashboard' : '/trip-organiser/profile';
       } else {
-        const regularUser = mockUsers.find(u => u.phone === identifier);
-        if (regularUser) {
-          sessionData = { id: regularUser.id, name: regularUser.name, email: regularUser.email, role: 'USER', avatar: regularUser.avatar };
+        const regularUser = mockUsers.find(u => u.email === email);
+        if (regularUser && password === 'password') {
+          sessionData = {
+            id: regularUser.id,
+            name: regularUser.name,
+            email: regularUser.email,
+            role: 'USER',
+            avatar: regularUser.avatar
+          };
           redirectPath = '/';
         }
       }
