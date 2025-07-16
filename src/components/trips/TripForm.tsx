@@ -200,19 +200,23 @@ export function TripForm({ trip, isAdmin = false }: TripFormProps) {
     setIsSaving(true);
     setIsRemarkDialogOpen(false);
 
-    // BACKEND: This is where you would make the API call.
-    // The payload would include both the form data and the remark.
-    // - For new trips: `POST /api/trips`
-    // - For editing trips: `PUT /api/trips/{trip.id}`
-    // The backend should:
-    // 1. Save the trip/batch data.
-    // 2. Perform a diff to see what changed.
-    // 3. Create a new entry in `tripChangeLogs` with the remark and diff.
-    // 4. Return the updated trip object.
-    console.log("Form submitted with remark:", { data, remark: changeRemark });
-    
-    // FRONTEND: Simulate API call. Shortened delay for better UX.
-    await new Promise(resolve => setTimeout(resolve, 300));
+    const endpoint = isEditMode ? `/api/trips/${trip?.id}` : '/api/trips';
+    const method = isEditMode ? 'PUT' : 'POST';
+    try {
+      const res = await fetch(endpoint, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, changeRemark }),
+      });
+      if (!res.ok) {
+        throw new Error('Failed to save trip');
+      }
+    } catch (err) {
+      console.error('Save trip error:', err);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to save trip.' });
+      setIsSaving(false);
+      return;
+    }
     
     toast({
         title: isEditMode ? "Trip Updated!" : "Trip Created!",

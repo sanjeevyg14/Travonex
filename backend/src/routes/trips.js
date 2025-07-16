@@ -13,6 +13,17 @@ router.get('/', async (req, res) => {
     }
 });
 
+// Get a trip by slug
+router.get('/slug/:slug', async (req, res) => {
+    try {
+        const trip = await Trip.findOne({ slug: req.params.slug }).populate('organizer');
+        if (!trip) return res.status(404).json({ error: 'Trip not found' });
+        res.json(trip);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Get a single trip by ID
 router.get('/:id', async (req, res) => {
     try {
