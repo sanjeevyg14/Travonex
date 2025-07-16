@@ -5,6 +5,7 @@ import User from '../models/User.js';
 import Organizer from '../models/Organizer.js';
 import { generateReferralCode } from '../utils/referral.js';
 
+
 const router = express.Router();
 
 // POST /api/auth/otp-signup
@@ -33,6 +34,13 @@ router.post('/', async (req, res) => {
         await firebaseDB.collection('users').doc(uid).set({
             uid,
             phone,
+    try {
+        const decoded = await firebaseAuth.verifyIdToken(idToken);
+        const { uid, phone_number } = decoded;
+
+        await firebaseDB.collection('users').doc(uid).set({
+            uid,
+            phone: phone_number,
             role,
             name,
             email,

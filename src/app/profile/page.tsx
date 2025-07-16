@@ -343,7 +343,7 @@ export default function ProfilePage() {
                         <CardContent className="space-y-4">
                             <div className="flex items-center text-sm text-muted-foreground p-4 bg-muted/50 rounded-lg">
                                 <Shield className="mr-3 h-5 w-5"/>
-                                <span>Your account is secured with One-Time Password (OTP) login. There are no passwords to manage.</span>
+                                <span>Your account is secured with a traditional email and password login.</span>
                             </div>
                              <div className="flex items-center justify-between rounded-lg border p-4">
                                 <div>
