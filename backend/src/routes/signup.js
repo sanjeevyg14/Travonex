@@ -13,6 +13,7 @@ router.post('/', async (req, res) => {
     if (!name || !email || !password || !accountType || terms !== true) {
 
 
+
 // Body: { name, email, idToken, accountType, referralCode, terms }
 // `idToken` must come from Firebase Phone Auth (verifying the OTP)
 router.post('/', async (req, res) => {
