@@ -6,6 +6,8 @@ const userSchema = new mongoose.Schema({
     phone: String,
     password: String, // For social/phone auth, can be empty
     role: { type: String, enum: ['user', 'organizer', 'admin'], default: 'user' },
+    referralCode: { type: String, unique: true },
+    referredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     createdAt: { type: Date, default: Date.now },
 });
 
