@@ -1,0 +1,100 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Official 1.0.0 Theme based on PRD */
+    --background: 31 56% 90%; /* #F2E6D9 */
+    --foreground: 0 0% 18%; /* #2E2E2E */
+    
+    --card: 31 56% 94%;
+    --card-foreground: 0 0% 18%;
+
+    --popover: 31 56% 94%;
+    --popover-foreground: 0 0% 18%;
+
+    --primary: 30 100% 60%; /* #FF9933 */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 30 95% 85%;
+    --secondary-foreground: 30 90% 25%;
+
+    --muted: 30 50% 95%;
+    --muted-foreground: 0 0% 42%; /* #6B6B6B */
+
+    --accent: 47 100% 50%; /* #FFC700 */
+    --accent-foreground: 0 0% 18%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 31 20% 80%;
+    --input: 31 20% 80%;
+    --ring: 30 100% 60%;
+
+    --radius: 0.5rem;
+
+    --chart-1: 30 100% 60%;
+    --chart-2: 47 100% 50%;
+    --chart-3: 30 95% 85%;
+    --chart-4: 0 84% 60%;
+    --chart-5: 0 0% 42%;
+
+    --sidebar-background: 31 56% 90%;
+    --sidebar-foreground: 0 0% 18%;
+    --sidebar-primary: 30 100% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 47 100% 50%;
+    --sidebar-accent-foreground: 0 0% 18%;
+    --sidebar-border: 31 20% 80%;
+    --sidebar-ring: 30 100% 60%;
+  }
+
+  .dark {
+    /* Dark mode is not specified, using light mode colors as default */
+    --background: 31 56% 90%;
+    --foreground: 0 0% 18%;
+    --card: 31 56% 94%;
+    --card-foreground: 0 0% 18%;
+    --popover: 31 56% 94%;
+    --popover-foreground: 0 0% 18%;
+    --primary: 30 100% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 30 95% 85%;
+    --secondary-foreground: 30 90% 25%;
+    --muted: 30 50% 95%;
+    --muted-foreground: 0 0% 42%;
+    --accent: 47 100% 50%;
+    --accent-foreground: 0 0% 18%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 31 20% 80%;
+    --input: 31 20% 80%;
+    --ring: 30 100% 60%;
+    --radius: 0.5rem;
+    --chart-1: 30 100% 60%;
+    --chart-2: 47 100% 50%;
+    --chart-3: 30 95% 85%;
+    --chart-4: 0 84% 60%;
+    --chart-5: 0 0% 42%;
+    --sidebar-background: 31 56% 90%;
+    --sidebar-foreground: 0 0% 18%;
+    --sidebar-primary: 30 100% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 47 100% 50%;
+    --sidebar-accent-foreground: 0 0% 18%;
+    --sidebar-border: 31 20% 80%;
+    --sidebar-ring: 30 100% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
