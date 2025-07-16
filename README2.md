@@ -64,6 +64,9 @@ The application uses environment variables for configuration, particularly for t
 
 3.  **Important**: Replace `YOUR_GOOGLE_API_KEY_HERE` with your actual API key from Google AI Studio. The AI-powered "Destination Suggestion" feature will not work without it.
 
+### Step 3.4: Backend Environment Variables
+The Express backend in the `backend` folder uses its own `.env` file. Copy `backend/.env.example` to `backend/.env` and fill in your MongoDB URI, Firebase service account credentials, JWT secret, and Razorpay keys.
+
 ---
 
 ## 4. Running the Application Locally
@@ -74,6 +77,8 @@ The Travonex platform consists of two main parts that need to run concurrently f
 2.  **The Genkit Server**: Powers the AI features.
 
 You will need to open **two separate terminals** in VS Code to run both.
+
+If you are integrating the optional Express backend, open a **third terminal** for it.
 
 ### Terminal 1: Run the Next.js Frontend
 
@@ -92,6 +97,14 @@ This command starts the local Genkit server, which provides the AI capabilities 
 **[http://localhost:4000](http://localhost:4000)**
 
 **You must have both servers running to test the complete application.**
+
+### Terminal 3: Run the Express Backend
+
+```bash
+cd backend && npm install
+npm run dev
+```
+This starts the REST API server using Express and MongoDB. It listens on **http://localhost:5000** by default and exposes endpoints consumed by the frontend, including payment order creation via Razorpay.
 
 ---
 
