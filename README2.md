@@ -150,6 +150,7 @@ Your database schema should align with the TypeScript types defined in `src/lib/
 *   **Response:** On successful login, the API should return a session token (e.g., JWT) and a user object containing `id`, `name`, `email`, `role`, and `avatar`.
 *   **Session Management:** The frontend uses `localStorage` to persist the session. All subsequent API calls should include the token in the `Authorization` header for validation.
 *   **Signup:** Users and organizers register using phone number verification. The frontend obtains a Firebase ID token after OTP verification and sends it to `POST /api/auth/signup` along with the user's name, email, and desired role.
+*   **Login:** Phone-based logins also use Firebase verification. After confirming the OTP, the frontend sends the resulting ID token as the `credential` in `POST /api/auth/login`.
 *   **Signup:** Users and organizers register with their name, email, and password. Phone verification is not required.
 *   **Phone Verification:** During signup, the client verifies the phone number with Firebase and sends the resulting `idToken` to `POST /api/auth/signup`. The backend validates this token using the Firebase Admin SDK before creating the account.
 

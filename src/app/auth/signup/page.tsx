@@ -23,6 +23,15 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("USER");
   const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(null);
+
+export default function SignupPage() {
+  const { toast } = useToast();
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState("USER");
+  const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(null);
 import { Loader2 } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -69,6 +78,7 @@ export default function SignupPage() {
       toast({ variant: "destructive", title: "Failed to send OTP", description: err.message });
     }
   };
+
 
       const payload = data;
       const response = await fetch('/api/auth/signup', {
@@ -137,6 +147,7 @@ export default function SignupPage() {
           <Button className="w-full" onClick={sendOtp}>Send OTP</Button>
         )}
       </CardFooter>
+
 
     <Card className="w-full max-w-sm shadow-2xl">
       <Form {...form}>
