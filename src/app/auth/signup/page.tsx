@@ -1,35 +1,28 @@
-/**
- * @fileoverview User & Organizer Signup Page
- * @description Handles new user and organizer registration.
- * 
- * @developer_notes
- * - Uses react-hook-form and Zod for robust validation.
- * - Allows users to select their account type (Traveler or Trip Organizer).
- * - Calls a new backend endpoint `/api/auth/signup` to create the account.
- * - After successful signup, redirects the user to the login page.
- */
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useRouter } from "next/navigation";
-
+import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
+import { auth } from "@/firebase/client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
+  CardContent,
+  CardFooter,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+
+export default function SignupPage() {
+  const { toast } = useToast();
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState("USER");
+  const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(null);
 import { Loader2 } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -66,9 +59,17 @@ export default function SignupPage() {
     },
   });
 
-  const handleSignup = async (data: SignupFormData) => {
-    setIsLoading(true);
+  const sendOtp = async () => {
     try {
+      const verifier = new RecaptchaVerifier(auth, "recaptcha-container", { size: "invisible" });
+      const result = await signInWithPhoneNumber(auth, phone, verifier);
+      setConfirmation(result);
+      toast({ title: "OTP sent" });
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Failed to send OTP", description: err.message });
+    }
+  };
+
       const payload = data;
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
@@ -88,19 +89,55 @@ export default function SignupPage() {
       });
       router.push('/auth/login');
 
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Signup Failed',
-        description: error.message,
+  const verifyOtp = async () => {
+    if (!confirmation) return;
+    try {
+      const cred = await confirmation.confirm(otp);
+      const idToken = await cred.user.getIdToken();
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken, name, email, role }),
       });
-    } finally {
-      setIsLoading(false);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Signup failed");
+      toast({ title: "Signup successful" });
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Verification failed", description: err.message });
     }
   };
 
-
   return (
+    <Card className="w-full max-w-sm">
+      <CardHeader>
+        <CardTitle>Phone Signup</CardTitle>
+      </CardHeader>
+      <CardContent className="grid gap-4">
+        <Input placeholder="Full Name" value={name} onChange={(e) => setName(e.target.value)} />
+        <Input placeholder="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <Input placeholder="Phone Number" value={phone} onChange={(e) => setPhone(e.target.value)} />
+        <Select defaultValue={role} onValueChange={(val) => setRole(val)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select role" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="USER">User</SelectItem>
+            <SelectItem value="ORGANIZER">Trip Organizer</SelectItem>
+          </SelectContent>
+        </Select>
+        {confirmation && (
+          <Input placeholder="OTP" value={otp} onChange={(e) => setOtp(e.target.value)} />
+        )}
+        <div id="recaptcha-container"></div>
+      </CardContent>
+      <CardFooter>
+        {confirmation ? (
+          <Button className="w-full" onClick={verifyOtp}>Verify &amp; Sign Up</Button>
+        ) : (
+          <Button className="w-full" onClick={sendOtp}>Send OTP</Button>
+        )}
+      </CardFooter>
+
     <Card className="w-full max-w-sm shadow-2xl">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSignup)}>

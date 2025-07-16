@@ -11,6 +11,7 @@ const router = express.Router();
 router.post('/', async (req, res) => {
     const { name, email, password, accountType, referralCode, terms } = req.body;
     if (!name || !email || !password || !accountType || terms !== true) {
+
 // Body: { name, email, idToken, accountType, referralCode, terms }
 // `idToken` must come from Firebase Phone Auth (verifying the OTP)
 router.post('/', async (req, res) => {
@@ -44,6 +45,7 @@ router.post('/', async (req, res) => {
                 email,
                 password,
                 phone,
+
                 kycStatus: 'Incomplete',
                 vendorAgreementStatus: 'Not Submitted',
             });
