@@ -7,7 +7,7 @@
 - User Profile Management: Provide a personalized profile section where users can manage their information, preferences, and saved trips.
 - AI-Powered Destination Suggestions: Suggest destinations based on the current trip offerings and stated interests. The AI tool will decide whether to include information on specific destinations in its output based on real-time trip availability.
 - Booking Management: Enable users to view their upcoming and past bookings, with options to cancel or view details.
-- Secure Authentication: Implement OTP-based login and signup for secure and easy user authentication using Firebase.
+- Secure Authentication: Provide traditional email and password based login and signup.
 - Organizer Profile Management: Enable trip organizers to upload KYC documents, a signed agreement, and other necessary information for verification.
 - Trip Listing Management: Allow trip organizers to create and manage trip listings, including details such as title, banner image, description, itinerary, pricing, and availability.
 - Booking and Payout Tracking: Provide trip organizers with a dashboard to view bookings per trip, user details, participant count, and payout status.

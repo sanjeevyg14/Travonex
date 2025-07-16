@@ -7,6 +7,10 @@ import { generateReferralCode } from '../utils/referral.js';
 const router = express.Router();
 
 // POST /api/auth/signup
+// Body: { name, email, password, accountType, referralCode, terms }
+router.post('/', async (req, res) => {
+    const { name, email, password, accountType, referralCode, terms } = req.body;
+    if (!name || !email || !password || !accountType || terms !== true) {
 // Body: { name, email, idToken, accountType, referralCode, terms }
 // `idToken` must come from Firebase Phone Auth (verifying the OTP)
 router.post('/', async (req, res) => {
@@ -22,10 +26,10 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ message: 'Invalid phone verification token' });
         }
         // Check for duplicates
-        const userExists = await User.findOne({ $or: [{ email }, { phone }] });
-        const organizerExists = await Organizer.findOne({ $or: [{ email }, { phone }] });
+        const userExists = await User.findOne({ email });
+        const organizerExists = await Organizer.findOne({ email });
         if (userExists || organizerExists) {
-            return res.status(409).json({ message: 'An account with this email or phone already exists.' });
+            return res.status(409).json({ message: 'An account with this email already exists.' });
         }
 
         let referredBy = null;
@@ -38,6 +42,7 @@ router.post('/', async (req, res) => {
             const organizer = new Organizer({
                 name,
                 email,
+                password,
                 phone,
                 kycStatus: 'Incomplete',
                 vendorAgreementStatus: 'Not Submitted',
@@ -47,6 +52,7 @@ router.post('/', async (req, res) => {
             const user = new User({
                 name,
                 email,
+                password,
                 phone,
                 referralCode: generateReferralCode(),
                 referredBy,

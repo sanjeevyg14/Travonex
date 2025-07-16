@@ -30,7 +30,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Phone } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -39,7 +39,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 const SignupFormSchema = z.object({
   name: z.string().min(3, "Full name must be at least 3 characters."),
   email: z.string().email("Please enter a valid email address."),
-  phone: z.string().min(10, "Please enter a valid 10-digit phone number."),
+  password: z.string().min(6, "Password must be at least 6 characters."),
   accountType: z.enum(["USER", "ORGANIZER"], { required_error: "You must select an account type." }),
   referralCode: z.string().optional(),
   terms: z.literal(true, {
@@ -53,14 +53,13 @@ export default function SignupPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [countryCode, setCountryCode] = useState('+91');
 
   const form = useForm<SignupFormData>({
     resolver: zodResolver(SignupFormSchema),
     defaultValues: {
       name: "",
       email: "",
-      phone: "",
+      password: "",
       accountType: "USER",
       referralCode: "",
       terms: false,
@@ -70,10 +69,7 @@ export default function SignupPage() {
   const handleSignup = async (data: SignupFormData) => {
     setIsLoading(true);
     try {
-      const payload = {
-        ...data,
-        phone: `${countryCode}${data.phone}`
-      }
+      const payload = data;
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -149,39 +145,8 @@ export default function SignupPage() {
 
             <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Full Name / Brand Name</FormLabel><FormControl><Input placeholder="John Doe" {...field} /></FormControl><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email Address</FormLabel><FormControl><Input type="email" placeholder="m@example.com" {...field} /></FormControl><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="password" render={({ field }) => (<FormItem><FormLabel>Password</FormLabel><FormControl><Input type="password" placeholder="******" {...field} /></FormControl><FormMessage /></FormItem>)} />
             
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phone Number</FormLabel>
-                  <FormControl>
-                    <div className="flex items-center border rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
-                        <Select value={countryCode} onValueChange={setCountryCode}>
-                            <SelectTrigger className="w-[100px] border-0 shadow-none focus:ring-0">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="+91">IN +91</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <div className="h-6 w-px bg-border" />
-                        <div className="relative flex-1">
-                            <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                            <Input
-                              type="tel"
-                              placeholder="98765 43210"
-                              className="border-0 shadow-none pl-10 focus-visible:ring-0"
-                              {...field}
-                            />
-                        </div>
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <FormField control={form.control} name="referralCode" render={({ field }) => (<FormItem><FormLabel>Referral Code (Optional)</FormLabel><FormControl><Input placeholder="Enter referral code" {...field} /></FormControl><FormMessage /></FormItem>)} />
             
             <FormField
