@@ -13,14 +13,14 @@ export default function ForgotPasswordPage() {
   return (
     <Card className="w-full max-w-sm shadow-2xl">
       <CardHeader>
-        <CardTitle className="text-2xl font-headline">Passwordless Login</CardTitle>
+        <CardTitle className="text-2xl font-headline">Forgot Password?</CardTitle>
         <CardDescription>
-          This platform uses a secure, passwordless login system.
+          Please return to the login page and use your email and password to sign in.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
         <p className="text-sm text-muted-foreground">
-          To sign in, please return to the login page and enter your registered phone number. You will receive a secure One-Time Password (OTP) to access your account.
+          Password reset is not required in this demo. Use the test credentials provided.
         </p>
       </CardContent>
       <div className="p-6 pt-0">

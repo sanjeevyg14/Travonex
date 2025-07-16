@@ -2,50 +2,45 @@ import express from 'express';
 import User from '../models/User.js';
 import Organizer from '../models/Organizer.js';
 import AdminUser from '../models/AdminUser.js';
-import { firebaseAuth } from '../utils/firebase.js';
 import jwt from 'jsonwebtoken';
 
 const router = express.Router();
 
 // POST /api/auth/login
-// Body: { identifier, credential }
+// Body: { email, password }
 router.post('/', async (req, res) => {
-    const { identifier, credential } = req.body;
-    if (!identifier || !credential) {
-        return res.status(400).json({ message: 'Identifier and credential are required' });
+    const { email, password } = req.body;
+    if (!email || !password) {
+        return res.status(400).json({ message: 'Email and password are required' });
     }
     try {
         let user = null;
         let role = null;
         let redirectPath = '/';
-        // Admin login (email + password)
-        if (identifier.includes('@')) {
-            const admin = await AdminUser.findOne({ email: identifier });
-            if (!admin) return res.status(401).json({ message: 'Admin account not found.' });
+        // Admin login
+        const admin = await AdminUser.findOne({ email });
+        if (admin) {
             if (admin.status !== 'Active') return res.status(403).json({ message: `Admin account is ${admin.status}.` });
-            if (!(await admin.comparePassword(credential))) return res.status(401).json({ message: 'Invalid password.' });
+            if (!(await admin.comparePassword(password))) return res.status(401).json({ message: 'Invalid password.' });
             user = admin;
             role = 'admin';
             redirectPath = '/admin/dashboard';
         } else {
-            // User/Organizer login (phone + OTP)
-            // credential is Firebase ID token
-            const decoded = await firebaseAuth.verifyIdToken(credential);
-            const phone = decoded.phone_number;
-            let organizer = await Organizer.findOne({ phone });
-            if (organizer) {
+            // Organizer login
+            const organizer = await Organizer.findOne({ email });
+            if (organizer && await organizer.comparePassword(password)) {
                 user = organizer;
                 role = 'organizer';
                 redirectPath = organizer.kycStatus === 'Verified' ? '/trip-organiser/dashboard' : '/trip-organiser/profile';
             } else {
-                let regularUser = await User.findOne({ phone });
-                if (regularUser) {
+                const regularUser = await User.findOne({ email });
+                if (regularUser && await regularUser.comparePassword(password)) {
                     user = regularUser;
                     role = 'user';
                     redirectPath = '/';
                 }
             }
-            if (!user) return res.status(404).json({ message: 'User or Organizer account not found.' });
+            if (!user) return res.status(401).json({ message: 'Invalid email or password.' });
         }
         // Issue JWT
         const token = jwt.sign({ id: user._id, role }, process.env.JWT_SECRET, { expiresIn: '7d' });

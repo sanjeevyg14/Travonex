@@ -4,24 +4,24 @@ This file contains the mock login credentials for testing the different user rol
 
 ## 1. User / Traveler Login
 
--   **Login Method:** Phone Number + OTP
--   **OTP for all users:** `123456`
+-   **Login Method:** Email + Password
+-   **Password for all users:** `password`
 
 ### Sample User Accounts:
 
--   **Phone:** `+919876543210` (Rohan Sharma)
--   **Phone:** `+919876543211` (Priya Patel)
+-   **Email:** `rohan@example.com` (Rohan Sharma)
+-   **Email:** `priya@example.com` (Priya Patel)
 
 ## 2. Trip Organizer Login
 
--   **Login Method:** Phone Number + OTP
--   **OTP for all organizers:** `123456`
+-   **Login Method:** Email + Password
+-   **Password for all organizers:** `password`
 
 ### Sample Organizer Accounts:
 
--   **Phone:** `+919988776655` (Himalayan Adventures - **Verified**)
--   **Phone:** `+919988776656` (Incredible India Tours - **Verified**)
--   **Phone:** `+919513626262` (New Self-Registered Organizer - **Incomplete**)
+-   **Email:** `himalayan@example.com` (Himalayan Adventures - **Verified**)
+-   **Email:** `iitours@example.com` (Incredible India Tours - **Verified**)
+-   **Email:** `newvendor@example.com` (New Self-Registered Organizer - **Incomplete**)
 
 ## 3. Admin Panel Login
 
