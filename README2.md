@@ -164,7 +164,7 @@ The frontend is built to call these (or similar) API endpoints. You will find `/
 *   **Auth:** `POST /api/auth/login`, `POST /api/auth/signup`, `POST /api/auth/logout`
 *   **Users (Public):** `GET /api/trips`, `GET /api/trips/slug/{slug}`, `POST /api/bookings/create`
 *   **Users (Authenticated):** `GET /api/users/me/profile`, `PUT /api/users/me/profile`, `GET /api/users/me/bookings`
-*   **Organizers:** `GET /api/organizers/me/dashboard`, `GET /api/organizers/me/trips`, `POST /api/trips`, `PUT /api/trips/{id}`, `GET /api/organizers/me/bookings`, `GET /api/organizers/me/payouts`, `POST /api/organizers/me/payouts/request`
+*   **Organizers:** `GET /api/organizers/me/dashboard`, `GET /api/organizers/me/trips`, `POST /api/trips`, `PUT /api/trips/{id}`, `DELETE /api/trips/{id}`, `GET /api/organizers/me/bookings`, `GET /api/organizers/me/payouts`, `POST /api/organizers/me/payouts/request`
 *   **Admin:**
     *   `GET /api/admin/dashboard`
     *   `GET /api/admin/trips`, `PATCH /api/admin/trips/{id}`
