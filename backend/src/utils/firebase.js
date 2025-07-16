@@ -1,7 +1,8 @@
 // Firebase Admin SDK setup
-import { initializeApp, applicationDefault, cert } from 'firebase-admin/app';
+import { initializeApp, cert } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
+import { getFirestore } from 'firebase-admin/firestore';
 
 const firebaseConfig = {
     credential: cert({
@@ -15,5 +16,6 @@ const firebaseConfig = {
 const firebaseApp = initializeApp(firebaseConfig);
 const firebaseAuth = getAuth(firebaseApp);
 const firebaseStorage = getStorage(firebaseApp);
+const firebaseDB = getFirestore(firebaseApp);
 
-export { firebaseApp, firebaseAuth, firebaseStorage };
+export { firebaseApp, firebaseAuth, firebaseStorage, firebaseDB };
