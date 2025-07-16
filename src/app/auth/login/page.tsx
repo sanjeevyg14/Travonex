@@ -17,6 +17,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Mail, Phone } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
+import { auth } from "@/firebase/client";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from 'next/navigation';
@@ -40,6 +42,7 @@ export default function LoginPage() {
   // State for credentials
   const [password, setPassword] = React.useState("");
   const [otp, setOtp] = React.useState("");
+  const [confirmation, setConfirmation] = React.useState<ConfirmationResult | null>(null);
   
   const [isLoading, setIsLoading] = React.useState(false);
   const [isResending, setIsResending] = React.useState(false);
@@ -62,21 +65,27 @@ export default function LoginPage() {
   const handleIdentifierSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
     const currentIdentifier = isEmailMode ? email : `${countryCode}${phoneNumber}`;
     setIdentifier(currentIdentifier);
 
-    // BACKEND: This should call POST /api/auth/send-otp if it's a phone number.
-    await new Promise(resolve => setTimeout(resolve, 300));
-
     if (isEmailMode) {
-        setStep(2);
-    } else {
-        toast({ title: "OTP Sent", description: `A verification code has been sent to ${currentIdentifier}.` });
-        setStep(2);
-        startResendTimer();
+      setStep(2);
+      setIsLoading(false);
+      return;
     }
-    setIsLoading(false);
+
+    try {
+      const verifier = new RecaptchaVerifier(auth, "recaptcha-container", { size: "invisible" });
+      const result = await signInWithPhoneNumber(auth, currentIdentifier, verifier);
+      setConfirmation(result);
+      toast({ title: "OTP Sent", description: `A verification code has been sent to ${currentIdentifier}.` });
+      setStep(2);
+      startResendTimer();
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Failed to send OTP", description: err.message });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -84,7 +93,13 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const { redirectPath } = await login(identifier, isEmailMode ? password : otp);
+      let credentialToSend = password;
+      if (!isEmailMode) {
+        if (!confirmation) throw new Error('Please request OTP first');
+        const cred = await confirmation.confirm(otp);
+        credentialToSend = await cred.user.getIdToken();
+      }
+      const { redirectPath } = await login(identifier, credentialToSend);
       toast({ title: "Login Successful", description: "Redirecting..." });
       // DEV_COMMENT: Using window.location.href for a full-page reload is the most reliable way
       // to ensure the browser has processed the new session cookie before making the next request.
@@ -103,11 +118,18 @@ export default function LoginPage() {
 
   const handleResendOtp = async () => {
     setIsResending(true);
-    // BACKEND: Call POST /api/auth/resend-otp
-    await new Promise(resolve => setTimeout(resolve, 300));
-    toast({ title: "OTP Resent" });
-    startResendTimer();
-    setIsResending(false);
+    try {
+      if (!identifier) throw new Error('Enter your phone number first');
+      const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
+      const result = await signInWithPhoneNumber(auth, identifier, verifier);
+      setConfirmation(result);
+      toast({ title: 'OTP Resent' });
+      startResendTimer();
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Failed to resend OTP', description: err.message });
+    } finally {
+      setIsResending(false);
+    }
   };
 
   const toggleLoginMode = () => {
@@ -201,6 +223,7 @@ export default function LoginPage() {
             </div>
           )}
         </CardContent>
+        <div id="recaptcha-container" className="hidden" />
         <CardFooter className="flex flex-col gap-4">
           <Button className="w-full" type="submit" disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

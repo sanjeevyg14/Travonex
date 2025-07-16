@@ -7,10 +7,10 @@
  *
  * @body
  * {
+ *   "idToken": "string",
  *   "name": "string",
  *   "email": "string",
- *   "phone": "string",
- *   "accountType": "'USER' | 'ORGANIZER'"
+ *   "role": "'USER' | 'ORGANIZER'"
  * }
  *
  * @returns
@@ -25,7 +25,7 @@ import { NextResponse } from 'next/server';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const backendRes = await fetch(`${process.env.BACKEND_URL || 'http://localhost:5000'}/api/auth/signup`, {
+    const backendRes = await fetch(`${process.env.BACKEND_URL || 'http://localhost:5000'}/api/auth/otp-signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
