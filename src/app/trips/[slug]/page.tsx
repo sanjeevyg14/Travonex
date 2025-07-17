@@ -22,7 +22,7 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { trips, users, organizers } from "@/lib/mock-data";
+
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,12 +41,12 @@ import { ClientOnlyDate } from "@/components/common/ClientOnlyDate";
 
 // DEV_COMMENT: Data fetching now happens on the server.
 async function getTripData(slug: string) {
-    const trip = trips.find(t => t.slug === slug && t.status === 'Published');
-    if (!trip) {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/trips/slug/${slug}`);
+    if (!res.ok) {
         return { trip: null, organizer: null };
     }
-    const organizer = organizers.find(o => o.id === trip.organizerId) || null;
-    return { trip, organizer };
+    const data = await res.json();
+    return { trip: data, organizer: data.organizer };
 }
 
 
@@ -60,8 +60,8 @@ export default async function TripDetailsPage({ params }: { params: { slug: stri
   // --- DEV_COMMENT: START - Organizer Average Rating Calculation ---
   // This logic calculates the average rating for the organizer across all their trips.
   // In a real backend, this would likely be a pre-calculated field on the organizer's profile to improve performance.
-  const organizerTrips = trips.filter(t => t.organizerId === organizer?.id);
-  const allOrganizerReviews = organizerTrips.flatMap(t => t.reviews || []);
+  const organizerTrips: any[] = [];
+  const allOrganizerReviews = organizerTrips.flatMap((t: any) => t.reviews || []);
   const totalRating = allOrganizerReviews.reduce((acc, review) => acc + review.rating, 0);
   const averageRating = allOrganizerReviews.length > 0 ? (totalRating / allOrganizerReviews.length).toFixed(1) : 'New';
   const reviewCount = allOrganizerReviews.length;
