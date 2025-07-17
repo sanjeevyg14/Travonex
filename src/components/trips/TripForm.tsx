@@ -32,12 +32,12 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { UploadCloud, PlusCircle, Trash2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCity } from "@/context/CityContext";
 import { Switch } from "@/components/ui/switch";
 import { DatePicker } from "@/components/ui/datepicker";
 import { Label } from "@/components/ui/label";
-import { interests as mockInterests, categories as mockCategories } from "@/lib/mock-data";
+import { useEffect } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -126,12 +126,34 @@ export function TripForm({ trip, isAdmin = false }: TripFormProps) {
   
   const [coverImageName, setCoverImageName] = useState<string | null>(null);
   const [galleryImageNames, setGalleryImageNames] = useState<string[]>([]);
+  const [categories, setCategories] = useState<{id:string; name:string; status?:string}[]>([]);
+  const [interests, setInterests] = useState<{id:string; name:string; status?:string}[]>([]);
 
   // State for the mandatory remarks dialog
   const [isRemarkDialogOpen, setIsRemarkDialogOpen] = useState(false);
   const [remark, setRemark] = useState("");
   const [formData, setFormData] = useState<TripFormData | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    const loadOptions = async () => {
+      try {
+        const [catRes, intRes] = await Promise.all([
+          fetch('/api/categories'),
+          fetch('/api/interests'),
+        ]);
+        const [catData, intData] = await Promise.all([
+          catRes.json(),
+          intRes.json(),
+        ]);
+        if (Array.isArray(catData)) setCategories(catData);
+        if (Array.isArray(intData)) setInterests(intData);
+      } catch (err) {
+        console.error('Failed to load categories or interests', err);
+      }
+    };
+    loadOptions();
+  }, []);
 
   const form = useForm<TripFormData>({
     resolver: zodResolver(TripFormSchema),
@@ -259,7 +281,24 @@ export function TripForm({ trip, isAdmin = false }: TripFormProps) {
                         <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Trip Title</FormLabel><FormControl><Input placeholder="e.g., Summer in Santorini" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         <FormField control={form.control} name="location" render={({ field }) => (<FormItem><FormLabel>Display Location</FormLabel><FormControl><Input placeholder="e.g., Himalayas, India" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>Destination City</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a destination city" /></SelectTrigger></FormControl><SelectContent>{availableCities.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="tripType" render={({ field }) => (<FormItem><FormLabel>Trip Category</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select a trip category" /></SelectTrigger></FormControl><SelectContent>{mockCategories.filter(c => c.status === 'Active').map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="tripType" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Trip Category</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select a trip category" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {categories.filter(c => c.status === 'Active').map(c => (
+                                  <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
                         <FormField control={form.control} name="difficulty" render={({ field }) => (<FormItem><FormLabel>Difficulty Level</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select difficulty" /></SelectTrigger></FormControl><SelectContent><SelectItem value="Easy">Easy</SelectItem><SelectItem value="Moderate">Moderate</SelectItem><SelectItem value="Hard">Hard</SelectItem><SelectItem value="Challenging">Challenging</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
                         <FormField control={form.control} name="duration" render={({ field }) => (<FormItem><FormLabel>Duration</FormLabel><FormControl><Input placeholder="e.g., 3 Days, 2 Nights" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         <div className="grid grid-cols-2 gap-4">
@@ -276,7 +315,7 @@ export function TripForm({ trip, isAdmin = false }: TripFormProps) {
                                 <FormLabel>Interest Tags</FormLabel>
                                 <FormDescription>Select tags that best describe your trip. This helps users find your trip when they filter.</FormDescription>
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
-                                    {mockInterests.filter(i => i.status === 'Active').map((interest) => (
+                                    {interests.filter(i => i.status === 'Active').map((interest) => (
                                         <FormField
                                         key={interest.id}
                                         control={form.control}
