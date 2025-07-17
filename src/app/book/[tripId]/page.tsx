@@ -21,14 +21,15 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { trips, users } from "@/lib/mock-data";
-import { notFound, useParams, useRouter, useSearchParams } from "next/navigation";
+import { users } from "@/lib/mock-data";
+import type { Trip } from "@/lib/types";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, Trash2, User, Users as UsersIcon, ShieldCheck, Loader2 } from "lucide-react";
+import { Minus, Plus, User, Users as UsersIcon, ShieldCheck, Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
@@ -37,6 +38,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClientOnlyDate } from "@/components/common/ClientOnlyDate";
 import { useAuth } from "@/context/AuthContext";
+import { loadRazorpay } from "@/lib/razorpay";
 
 function BookingPageSkeleton() {
   return (
@@ -113,8 +115,24 @@ export default function BookingPage() {
 
   // DEV_COMMENT: Fetch trip and batch data from the backend using tripId and batchId.
   // The backend should validate that the trip is published and the batch is active and has enough slots.
-  const trip = trips.find(t => t.id === params.tripId);
-  const batch = trip?.batches.find(b => b.id === batchId);
+  const [trip, setTrip] = useState<Trip | null>(null);
+  const [batch, setBatch] = useState<any | null>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch(`/api/trips/${params.tripId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setTrip(data);
+        const foundBatch = data.batches?.find((b: any) => b.id === batchId);
+        setBatch(foundBatch || null);
+      } catch (err) {
+        console.error('Trip fetch error:', err);
+      }
+    };
+    load();
+  }, [params.tripId, batchId]);
 
   // DEV_COMMENT: START - State Management for Booking Form
   // Initialize traveler info only after we have the current user's data.
@@ -175,6 +193,10 @@ export default function BookingPage() {
   // DEV_COMMENT: START - Dynamic Fare Calculation
   // The backend MUST re-run this exact calculation logic to ensure price integrity.
   const fareDetails = useMemo(() => {
+    if (!trip || !batch) {
+      return { basePrice: 0, subtotal: 0, couponDiscount: 0, walletDiscount: 0, tax: 0, totalPayable: 0 };
+    }
+
     const basePrice = batch.priceOverride ?? trip.price;
     const subtotal = basePrice * travelers.length;
     
@@ -228,14 +250,74 @@ export default function BookingPage() {
       description: "Preparing your booking summary to proceed with payment.",
     });
 
-    // FRONTEND: Simulate network delay for payment gateway
-    await new Promise(resolve => setTimeout(resolve, 300));
+    try {
+      await loadRazorpay();
+      const orderRes = await fetch('/api/payments/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: fareDetails.totalPayable, receipt: `${trip.id}-${Date.now()}` }),
+      });
+      const order = await orderRes.json();
+      if (!orderRes.ok) throw new Error(order.error || 'Order creation failed');
 
-    // TODO: Replace this with actual payment gateway integration (e.g., Razorpay, Stripe).
-    // The payment gateway's success callback would trigger the final booking creation.
-    // For this prototype, we redirect directly to the success page.
-    router.push('/booking/success');
-    setIsProcessing(false);
+      const options: any = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: order.amount,
+        currency: order.currency,
+        name: 'Travonex',
+        description: trip.title,
+        order_id: order.id,
+        prefill: {
+          name: currentUser.name,
+          email: currentUser.email,
+          contact: currentUser.phone,
+        },
+        handler: async (response: any) => {
+          try {
+            const verifyRes = await fetch('/api/payments/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                order_id: response.razorpay_order_id,
+                payment_id: response.razorpay_payment_id,
+                signature: response.razorpay_signature,
+              }),
+            });
+            const verify = await verifyRes.json();
+            if (!verify.valid) throw new Error('Verification failed');
+
+            await fetch('/api/bookings', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                ...finalPayload,
+                paymentStatus: 'paid',
+                bookingStatus: 'confirmed',
+                orderId: response.razorpay_order_id,
+                paymentId: response.razorpay_payment_id,
+              }),
+            });
+
+            router.push('/booking/success');
+          } catch (err) {
+            console.error('Payment verification failed:', err);
+            toast({ variant: 'destructive', title: 'Payment failed', description: 'Verification error' });
+          } finally {
+            setIsProcessing(false);
+          }
+        },
+        modal: {
+          ondismiss: () => setIsProcessing(false),
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      console.error('Payment init error:', err);
+      toast({ variant: 'destructive', title: 'Payment Error', description: 'Unable to initiate payment.' });
+      setIsProcessing(false);
+    }
   };
 
   return (

@@ -18,75 +18,39 @@
  * - 500 Internal Server Error
  */
 import { NextResponse } from 'next/server';
-import { trips as mockTrips } from '@/lib/mock-data';
 import type { Trip } from '@/lib/types';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
 
   try {
-    // --- Database Query Simulation ---
-    // In a real app, this logic would be part of your database query (e.g., a WHERE clause in SQL).
-    let results: Trip[] = mockTrips.filter(trip => trip.status === 'Published');
+    const backendUrl = `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/trips`;
+    const url = new URL(backendUrl);
+    searchParams.forEach((value, key) => url.searchParams.append(key, value));
 
-    // Search by keyword
-    const searchTerm = searchParams.get('q');
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      results = results.filter(trip =>
-        trip.title.toLowerCase().includes(term) ||
-        trip.location.toLowerCase().includes(term) ||
-        (trip.interests && trip.interests.some(interest => interest.toLowerCase().includes(term)))
-      );
-    }
-
-    // Filter by city
-    const city = searchParams.get('city');
-    if (city && city !== 'all') {
-      results = results.filter(trip => trip.city === city);
-    }
-
-    // Filter by category
-    const category = searchParams.get('category');
-    if (category) {
-        results = results.filter(trip => trip.tripType === category);
-    }
-
-    // Filter for featured trips
-    const isFeatured = searchParams.get('isFeatured');
-    if (isFeatured === 'true') {
-        results = results.filter(trip => trip.isFeatured);
-    }
-    
-    // Filter for banner trips
-    const isBanner = searchParams.get('isBanner');
-    if (isBanner === 'true') {
-        results = results.filter(trip => trip.isBannerTrip);
-    }
-
-    // Apply limit
-    const limit = searchParams.get('limit');
-    if (limit) {
-      results = results.slice(0, parseInt(limit, 10));
-    }
-    // --- End of Database Query Simulation ---
-
-    // IMPORTANT: Map to a public-facing data structure to avoid leaking sensitive data.
-    const publicTrips = results.map(trip => ({
-      id: trip.id,
-      slug: trip.slug,
-      title: trip.title,
-      location: trip.location,
-      tripType: trip.tripType,
-      price: trip.price,
-      image: trip.image,
-      imageHint: trip.imageHint
-    }));
-
-    return NextResponse.json(publicTrips);
+    const res = await fetch(url.toString());
+    const data = await res.json();
+    return NextResponse.json(data, { status: res.status });
 
   } catch (error) {
     console.error('Failed to fetch trips:', error);
     return NextResponse.json({ message: 'An error occurred while fetching trips.' }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const backendUrl = `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/trips`;
+    const res = await fetch(backendUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    return NextResponse.json(data, { status: res.status });
+  } catch (error) {
+    console.error('Failed to create trip:', error);
+    return NextResponse.json({ message: 'An error occurred while creating trip.' }, { status: 500 });
   }
 }
