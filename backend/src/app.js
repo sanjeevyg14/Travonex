@@ -20,16 +20,29 @@ import signupRouter from './routes/signup.js';
 import loginRouter from './routes/login.js';
 import paymentsRouter from './routes/payments.js';
 import otpSignupRouter from './routes/otpSignup.js';
+import adminRouter from './routes/admin.js';
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './swagger.js';
 
 const app = express();
 
-// Enable CORS for frontend integration
+// Enable CORS using allowed origins from env
+const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || [];
 app.use(cors({
-    origin: '*', // TODO: Set to your frontend domain in production
-    credentials: true,
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
 }));
 
 app.use(express.json());
+
+// Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // API routes
 app.use('/api/trips', tripsRouter);
@@ -42,6 +55,7 @@ app.use('/api/interests', interestsRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/upload', uploadRouter);
 app.use('/api/payments', paymentsRouter);
+app.use('/api/admin', adminRouter);
 app.use('/api/protected', protectedRouter); // Example: requires auth
 app.use('/api/auth/signup', signupRouter);
 app.use('/api/auth/login', loginRouter);
