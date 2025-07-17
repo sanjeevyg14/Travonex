@@ -72,6 +72,15 @@ The application uses environment variables for configuration, particularly for t
 ### Step 3.4: Backend Environment Variables
 The Express backend in the `backend` folder uses its own `.env` file. Copy `backend/.env.example` to `backend/.env` and fill in your MongoDB URI, Firebase service account credentials, JWT secret, and Razorpay keys.
 
+### Step 3.5: Set `BACKEND_URL`
+The Next.js API routes in `src/app/api` proxy requests to your backend server. Specify its base URL in the same `.env` file created in Step&nbsp;3.3.
+
+```env
+BACKEND_URL=http://localhost:5000
+```
+
+Replace `http://localhost:5000` with the address of your deployed backend when running in production.
+
 ---
 
 ## 4. Running the Application Locally
