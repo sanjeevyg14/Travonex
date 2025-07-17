@@ -121,7 +121,6 @@ router.get('/me/bookings', requireJwt('organizer'), async (req, res) => {
     }
 });
 
-// GET /api/organizers/me/payout-history
 router.get('/me/payout-history', requireJwt('organizer'), async (req, res) => {
     try {
         const payouts = await Payout.find({ organizer: req.user.id })
