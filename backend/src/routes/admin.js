@@ -5,6 +5,7 @@ import Organizer from '../models/Organizer.js';
 import Booking from '../models/Booking.js';
 import Trip from '../models/Trip.js';
 import Payout from '../models/Payout.js';
+import Banner from '../models/Banner.js';
 import { requireJwt } from '../middlewares/jwtAuth.js';
 
 const router = express.Router();
@@ -150,6 +151,60 @@ router.post('/payouts/:id/process', requireJwt('admin'), async (req, res) => {
     res.json(payout);
   } catch (err) {
     res.status(400).json({ message: err.message });
+  }
+});
+
+// --- Banner Management ---
+router.get('/banners', requireJwt('admin'), async (req, res) => {
+  try {
+    const banners = await Banner.find();
+    res.json(banners);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+router.post('/banners', requireJwt('admin'), async (req, res) => {
+  try {
+    const banner = new Banner(req.body);
+    await banner.save();
+    res.status(201).json(banner);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+router.get('/banners/:id', requireJwt('admin'), async (req, res) => {
+  try {
+    const banner = await Banner.findById(req.params.id);
+    if (!banner) return res.status(404).json({ message: 'Banner not found' });
+    res.json(banner);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+router.put('/banners/:id', requireJwt('admin'), async (req, res) => {
+  try {
+    const updated = await Banner.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+    if (!updated) return res.status(404).json({ message: 'Banner not found' });
+    res.json(updated);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+router.delete('/banners/:id', requireJwt('admin'), async (req, res) => {
+  try {
+    const deleted = await Banner.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ message: 'Banner not found' });
+    res.json({ message: 'Banner deleted' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
 
