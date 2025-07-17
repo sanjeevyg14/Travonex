@@ -24,16 +24,55 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { PlusCircle, Edit, Trash2 } from "lucide-react";
-import { homeBanners as mockBanners } from "@/lib/mock-data";
 import type { HomeBanner } from "@/lib/types";
 import Image from "next/image";
 
 export default function AdminBannerManagerPage() {
-  const [banners, setBanners] = React.useState<HomeBanner[]>(mockBanners);
+  const [banners, setBanners] = React.useState<HomeBanner[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
 
-  const handleStatusToggle = (id: string, newStatus: boolean) => {
-    // BACKEND: Call `PUT /api/admin/banners/{id}` with `{ isActive: newStatus }`
-    setBanners(banners.map(b => b.id === id ? { ...b, isActive: newStatus } : b));
+  React.useEffect(() => {
+    const loadBanners = async () => {
+      try {
+        const res = await fetch('/api/admin/banners');
+        const data = await res.json();
+        const normalized = data.map((b: any) => ({
+          id: b._id || b.id,
+          title: b.title,
+          imageUrl: b.imageUrl,
+          linkUrl: b.linkUrl,
+          isActive: b.isActive,
+        }));
+        setBanners(normalized);
+      } catch (err) {
+        console.error('Failed to load banners:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadBanners();
+  }, []);
+
+  const handleStatusToggle = async (id: string, newStatus: boolean) => {
+    try {
+      const res = await fetch(`/api/admin/banners/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: newStatus }),
+      });
+      if (!res.ok) throw new Error('Failed to update banner');
+      const updated = await res.json();
+      const mapped = {
+        id: updated._id || updated.id,
+        title: updated.title,
+        imageUrl: updated.imageUrl,
+        linkUrl: updated.linkUrl,
+        isActive: updated.isActive,
+      };
+      setBanners(banners.map(b => b.id === id ? mapped : b));
+    } catch (err) {
+      console.error(err);
+    }
   };
   
   return (
