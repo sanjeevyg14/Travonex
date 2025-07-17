@@ -47,28 +47,25 @@ export default function HomePage() {
 
 
   React.useEffect(() => {
-    // FRONTEND: Simulate fetching data from the backend.
-    const loadData = () => {
-        // BACKEND: Fetch trips marked for the banner. The API should limit this to 5. `GET /api/trips?isBanner=true`
-        const fetchedBannerTrips = trips.filter(trip => trip.isBannerTrip && trip.status === 'Published');
-        setBannerTrips(fetchedBannerTrips);
-        
-        // BACKEND: This logic should be a single API call: GET /api/trips?isFeatured=true&city={selectedCity}&limit=4
-        // The `isFeatured` flag is set by an Admin in the Admin Panel.
-        const fetchedFeaturedTrips = trips
-            .filter(trip => trip.isFeatured && trip.status === 'Published')
-            .filter(trip => selectedCity === 'all' || trip.city === selectedCity)
-            .slice(0, 4);
-        setFeaturedTrips(fetchedFeaturedTrips);
+    const loadData = async () => {
+        try {
+            const bannerRes = await fetch('/api/trips?isBanner=true&limit=5');
+            const bannerData = await bannerRes.json();
+            setBannerTrips(Array.isArray(bannerData) ? bannerData : []);
 
-        // BACKEND: Fetch active categories from `GET /api/categories?status=Active`
-        const activeCategories = mockCategories.filter(c => c.status === 'Active');
-        setCategories(activeCategories);
+            const featuredRes = await fetch(`/api/trips?isFeatured=true&city=${selectedCity}&limit=4`);
+            const featuredData = await featuredRes.json();
+            setFeaturedTrips(Array.isArray(featuredData) ? featuredData : []);
 
-        setIsLoading(false);
+            const activeCategories = mockCategories.filter(c => c.status === 'Active');
+            setCategories(activeCategories);
+        } catch (err) {
+            console.error('Homepage data load error:', err);
+        } finally {
+            setIsLoading(false);
+        }
     };
-    
-    // Using requestAnimationFrame to ensure the browser has painted the initial skeletons before we do heavy work.
+
     requestAnimationFrame(loadData);
   }, [selectedCity]);
   

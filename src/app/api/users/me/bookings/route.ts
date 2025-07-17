@@ -13,7 +13,6 @@
  */
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { bookings, trips, organizers } from '@/lib/mock-data';
 import type { UserSession } from '@/lib/types';
 
 export async function GET(request: Request) {
@@ -34,20 +33,10 @@ export async function GET(request: Request) {
     }
     // --- End of Authentication ---
 
-    // --- Database Query Simulation ---
-    // Fetch bookings for the specific user and join related trip/organizer data.
-    const userBookings = bookings.filter(b => b.userId === userId).map(booking => {
-      const trip = trips.find(t => t.id === booking.tripId);
-      const organizer = trip ? organizers.find(o => o.id === trip.organizerId) : null;
-      return {
-        ...booking,
-        tripTitle: trip?.title || 'Unknown Trip',
-        organizerName: organizer?.name || 'Unknown Organizer',
-      };
-    });
-    // --- End of Database Query Simulation ---
-
-    return NextResponse.json(userBookings);
+    const backendUrl = `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/bookings/user/${userId}`;
+    const res = await fetch(backendUrl);
+    const data = await res.json();
+    return NextResponse.json(data, { status: res.status });
   } catch (error) {
     console.error('Failed to fetch user bookings:', error);
     return NextResponse.json({ message: 'An error occurred.' }, { status: 500 });
