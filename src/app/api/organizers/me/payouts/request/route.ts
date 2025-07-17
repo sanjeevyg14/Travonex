@@ -1,18 +1,19 @@
 import { NextResponse } from 'next/server';
 
-export async function PATCH(request: Request, { params }: { params: { organizerId: string } }) {
+export async function POST(request: Request) {
   const auth = request.headers.get('Authorization') || '';
-  const backendUrl = `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/admin/organizers/${params.organizerId}/status`;
   try {
+    const body = await request.json();
+    const backendUrl = `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/organizers/me/payouts/request`;
     const res = await fetch(backendUrl, {
-      method: 'PATCH',
+      method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: auth },
-      body: await request.text(),
+      body: JSON.stringify(body),
     });
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
-  } catch (err) {
-    console.error('Failed to update organizer status:', err);
+  } catch (error) {
+    console.error('Failed to request payout:', error);
     return NextResponse.json({ message: 'An error occurred.' }, { status: 500 });
   }
 }
