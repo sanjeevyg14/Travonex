@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const tripSchema = new mongoose.Schema({
     title: String,
+    slug: { type: String, required: true, unique: true },
     description: String,
     city: String,
     category: String,

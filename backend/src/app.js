@@ -20,6 +20,7 @@ import signupRouter from './routes/signup.js';
 import loginRouter from './routes/login.js';
 import paymentsRouter from './routes/payments.js';
 import otpSignupRouter from './routes/otpSignup.js';
+import adminRouter from './routes/admin.js';
 
 const app = express();
 
@@ -42,6 +43,7 @@ app.use('/api/interests', interestsRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/upload', uploadRouter);
 app.use('/api/payments', paymentsRouter);
+app.use('/api/admin', adminRouter);
 app.use('/api/protected', protectedRouter); // Example: requires auth
 app.use('/api/auth/signup', signupRouter);
 app.use('/api/auth/login', loginRouter);
