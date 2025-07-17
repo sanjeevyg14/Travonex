@@ -1,4 +1,5 @@
 import express from 'express';
+import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import Organizer from '../models/Organizer.js';
 import Booking from '../models/Booking.js';
@@ -206,5 +207,6 @@ router.delete('/banners/:id', requireJwt('admin'), async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+
 
 export default router;
