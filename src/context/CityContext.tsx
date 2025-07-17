@@ -1,8 +1,7 @@
 'use client';
 
 import type { City } from '@/lib/types';
-import { cities as mockCities } from '@/lib/mock-data';
-import React, { createContext, useContext, useState, useMemo } from 'react';
+import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
 
 type CityContextType = {
   cities: City[];
@@ -14,9 +13,22 @@ const CityContext = createContext<CityContextType | undefined>(undefined);
 
 export const CityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [selectedCity, setSelectedCity] = useState<string>('all');
-  
-  // In a real app, this would be fetched from an API
-  const cities = useMemo(() => ([{ id: 'all', name: 'All Cities', enabled: true }, ...mockCities.filter(c => c.enabled)]), []);
+  const [cities, setCities] = useState<City[]>([{ id: 'all', name: 'All Cities', enabled: true }]);
+
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        const res = await fetch('/api/cities');
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setCities([{ id: 'all', name: 'All Cities', enabled: true }, ...data.filter((c: City) => c.enabled)]);
+        }
+      } catch (e) {
+        console.error('Failed to load cities', e);
+      }
+    };
+    fetchCities();
+  }, []);
 
   const value = useMemo(() => ({
     cities,
