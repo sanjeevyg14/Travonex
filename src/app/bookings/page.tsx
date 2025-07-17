@@ -14,7 +14,7 @@
  */
 import * as React from "react";
 import { BookingsClient } from "@/components/bookings/BookingsClient";
-import { bookings as mockBookings, trips, organizers } from "@/lib/mock-data";
+import { trips, organizers } from "@/lib/mock-data";
 import { cookies } from "next/headers";
 import type { UserSession } from "@/lib/types";
 
@@ -33,9 +33,9 @@ async function getUserBookings() {
     const userId = session?.id;
     if (!userId) return [];
 
-    // In a real app, this would be a database call.
-    const userBookings = mockBookings.filter(b => b.userId === userId);
-    return userBookings;
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/users/me/bookings`);
+    if (!res.ok) return [];
+    return await res.json();
   } catch {
     return [];
   }

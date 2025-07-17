@@ -3,7 +3,6 @@
 "use client";
 
 import * as React from "react";
-import { users } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -56,27 +55,48 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = React.useState(false);
 
   React.useEffect(() => {
-    // FRONTEND: Fetch the full profile for the logged-in user.
-    // In a real app, this would be `GET /api/users/me`
-    if (sessionUser) {
-        const fullUserProfile = users.find(u => u.id === sessionUser.id);
-        if (fullUserProfile) {
-            setUser(fullUserProfile);
-            setDob(fullUserProfile.dateOfBirth ? new Date(fullUserProfile.dateOfBirth) : undefined);
+    async function fetchProfile() {
+      if (!sessionUser) return;
+      try {
+        const res = await fetch('/api/users/me/profile', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setUser(data);
+          setDob(data.dateOfBirth ? new Date(data.dateOfBirth) : undefined);
         }
+      } catch (err) {
+        console.error('Failed to load profile', err);
+      }
     }
+    fetchProfile();
   }, [sessionUser]);
 
   const handleSaveChanges = async () => {
+    if (!user) return;
     setIsSaving(true);
-    // In a real app, you would send the updated data to the server
-    // BACKEND: PUT /api/users/me
-    await new Promise(resolve => setTimeout(resolve, 300));
-    toast({
-        title: "Profile Updated",
-        description: "Your changes have been saved successfully.",
-    });
-    setIsSaving(false);
+    try {
+      const res = await fetch('/api/users/me/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+        },
+        body: JSON.stringify({ ...user, dateOfBirth: dob }),
+      });
+      if (res.ok) {
+        toast({ title: 'Profile Updated', description: 'Your changes have been saved successfully.' });
+      } else {
+        const err = await res.json();
+        toast({ title: 'Update failed', description: err.message || 'An error occurred.' });
+      }
+    } catch (err) {
+      console.error('Profile update error', err);
+      toast({ title: 'Update failed', description: 'An error occurred.' });
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   if (authLoading || !user) {
