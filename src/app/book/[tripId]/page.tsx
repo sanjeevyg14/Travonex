@@ -21,14 +21,15 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { trips, users } from "@/lib/mock-data";
-import { notFound, useParams, useRouter, useSearchParams } from "next/navigation";
+import { users } from "@/lib/mock-data";
+import type { Trip } from "@/lib/types";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, Trash2, User, Users as UsersIcon, ShieldCheck, Loader2 } from "lucide-react";
+import { Minus, Plus, User, Users as UsersIcon, ShieldCheck, Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
@@ -113,8 +114,24 @@ export default function BookingPage() {
 
   // DEV_COMMENT: Fetch trip and batch data from the backend using tripId and batchId.
   // The backend should validate that the trip is published and the batch is active and has enough slots.
-  const trip = trips.find(t => t.id === params.tripId);
-  const batch = trip?.batches.find(b => b.id === batchId);
+  const [trip, setTrip] = useState<Trip | null>(null);
+  const [batch, setBatch] = useState<any | null>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch(`/api/trips/${params.tripId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setTrip(data);
+        const foundBatch = data.batches?.find((b: any) => b.id === batchId);
+        setBatch(foundBatch || null);
+      } catch (err) {
+        console.error('Trip fetch error:', err);
+      }
+    };
+    load();
+  }, [params.tripId, batchId]);
 
   // DEV_COMMENT: START - State Management for Booking Form
   // Initialize traveler info only after we have the current user's data.
@@ -175,6 +192,10 @@ export default function BookingPage() {
   // DEV_COMMENT: START - Dynamic Fare Calculation
   // The backend MUST re-run this exact calculation logic to ensure price integrity.
   const fareDetails = useMemo(() => {
+    if (!trip || !batch) {
+      return { basePrice: 0, subtotal: 0, couponDiscount: 0, walletDiscount: 0, tax: 0, totalPayable: 0 };
+    }
+
     const basePrice = batch.priceOverride ?? trip.price;
     const subtotal = basePrice * travelers.length;
     
