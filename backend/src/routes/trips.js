@@ -52,6 +52,7 @@ router.get('/', async (req, res) => {
  *       200:
  *         description: A trip
  */
+
 // Get a trip by slug
 router.get('/slug/:slug', async (req, res) => {
     try {
@@ -103,6 +104,7 @@ router.get('/slug/:slug', async (req, res) => {
  *       200:
  *         description: Deleted
  */
+
 // Get a single trip by ID
 router.get('/:id', async (req, res) => {
     try {

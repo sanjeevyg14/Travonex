@@ -24,6 +24,7 @@ import adminRouter from './routes/admin.js';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger.js';
 
+
 const app = express();
 
 // Enable CORS using allowed origins from env
