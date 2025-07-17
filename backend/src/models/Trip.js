@@ -21,6 +21,7 @@ const tripSchema = new mongoose.Schema({
   },
   adminNotes: String,
   createdAt: { type: Date, default: Date.now },
+
     title: String,
     slug: { type: String, required: true, unique: true },
     description: String,
@@ -32,6 +33,7 @@ const tripSchema = new mongoose.Schema({
     endDate: Date,
     images: [String],
     createdAt: { type: Date, default: Date.now },
+
 });
 
 export default mongoose.model('Trip', tripSchema);

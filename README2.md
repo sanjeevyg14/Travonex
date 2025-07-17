@@ -65,7 +65,7 @@ The application uses environment variables for configuration, particularly for t
     ```
 
 3.  **Important**: Replace `YOUR_GOOGLE_API_KEY_HERE` with your actual API key from Google AI Studio, and set `YOUR_RAZORPAY_KEY_ID` to the key from your Razorpay dashboard. `CORS_ORIGIN` should be the URL of your frontend (e.g., `http://localhost:3000`).
-    ```
+
 
 3.  **Important**: Replace `YOUR_GOOGLE_API_KEY_HERE` with your actual API key from Google AI Studio, and set `YOUR_RAZORPAY_KEY_ID` to the key from your Razorpay dashboard.
 
