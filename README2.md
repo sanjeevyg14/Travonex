@@ -54,15 +54,16 @@ This will install all the necessary packages defined in `package.json`, includin
 The application uses environment variables for configuration, particularly for the AI features powered by Genkit.
 
 1.  Create a new file named `.env` in the root of the project.
-2.  Add the following line to the `.env` file:
+2.  Add the following lines to the `.env` file:
 
     ```env
     # This key is required for Genkit to communicate with Google AI services.
     # Get your key from Google AI Studio: https://aistudio.google.com/app/apikey
     GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY_HERE
+    NEXT_PUBLIC_RAZORPAY_KEY_ID=YOUR_RAZORPAY_KEY_ID
     ```
 
-3.  **Important**: Replace `YOUR_GOOGLE_API_KEY_HERE` with your actual API key from Google AI Studio. The AI-powered "Destination Suggestion" feature will not work without it.
+3.  **Important**: Replace `YOUR_GOOGLE_API_KEY_HERE` with your actual API key from Google AI Studio, and set `YOUR_RAZORPAY_KEY_ID` to the key from your Razorpay dashboard.
 
 ### Step 3.4: Backend Environment Variables
 The Express backend in the `backend` folder uses its own `.env` file. Copy `backend/.env.example` to `backend/.env` and fill in your MongoDB URI, Firebase service account credentials, JWT secret, and Razorpay keys.
