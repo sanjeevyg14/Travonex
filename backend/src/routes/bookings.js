@@ -13,6 +13,16 @@ router.get('/', async (req, res) => {
     }
 });
 
+// Get bookings for a specific user
+router.get('/user/:userId', async (req, res) => {
+    try {
+        const bookings = await Booking.find({ user: req.params.userId }).populate('user trip');
+        res.json(bookings);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Create a new booking
 router.post('/', async (req, res) => {
     try {
@@ -21,6 +31,43 @@ router.post('/', async (req, res) => {
         res.status(201).json(booking);
     } catch (err) {
         res.status(400).json({ error: err.message });
+    }
+});
+
+// Get a booking by ID
+router.get('/:id', async (req, res) => {
+    try {
+        const booking = await Booking.findById(req.params.id).populate('user trip');
+        if (!booking) return res.status(404).json({ error: 'Booking not found' });
+        res.json(booking);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Update a booking by ID
+router.put('/:id', async (req, res) => {
+    try {
+        const updated = await Booking.findByIdAndUpdate(
+            req.params.id,
+            req.body,
+            { new: true, runValidators: true }
+        ).populate('user trip');
+        if (!updated) return res.status(404).json({ error: 'Booking not found' });
+        res.json(updated);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// Delete a booking by ID
+router.delete('/:id', async (req, res) => {
+    try {
+        const deleted = await Booking.findByIdAndDelete(req.params.id);
+        if (!deleted) return res.status(404).json({ error: 'Booking not found' });
+        res.json({ message: 'Booking deleted' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
