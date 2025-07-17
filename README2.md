@@ -50,6 +50,8 @@ npm install
 ```
 This will install all the necessary packages defined in `package.json`, including Next.js, React, Tailwind, and Genkit.
 
+**Important:** Run `npm install` before executing commands like `npm run lint` to avoid errors such as `next: command not found`. If you work with the Express backend, run `cd backend && npm install` in that folder before using its scripts.
+
 ### Step 3.3: Configure Environment Variables
 The application uses environment variables for configuration, particularly for the AI features powered by Genkit.
 
