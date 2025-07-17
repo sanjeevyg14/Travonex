@@ -56,6 +56,11 @@ export default function HomePage() {
             const featuredRes = await fetch(`/api/trips?isFeatured=true&city=${selectedCity}&limit=4`);
             const featuredData = await featuredRes.json();
             setFeaturedTrips(Array.isArray(featuredData) ? featuredData : []);
+            setBannerTrips(bannerData);
+
+            const featuredRes = await fetch(`/api/trips?isFeatured=true&city=${selectedCity}&limit=4`);
+            const featuredData = await featuredRes.json();
+            setFeaturedTrips(featuredData);
 
             const activeCategories = mockCategories.filter(c => c.status === 'Active');
             setCategories(activeCategories);
