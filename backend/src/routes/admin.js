@@ -6,6 +6,8 @@ import Booking from '../models/Booking.js';
 import Trip from '../models/Trip.js';
 import Payout from '../models/Payout.js';
 import Banner from '../models/Banner.js';
+import Category from '../models/Category.js';
+import Interest from '../models/Interest.js';
 import { requireJwt } from '../middlewares/jwtAuth.js';
 import { sendEmail } from '../utils/email.js';
 
@@ -232,6 +234,73 @@ router.patch('/trips/:id', requireJwt('admin'), async (req, res) => {
     }
 
     res.json(trip);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// --- Category & Interest Management ---
+router.get('/categories', requireJwt('admin'), async (req, res) => {
+  try {
+    const categories = await Category.find();
+    res.json(categories);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+router.post('/categories', requireJwt('admin'), async (req, res) => {
+  try {
+    const category = new Category(req.body);
+    await category.save();
+    res.status(201).json(category);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+router.put('/categories/:id', requireJwt('admin'), async (req, res) => {
+  try {
+    const category = await Category.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+    if (!category) return res.status(404).json({ message: 'Category not found' });
+    res.json(category);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+router.get('/interests', requireJwt('admin'), async (req, res) => {
+  try {
+    const interests = await Interest.find();
+    res.json(interests);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+router.post('/interests', requireJwt('admin'), async (req, res) => {
+  try {
+    const interest = new Interest(req.body);
+    await interest.save();
+    res.status(201).json(interest);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+router.put('/interests/:id', requireJwt('admin'), async (req, res) => {
+  try {
+    const interest = await Interest.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+    if (!interest) return res.status(404).json({ message: 'Interest not found' });
+    res.json(interest);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }

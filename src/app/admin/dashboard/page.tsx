@@ -1,7 +1,6 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 import { Badge } from "@/components/ui/badge";
@@ -12,41 +11,15 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Users, ShieldCheck, Briefcase, AlertTriangle, ListChecks, Banknote, CheckCircle, Loader2 } from "lucide-react";
 import { ClientOnlyDate } from '@/components/common/ClientOnlyDate';
 import type { UserSession } from '@/lib/types';
-import { users as mockUsers, organizers as mockOrganizers, trips as mockTrips, bookings as mockBookings, payouts as mockPayouts, disputes as mockDisputes } from '@/lib/mock-data';
+import { cookies } from 'next/headers';
 
 // Server-side data fetching function
-async function getDashboardData() {
-  // These would be efficient aggregate queries in a real database.
-  const totalRevenue = mockBookings.filter(b => b.status !== 'Cancelled').reduce((acc, b) => acc + b.amount, 0);
-  const pendingKycs = mockOrganizers.filter(o => o.kycStatus === 'Pending' || o.vendorAgreementStatus === 'Submitted').length;
-  const pendingTrips = mockTrips.filter(t => t.status === 'Pending Approval').length;
-  const pendingPayouts = mockPayouts.filter(p => p.status === 'Pending').length;
-  const pendingDisputes = mockDisputes.filter(d => d.status === 'Open').length;
-
-  const recentBookings = mockBookings.slice(0, 5).map(booking => {
-      const user = mockUsers.find(u => u.id === booking.userId);
-      const trip = mockTrips.find(t => t.id === booking.tripId);
-      return {
-          id: booking.id,
-          userName: user?.name,
-          tripTitle: trip?.title,
-          bookingDate: booking.bookingDate,
-          amount: booking.amount,
-      }
+async function getDashboardData(token: string) {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/admin/dashboard`, {
+    headers: { Authorization: `Bearer ${token}` }
   });
-
-  return {
-      totalRevenue,
-      totalUsers: mockUsers.length,
-      totalOrganizers: mockOrganizers.length,
-      totalBookings: mockBookings.length,
-      pendingKycs,
-      pendingTrips,
-      pendingPayouts,
-      pendingDisputes,
-      totalPending: pendingKycs + pendingTrips + pendingPayouts + pendingDisputes,
-      recentBookings,
-  };
+  if (!res.ok) throw new Error('Failed to load dashboard');
+  return res.json();
 }
 
 
@@ -70,7 +43,7 @@ export default async function AdminDashboardPage() {
         redirect('/auth/login');
     }
 
-    const dashboardData = await getDashboardData();
+    const dashboardData = await getDashboardData(session.token);
 
     return (
         <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">

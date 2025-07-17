@@ -4,7 +4,8 @@
 import { useState, useEffect, Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { TripCard, TripCardSkeleton } from "@/components/common/TripCard";
-import { trips, categories as mockCategories, interests as mockInterests, organizers as mockOrganizers } from "@/lib/mock-data";
+// Fallback mock trips are kept for development if the backend is unavailable
+import { trips as mockTrips } from "@/lib/mock-data";
 import type { Trip } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Frown, X, SlidersHorizontal } from "lucide-react";
@@ -23,21 +24,49 @@ import { Slider } from "@/components/ui/slider";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
-const maxPrice = Math.max(...trips.map(t => t.price), 100000);
+const fallbackTrips = mockTrips.filter(t => t.status === 'Published');
+const initialMaxPrice = Math.max(...fallbackTrips.map(t => t.price), 100000);
 
 // DEV_COMMENT: To avoid duplicating the filter UI for desktop and mobile,
 // it's extracted into its own component. The filter data (categories, interests)
 // is sourced from the same mock data that organizers use, ensuring consistency.
+interface FilterProps {
+  priceRange: number[];
+  setPriceRange: (val: number[]) => void;
+  dateRange: { from?: Date; to?: Date };
+  setDateRange: (val: { from?: Date; to?: Date }) => void;
+  selectedDuration: string;
+  setSelectedDuration: (val: string) => void;
+  selectedCategories: string[];
+  handleCategoryChange: (cat: string, checked: boolean) => void;
+  categories: { id: string; name: string; status?: string }[];
+  selectedInterests: string[];
+  handleInterestChange: (int: string, checked: boolean) => void;
+  interests: { id: string; name: string; status?: string }[];
+  selectedOrganizer: string;
+  setSelectedOrganizer: (val: string) => void;
+  organizers: { id: string; name: string }[];
+  selectedRating: number;
+  setSelectedRating: (val: number) => void;
+  maxPrice: number;
+  activeFilterCount: number;
+  resetFilters: () => void;
+}
+
 function FilterSidebarContent({
   priceRange, setPriceRange,
   dateRange, setDateRange,
   selectedDuration, setSelectedDuration,
   selectedCategories, handleCategoryChange,
+  categories,
   selectedInterests, handleInterestChange,
+  interests,
   selectedOrganizer, setSelectedOrganizer,
+  organizers,
   selectedRating, setSelectedRating,
+  maxPrice,
   activeFilterCount, resetFilters
-}: any) {
+}: FilterProps) {
   
   const handleRatingChange = (value: string) => {
     setSelectedRating(parseInt(value, 10));
@@ -98,7 +127,7 @@ function FilterSidebarContent({
                     <SelectTrigger><SelectValue placeholder="All Organizers"/></SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All Organizers</SelectItem>
-                        {mockOrganizers.map(o => <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>)}
+                        {organizers.map(o => <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>)}
                     </SelectContent>
                 </Select>
             </div>
@@ -115,7 +144,7 @@ function FilterSidebarContent({
             <div>
                 <h3 className="font-semibold mb-3 text-sm">Category</h3>
                 <div className="space-y-2">
-                    {mockCategories.filter(c=>c.status==='Active').map(cat => (
+                    {categories.filter(c=>c.status==='Active').map(cat => (
                         <div key={cat.id} className="flex items-center space-x-2">
                             <Checkbox id={`cat-${cat.id}`} onCheckedChange={(checked) => handleCategoryChange(cat.name, !!checked)} checked={selectedCategories.includes(cat.name)} />
                             <Label htmlFor={`cat-${cat.id}`} className="font-normal">{cat.name}</Label>
@@ -127,7 +156,7 @@ function FilterSidebarContent({
             <div>
                 <h3 className="font-semibold mb-3 text-sm">Interests</h3>
                 <div className="space-y-2">
-                    {mockInterests.filter(i=>i.status==='Active').map(interest => (
+                    {interests.filter(i=>i.status==='Active').map(interest => (
                         <div key={interest.id} className="flex items-center space-x-2">
                             <Checkbox id={`int-${interest.id}`} onCheckedChange={(checked) => handleInterestChange(interest.name, !!checked)} checked={selectedInterests.includes(interest.name)} />
                             <Label htmlFor={`int-${interest.id}`} className="font-normal">{interest.name}</Label>
@@ -148,6 +177,13 @@ function SearchPageComponent() {
   const [sortKey, setSortKey] = useState("relevance");
   const [isLoading, setIsLoading] = useState(true);
 
+  const [maxPrice, setMaxPrice] = useState(initialMaxPrice);
+
+  const [trips, setTrips] = useState<Trip[]>(fallbackTrips);
+  const [categories, setCategories] = useState<{id:string; name:string; status?:string}[]>([]);
+  const [interests, setInterests] = useState<{id:string; name:string; status?:string}[]>([]);
+  const [organizers, setOrganizers] = useState<{id:string; name:string}[]>([]);
+
   // Filter states
   const [selectedCategories, setSelectedCategories] = useState<string[]>(searchParams.get('category')?.split(',').filter(Boolean) || []);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
@@ -162,6 +198,35 @@ function SearchPageComponent() {
     const total = trip.reviews.reduce((acc, review) => acc + review.rating, 0);
     return total / trip.reviews.length;
   };
+
+  useEffect(() => {
+    const loadInitial = async () => {
+      try {
+        const [tripRes, catRes, intRes, orgRes] = await Promise.all([
+          fetch('/api/trips'),
+          fetch('/api/categories'),
+          fetch('/api/interests'),
+          fetch('/api/organizers'),
+        ]);
+        const [tripData, catData, intData, orgData] = await Promise.all([
+          tripRes.json(),
+          catRes.json(),
+          intRes.json(),
+          orgRes.json(),
+        ]);
+        if (Array.isArray(tripData)) {
+          setTrips(tripData);
+          setMaxPrice(Math.max(...tripData.map((t: any) => t.price), initialMaxPrice));
+        }
+        if (Array.isArray(catData)) setCategories(catData);
+        if (Array.isArray(intData)) setInterests(intData);
+        if (Array.isArray(orgData)) setOrganizers(orgData);
+      } catch (err) {
+        console.error('Failed to load search data', err);
+      }
+    };
+    loadInitial();
+  }, []);
 
   useEffect(() => {
     setSearchTerm(searchParams.get('q') || "");
@@ -237,7 +302,7 @@ function SearchPageComponent() {
     }, 500); // Simulate network delay
 
     return () => clearTimeout(timer);
-  }, [searchTerm, selectedCategories, selectedInterests, priceRange, dateRange, selectedDuration, sortKey, selectedOrganizer, selectedRating]);
+  }, [trips, searchTerm, selectedCategories, selectedInterests, priceRange, dateRange, selectedDuration, sortKey, selectedOrganizer, selectedRating]);
 
   const handleCategoryChange = (category: string, checked: boolean) => {
     setSelectedCategories(prev => checked ? [...prev, category] : prev.filter(c => c !== category));
@@ -268,8 +333,19 @@ function SearchPageComponent() {
   ), [selectedCategories, selectedInterests, dateRange, priceRange, selectedDuration, selectedOrganizer, selectedRating]);
 
   const filterProps = {
-    priceRange, setPriceRange, dateRange, setDateRange, selectedDuration, setSelectedDuration, selectedCategories, handleCategoryChange,
-    selectedInterests, handleInterestChange, selectedOrganizer, setSelectedOrganizer, selectedRating, setSelectedRating, activeFilterCount, resetFilters
+    priceRange, setPriceRange,
+    dateRange, setDateRange,
+    selectedDuration, setSelectedDuration,
+    selectedCategories, handleCategoryChange,
+    categories,
+    selectedInterests, handleInterestChange,
+    interests,
+    selectedOrganizer, setSelectedOrganizer,
+    organizers,
+    selectedRating, setSelectedRating,
+    maxPrice,
+    activeFilterCount,
+    resetFilters,
   };
 
   return (

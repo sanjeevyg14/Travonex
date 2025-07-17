@@ -31,7 +31,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import type { Category, Interest } from "@/lib/types";
-import { categories as mockCategories, interests as mockInterests } from "@/lib/mock-data";
+import { useAuth } from "@/context/AuthContext";
 
 
 const FormSchema = z.object({
@@ -49,14 +49,38 @@ type DialogState = {
 
 export default function AdminCategoriesPage() {
   const { toast } = useToast();
-  const [categories, setCategories] = React.useState<Category[]>(mockCategories);
-  const [interests, setInterests] = React.useState<Interest[]>(mockInterests);
+  const { token } = useAuth();
+  const [categories, setCategories] = React.useState<Category[]>([]);
+  const [interests, setInterests] = React.useState<Interest[]>([]);
   
   const [dialogState, setDialogState] = React.useState<DialogState>({ isOpen: false, type: 'Category', data: null });
 
   const form = useForm<FormData>({
     resolver: zodResolver(FormSchema),
   });
+
+  React.useEffect(() => {
+    if (!token) return;
+    const loadData = async () => {
+      try {
+        const [catRes, intRes] = await Promise.all([
+          fetch('/api/admin/categories', { headers: { Authorization: `Bearer ${token}` } }),
+          fetch('/api/admin/interests', { headers: { Authorization: `Bearer ${token}` } }),
+        ]);
+        if (catRes.ok) {
+          const catData = await catRes.json();
+          setCategories(Array.isArray(catData) ? catData : []);
+        }
+        if (intRes.ok) {
+          const intData = await intRes.json();
+          setInterests(Array.isArray(intData) ? intData : []);
+        }
+      } catch (err) {
+        console.error('Failed to load categories or interests', err);
+      }
+    };
+    loadData();
+  }, [token]);
   
   const handleOpenDialog = (type: 'Category' | 'Interest', data: Category | Interest | null = null) => {
     form.reset({
@@ -70,29 +94,30 @@ export default function AdminCategoriesPage() {
     setDialogState({ isOpen: false, type: 'Category', data: null });
   }
 
-  const onSubmit = (formData: FormData) => {
+  const onSubmit = async (formData: FormData) => {
     const { type, data } = dialogState;
-    const list = type === 'Category' ? categories : interests;
-    const setList = type === 'Category' ? setCategories : setInterests;
-    
-    const newItemData = {
-        id: data?.id || `${type.toLowerCase()}_${Date.now()}`,
-        name: formData.name,
-        // DEV_COMMENT: The icon for categories is hardcoded for simplicity in this mock. A real implementation would need an icon picker.
-        ...(type === 'Category' && { icon: 'Activity' }),
-        status: formData.status ? 'Active' : 'Inactive',
-    } as Category | Interest;
+    const endpoint = type === 'Category' ? '/api/admin/categories' : '/api/admin/interests';
+    const method = data ? 'PUT' : 'POST';
+    const url = data ? `${endpoint}/${data.id}` : endpoint;
 
-    if (data) {
-        // Edit mode
-        setList(list.map(item => item.id === data.id ? newItemData : item));
-        toast({ title: `${type} Updated` });
-    } else {
-        // Create mode
-        setList([...list, newItemData]);
-        toast({ title: `${type} Created` });
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ name: formData.name, status: formData.status ? 'Active' : 'Inactive' })
+      });
+      if (!res.ok) throw new Error('Request failed');
+      const item = await res.json();
+      if (type === 'Category') {
+        setCategories(prev => data ? prev.map(c => c.id === item.id ? item : c) : [...prev, item]);
+      } else {
+        setInterests(prev => data ? prev.map(i => i.id === item.id ? item : i) : [...prev, item]);
+      }
+      toast({ title: `${type} ${data ? 'Updated' : 'Created'}` });
+    } catch (err) {
+      console.error('Failed to save taxonomy', err);
+      toast({ title: 'Error', description: 'Failed to save item' });
     }
-    
     handleCloseDialog();
   };
 

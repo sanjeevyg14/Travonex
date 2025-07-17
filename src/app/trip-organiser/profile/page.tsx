@@ -37,7 +37,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { UploadCloud, CheckCircle, AlertCircle, FileText, Download, ShieldCheck, ShieldAlert, ShieldX, Eye, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { organizers as mockOrganizers } from "@/lib/mock-data";
 import type { Organizer, OrganizerDocument } from "@/lib/types";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import Image from 'next/image';
@@ -168,7 +167,7 @@ function ProfilePageSkeleton() {
 
 export default function OrganizerProfilePage() {
   const { toast } = useToast();
-  const { user: sessionUser, loading: authLoading } = useAuth();
+  const { user: sessionUser, loading: authLoading, token } = useAuth();
   const [organizer, setOrganizer] = React.useState<Organizer | null>(null);
   const [isDocPreviewOpen, setIsDocPreviewOpen] = React.useState(false);
   const [selectedDoc, setSelectedDoc] = React.useState<OrganizerDocument | null>(null);
@@ -180,37 +179,57 @@ export default function OrganizerProfilePage() {
 
   // Fetch organizer data based on the authenticated user session.
   React.useEffect(() => {
-      if (sessionUser) {
-          const currentOrganizer = mockOrganizers.find(o => o.id === sessionUser.id);
-          if (currentOrganizer) {
-              setOrganizer(currentOrganizer);
-              form.reset({
-                  name: currentOrganizer.name || '',
-                  organizerType: currentOrganizer.organizerType || undefined,
-                  phone: currentOrganizer.phone || '',
-                  address: currentOrganizer.address || '',
-                  website: currentOrganizer.website || '',
-                  experience: currentOrganizer.experience || 0,
-                  specializations: currentOrganizer.specializations || [],
-                  authorizedSignatoryName: currentOrganizer.authorizedSignatoryName || '',
-                  authorizedSignatoryId: currentOrganizer.authorizedSignatoryId || '',
-                  emergencyContact: currentOrganizer.emergencyContact || '',
-              });
-          }
+    if (!token) return;
+    const loadProfile = async () => {
+      try {
+        const res = await fetch('/api/organizers/me/profile', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setOrganizer(data);
+          form.reset({
+            name: data.name || '',
+            organizerType: data.organizerType || undefined,
+            phone: data.phone || '',
+            address: data.address || '',
+            website: data.website || '',
+            experience: data.experience || 0,
+            specializations: data.specializations || [],
+            authorizedSignatoryName: data.authorizedSignatoryName || '',
+            authorizedSignatoryId: data.authorizedSignatoryId || '',
+            emergencyContact: data.emergencyContact || '',
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load organizer profile', err);
       }
-  }, [sessionUser, form]);
+    };
+    loadProfile();
+  }, [token, form]);
 
   const handleProfileSave = async (data: ProfileFormData) => {
-    if (!organizer) return;
+    if (!token) return;
     form.formState.isSubmitting = true;
-    console.log("Profile Save Payload:", data);
-    await new Promise(resolve => setTimeout(resolve, 300));
-    setOrganizer(prev => prev ? { ...prev, ...data, isProfileComplete: true } : null);
-    toast({
-      title: "Profile Saved!",
-      description: "Your business information has been updated. The Vendor Agreement will be sent to your registered email.",
-    });
-    form.formState.isSubmitting = false;
+    try {
+      const res = await fetch('/api/organizers/me/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(data)
+      });
+      const updated = await res.json();
+      if (!res.ok) throw new Error(updated.message || 'Failed to save');
+      setOrganizer(updated);
+      toast({
+        title: 'Profile Saved!',
+        description: 'Your business information has been updated. The Vendor Agreement will be sent to your registered email.',
+      });
+    } catch (err) {
+      console.error('Failed to save profile', err);
+      toast({ title: 'Error', description: 'Failed to save profile' });
+    } finally {
+      form.formState.isSubmitting = false;
+    }
   };
   
   const handleDocumentUpload = (docType: string) => {
