@@ -61,6 +61,10 @@ The application uses environment variables for configuration, particularly for t
     # Get your key from Google AI Studio: https://aistudio.google.com/app/apikey
     GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY_HERE
     NEXT_PUBLIC_RAZORPAY_KEY_ID=YOUR_RAZORPAY_KEY_ID
+    CORS_ORIGIN=http://localhost:3000
+    ```
+
+3.  **Important**: Replace `YOUR_GOOGLE_API_KEY_HERE` with your actual API key from Google AI Studio, and set `YOUR_RAZORPAY_KEY_ID` to the key from your Razorpay dashboard. `CORS_ORIGIN` should be the URL of your frontend (e.g., `http://localhost:3000`).
     ```
 
 3.  **Important**: Replace `YOUR_GOOGLE_API_KEY_HERE` with your actual API key from Google AI Studio, and set `YOUR_RAZORPAY_KEY_ID` to the key from your Razorpay dashboard.

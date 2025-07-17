@@ -7,6 +7,7 @@ import Trip from '../models/Trip.js';
 import Payout from '../models/Payout.js';
 import Banner from '../models/Banner.js';
 import { requireJwt } from '../middlewares/jwtAuth.js';
+import { sendEmail } from '../utils/email.js';
 
 const router = express.Router();
 
@@ -208,5 +209,32 @@ router.delete('/banners/:id', requireJwt('admin'), async (req, res) => {
   }
 });
 
+// --- Trip Management ---
+router.patch('/trips/:id', requireJwt('admin'), async (req, res) => {
+  try {
+    const trip = await Trip.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    ).populate('organizer');
+    if (!trip) return res.status(404).json({ message: 'Trip not found' });
+
+    if (req.body.status === 'Rejected' && trip.organizer?.email) {
+      try {
+        await sendEmail(
+          trip.organizer.email,
+          'Trip Rejected',
+          `Your trip "${trip.title}" was rejected. Reason: ${req.body.adminNotes || 'N/A'}`
+        );
+      } catch (e) {
+        console.error('Failed to send rejection email:', e);
+      }
+    }
+
+    res.json(trip);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
 
 export default router;
