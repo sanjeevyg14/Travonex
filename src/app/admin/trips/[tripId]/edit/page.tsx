@@ -15,6 +15,9 @@ import { TripForm } from "@/components/trips/TripForm";
 import { trips } from "@/lib/mock-data";
 import { notFound } from "next/navigation";
 
+// Disable static generation to avoid type mismatch for params during build
+export const dynamic = "force-dynamic";
+
 export default function AdminEditTripPage({ params }: { params: { tripId: string } }) {
     // BACKEND: Fetch trip data using a secure admin endpoint
     const trip = trips.find(t => t.id === params.tripId);
