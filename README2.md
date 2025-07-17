@@ -70,7 +70,7 @@ The application uses environment variables for configuration, particularly for t
 3.  **Important**: Replace `YOUR_GOOGLE_API_KEY_HERE` with your actual API key from Google AI Studio, and set `YOUR_RAZORPAY_KEY_ID` to the key from your Razorpay dashboard.
 
 ### Step 3.4: Backend Environment Variables
-The Express backend in the `backend` folder uses its own `.env` file. Copy `backend/.env.example` to `backend/.env` and fill in your MongoDB URI, Firebase service account credentials, JWT secret, and Razorpay keys.
+The Express backend in the `backend` folder uses its own `.env` file. Copy `backend/.env.example` to `.env` inside that folder and fill in your MongoDB URI, Firebase service account credentials, JWT secret, and Razorpay keys.
 
 ---
 
