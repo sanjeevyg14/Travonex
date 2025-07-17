@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
-import { auth } from "@/firebase/client";
+import { useToast } from "@/hooks/use-toast";
+import { startOtpVerification, verifyOtp } from "@/utils/otp";
+import { saveUserRole } from "@/utils/user";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -12,8 +13,9 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/ui/card";
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import OtpInput from "@/components/ui/OtpInput";
 
 export default function SignupPage() {
   const { toast } = useToast();
@@ -22,31 +24,23 @@ export default function SignupPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("USER");
-  const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(null);
+  const [verificationId, setVerificationId] = useState<string | null>(null);
 
   const sendOtp = async () => {
     try {
-      const verifier = new RecaptchaVerifier(auth, "recaptcha-container", { size: "invisible" });
-      const result = await signInWithPhoneNumber(auth, phone, verifier);
-      setConfirmation(result);
+      const id = await startOtpVerification(phone);
+      setVerificationId(id);
       toast({ title: "OTP sent" });
     } catch (err: any) {
       toast({ variant: "destructive", title: "Failed to send OTP", description: err.message });
     }
   };
 
-  const verifyOtp = async () => {
-    if (!confirmation) return;
+  const handleVerify = async () => {
+    if (!verificationId) return;
     try {
-      const cred = await confirmation.confirm(otp);
-      const idToken = await cred.user.getIdToken();
-      const res = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken, name, email, role }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Signup failed");
+      const { idToken } = await verifyOtp(verificationId, otp);
+      await saveUserRole(idToken, role, { name, email });
       toast({ title: "Signup successful" });
     } catch (err: any) {
       toast({ variant: "destructive", title: "Verification failed", description: err.message });
@@ -62,23 +56,24 @@ export default function SignupPage() {
         <Input placeholder="Full Name" value={name} onChange={(e) => setName(e.target.value)} />
         <Input placeholder="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         <Input placeholder="Phone Number" value={phone} onChange={(e) => setPhone(e.target.value)} />
-        <Select defaultValue={role} onValueChange={(val) => setRole(val)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select role" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="USER">User</SelectItem>
-            <SelectItem value="ORGANIZER">Trip Organizer</SelectItem>
-          </SelectContent>
-        </Select>
-        {confirmation && (
-          <Input placeholder="OTP" value={otp} onChange={(e) => setOtp(e.target.value)} />
+        <RadioGroup value={role} onValueChange={setRole} className="flex gap-4">
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="USER" id="role-user" />
+            <Label htmlFor="role-user">User</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="ORGANIZER" id="role-organizer" />
+            <Label htmlFor="role-organizer">Trip Organizer</Label>
+          </div>
+        </RadioGroup>
+        {verificationId && (
+          <OtpInput value={otp} onChange={setOtp} />
         )}
         <div id="recaptcha-container"></div>
       </CardContent>
       <CardFooter>
-        {confirmation ? (
-          <Button className="w-full" onClick={verifyOtp}>Verify &amp; Sign Up</Button>
+        {verificationId ? (
+          <Button className="w-full" onClick={handleVerify}>Verify &amp; Sign Up</Button>
         ) : (
           <Button className="w-full" onClick={sendOtp}>Send OTP</Button>
         )}

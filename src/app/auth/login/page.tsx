@@ -17,8 +17,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Mail, Phone } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
-import { auth } from "@/firebase/client";
+import { startOtpVerification, verifyOtp } from "@/utils/otp";
+import OtpInput from "@/components/ui/OtpInput";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from 'next/navigation';
@@ -42,7 +42,7 @@ export default function LoginPage() {
   // State for credentials
   const [password, setPassword] = React.useState("");
   const [otp, setOtp] = React.useState("");
-  const [confirmation, setConfirmation] = React.useState<ConfirmationResult | null>(null);
+  const [verificationId, setVerificationId] = React.useState<string | null>(null);
   
   const [isLoading, setIsLoading] = React.useState(false);
   const [isResending, setIsResending] = React.useState(false);
@@ -75,9 +75,8 @@ export default function LoginPage() {
     }
 
     try {
-      const verifier = new RecaptchaVerifier(auth, "recaptcha-container", { size: "invisible" });
-      const result = await signInWithPhoneNumber(auth, currentIdentifier, verifier);
-      setConfirmation(result);
+      const id = await startOtpVerification(currentIdentifier);
+      setVerificationId(id);
       toast({ title: "OTP Sent", description: `A verification code has been sent to ${currentIdentifier}.` });
       setStep(2);
       startResendTimer();
@@ -95,9 +94,9 @@ export default function LoginPage() {
     try {
       let credentialToSend = password;
       if (!isEmailMode) {
-        if (!confirmation) throw new Error('Please request OTP first');
-        const cred = await confirmation.confirm(otp);
-        credentialToSend = await cred.user.getIdToken();
+        if (!verificationId) throw new Error('Please request OTP first');
+        const { idToken } = await verifyOtp(verificationId, otp);
+        credentialToSend = idToken;
       }
       const { redirectPath } = await login(identifier, credentialToSend);
       toast({ title: "Login Successful", description: "Redirecting..." });
@@ -120,9 +119,8 @@ export default function LoginPage() {
     setIsResending(true);
     try {
       if (!identifier) throw new Error('Enter your phone number first');
-      const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
-      const result = await signInWithPhoneNumber(auth, identifier, verifier);
-      setConfirmation(result);
+      const id = await startOtpVerification(identifier);
+      setVerificationId(id);
       toast({ title: 'OTP Resent' });
       startResendTimer();
     } catch (err: any) {
@@ -211,15 +209,7 @@ export default function LoginPage() {
           {step === 2 && !isEmailMode && (
             <div className="grid gap-2">
                 <Label htmlFor="otp">One-Time Password (OTP)</Label>
-                <Input
-                    id="otp"
-                    placeholder="_ _ _ _ _ _"
-                    required
-                    maxLength={6}
-                    pattern="[0-9]*"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                />
+                <OtpInput value={otp} onChange={setOtp} />
             </div>
           )}
         </CardContent>
