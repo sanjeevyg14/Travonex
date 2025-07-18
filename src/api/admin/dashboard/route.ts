@@ -1,7 +1,5 @@
 
 import { NextResponse } from 'next/server';
-import { adminUsers, users as mockUsers, organizers as mockOrganizers, trips as mockTrips, bookings as mockBookings, payouts as mockPayouts, disputes as mockDisputes } from '@/lib/mock-data';
-import type { UserSession } from '@/lib/types';
 
 export async function GET(request: Request) {
   // --- Authentication & Authorization ---
@@ -31,42 +29,16 @@ export async function GET(request: Request) {
   // --- End Check ---
 
   try {
-    // --- Database Query Simulation ---
-    // These would be efficient aggregate queries in a real database.
-    const totalRevenue = mockBookings.filter(b => b.status !== 'Cancelled').reduce((acc, b) => acc + b.amount, 0);
-    const pendingKycs = mockOrganizers.filter(o => o.kycStatus === 'Pending' || o.vendorAgreementStatus === 'Submitted').length;
-    const pendingTrips = mockTrips.filter(t => t.status === 'Pending Approval').length;
-    const pendingPayouts = mockPayouts.filter(p => p.status === 'Pending').length;
-    const pendingDisputes = mockDisputes.filter(d => d.status === 'Open').length;
-
-    const recentBookings = mockBookings.slice(0, 5).map(booking => {
-        const user = mockUsers.find(u => u.id === booking.userId);
-        const trip = mockTrips.find(t => t.id === booking.tripId);
-        return {
-            id: booking.id,
-            userName: user?.name,
-            tripTitle: trip?.title,
-            bookingDate: booking.bookingDate,
-            amount: booking.amount,
-        }
-    });
-
-    const dashboardData = {
-        totalRevenue,
-        totalUsers: mockUsers.length,
-        totalOrganizers: mockOrganizers.length,
-        totalBookings: mockBookings.length,
-        pendingKycs,
-        pendingTrips,
-        pendingPayouts,
-        pendingDisputes,
-        totalPending: pendingKycs + pendingTrips + pendingPayouts + pendingDisputes,
-        recentBookings,
-    };
-
-    return NextResponse.json(dashboardData);
+    const backendUrl = `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/admin/dashboard`;
+    const res = await fetch(backendUrl, { headers: { Authorization: authHeader } });
+    const data = await res.json();
+    if (!res.ok) {
+      console.error('Backend error fetching admin dashboard:', data);
+      return NextResponse.json(data, { status: res.status });
+    }
+    return NextResponse.json(data, { status: res.status });
   } catch (error) {
     console.error('Failed to fetch admin dashboard data:', error);
-    return NextResponse.json({ message: 'An error occurred.' }, { status: 500 });
+    return NextResponse.json({ message: 'Failed to fetch admin dashboard data' }, { status: 500 });
   }
 }
