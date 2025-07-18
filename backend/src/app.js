@@ -15,6 +15,7 @@ import categoriesRouter from './routes/categories.js';
 import interestsRouter from './routes/interests.js';
 import authRouter from './routes/auth.js';
 import uploadRouter from './routes/upload.js';
+import reviewsRouter from './routes/reviews.js';
 import protectedRouter from './routes/protected.js';
 import signupRouter from './routes/signup.js';
 import loginRouter from './routes/login.js';
@@ -50,6 +51,7 @@ app.use('/api/trips', tripsRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/organizers', organizersRouter);
 app.use('/api/bookings', bookingsRouter);
+app.use('/api/reviews', reviewsRouter);
 app.use('/api/cities', citiesRouter);
 app.use('/api/categories', categoriesRouter);
 app.use('/api/interests', interestsRouter);
@@ -78,9 +80,13 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-// Connect to MongoDB and start server
-connectDB().then(() => {
+// Connect to MongoDB and start server when not in test environment
+if (process.env.NODE_ENV !== 'test') {
+  connectDB().then(() => {
     app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
+      console.log(`Server running on port ${PORT}`);
     });
-});
+  });
+}
+
+export default app;
