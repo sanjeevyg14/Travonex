@@ -32,9 +32,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { bookings as mockBookings, trips, users } from "@/lib/mock-data";
+// Data now fetched from the backend
 import { cn } from "@/lib/utils";
-import type { Booking, Trip } from "@/lib/types";
+import type { Booking, Trip, User } from "@/lib/types";
 import { Users } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import Link from "next/link";
@@ -160,7 +160,27 @@ function BookingDetailsDialog({ booking, trip }: { booking: Booking; trip: Trip 
 
 
 export default function AdminBookingsPage() {
-  const [bookings, setBookings] = React.useState<Booking[]>(mockBookings);
+  const [bookings, setBookings] = React.useState<Booking[]>([]);
+  const [trips, setTrips] = React.useState<Trip[]>([]);
+  const [users, setUsers] = React.useState<User[]>([]);
+
+  React.useEffect(() => {
+    fetch('/api/admin/bookings')
+      .then(res => res.json())
+      .then(setBookings)
+      .catch(() => setBookings([]));
+  }, []);
+
+  React.useEffect(() => {
+    fetch('/api/trips')
+      .then(res => res.json())
+      .then(setTrips)
+      .catch(() => setTrips([]));
+    fetch('/api/admin/users')
+      .then(res => res.json())
+      .then(setUsers)
+      .catch(() => setUsers([]));
+  }, []);
   
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">

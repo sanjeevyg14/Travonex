@@ -22,17 +22,25 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Download, SlidersHorizontal } from "lucide-react";
-import { auditLogs as mockAuditLogs } from "@/lib/mock-data";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/datepicker";
 import { ClientOnlyDate } from "@/components/common/ClientOnlyDate";
+import type { AuditLog } from "@/lib/types";
 
 
 export default function AdminAuditLogPage() {
     const [dateRange, setDateRange] = React.useState<{from?: Date, to?: Date}>({});
+    const [auditLogs, setAuditLogs] = React.useState<AuditLog[]>([]);
+
+    React.useEffect(() => {
+        fetch('/api/admin/audit-logs')
+            .then(res => res.json())
+            .then(setAuditLogs)
+            .catch(() => setAuditLogs([]));
+    }, []);
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
@@ -97,7 +105,7 @@ export default function AdminAuditLogPage() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {mockAuditLogs.map(log => (
+                    {auditLogs.map(log => (
                         <TableRow key={log.id}>
                             <TableCell>{log.adminName} ({log.adminId})</TableCell>
                             <TableCell><Badge variant="secondary">{log.action}</Badge></TableCell>

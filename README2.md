@@ -153,9 +153,8 @@ Here's a brief overview of the key directories:
     *   `src/components/ai/`: Components related to AI features.
 *   `src/ai/`: Genkit configuration and AI flows.
     *   `src/ai/flows/`: The core logic for AI agents (e.g., `destination-suggestion.ts`).
-*   `src/lib/`: Utility functions, type definitions, and mock data.
+*   `src/lib/`: Utility functions and type definitions.
     *   `src/lib/types.ts`: **Crucial file**. Contains all TypeScript type definitions for the application's data models.
-    *   `src/lib/mock-data.ts`: Placeholder data used to power the UI before backend integration.
 *   `src/context/`: React Context providers for managing global state (e.g., Auth, City).
 
 ---
@@ -239,4 +238,4 @@ A: You need to create a `.env` file in the project root and add your Google AI S
 A: The project uses `https://placehold.co` for mock images. In a production environment, you would integrate a file storage service (like Firebase Storage, AWS S3, or Cloudinary) for image uploads and replace the placeholder URLs with the URLs from your storage service.
 
 **Q: Where is the data stored?**
-A: Currently, all data is mocked and lives in `src/lib/mock-data.ts`. The next step is to replace these mock data imports with API calls to your backend database.
+A: All data is served by the Express backend and accessed through the Next.js `/api` routes. The old `src/lib/mock-data.ts` file is no longer used.
