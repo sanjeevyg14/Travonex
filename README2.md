@@ -215,7 +215,19 @@ The frontend is built to call these (or similar) API endpoints. You will find `/
 
 ---
 
-## 7. Frequently Asked Questions (FAQs)
+## 7. Running Tests
+
+Use the root `test` script to run the backend test suite:
+
+```bash
+npm test
+```
+
+This command runs `npm --prefix backend test`, executing the tests located in the `backend` directory.
+
+---
+
+## 8. Frequently Asked Questions (FAQs)
 
 **Q: Why do I need to run two servers?**
 A: The main application is a Next.js app (`localhost:3000`). The AI features are powered by Google's Genkit, which runs as a separate local server (`localhost:4000`). The Next.js app makes API calls to the Genkit server for things like destination suggestions.
