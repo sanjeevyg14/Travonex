@@ -21,7 +21,7 @@ import type { UserSession } from "@/lib/types";
 // DEV_COMMENT: Data fetching now happens on the server before the page is rendered.
 // It securely reads the session cookie to identify the user.
 async function getUserBookings() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const sessionCookie = cookieStore.get('userSession');
 
   if (!sessionCookie) {

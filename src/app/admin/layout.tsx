@@ -276,7 +276,7 @@ export default function AdminLayout({
   // If we've passed the checks, the user is authorized and we can render the layout.
   return (
     <SidebarProvider defaultOpen={false}>
-      <AdminSidebar key={user.id} />
+      <AdminSidebar key={user!.id} />
       <SidebarInset>
         <Header homePath="/admin/dashboard" />
         {children}

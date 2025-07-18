@@ -124,7 +124,8 @@ const StatusBanner = ({ status }: { status: Organizer['kycStatus'] }) => {
         Pending: { icon: ShieldAlert, text: 'Your profile and documents are under review. Our team will get back to you shortly.', color: 'bg-amber-100 border-amber-500 text-amber-800' },
         Rejected: { icon: ShieldX, text: 'Your verification was unsuccessful. Please review the feedback on your documents and resubmit.', color: 'bg-red-100 border-red-500 text-red-800' },
         Verified: { icon: ShieldCheck, text: 'Congratulations! Your profile is verified. You can now create and manage trip listings.', color: 'bg-green-100 border-green-500 text-green-800' },
-        Incomplete: { icon: ShieldAlert, text: 'Your profile is incomplete. Please fill out all required information and upload documents to submit for verification.', color: 'bg-blue-100 border-blue-500 text-blue-800'}
+        Incomplete: { icon: ShieldAlert, text: 'Your profile is incomplete. Please fill out all required information and upload documents to submit for verification.', color: 'bg-blue-100 border-blue-500 text-blue-800'},
+        Suspended: { icon: ShieldAlert, text: 'Your account is suspended. Contact support for assistance.', color: 'bg-red-100 border-red-500 text-red-800' }
     };
     const banner = banners[status];
     if (!banner) return null;
