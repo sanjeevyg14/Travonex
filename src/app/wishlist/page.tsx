@@ -14,7 +14,6 @@
 
 import * as React from "react";
 import { TripCard, TripCardSkeleton } from "@/components/common/TripCard";
-import { trips } from "@/lib/mock-data";
 import type { Trip } from "@/lib/types";
 
 // Mock wishlisted trips by filtering from the main data source
@@ -25,14 +24,15 @@ export default function WishlistPage() {
     const [isLoading, setIsLoading] = React.useState(true);
 
     React.useEffect(() => {
-        // FRONTEND: Simulate fetching wishlist data
-        // BACKEND: GET /api/users/me/wishlist
         setIsLoading(true);
-        setTimeout(() => {
-            const fetchedTrips = trips.filter(trip => wishlistedTripIds.includes(trip.id));
-            setWishlistedTrips(fetchedTrips);
-            setIsLoading(false);
-        }, 300);
+        fetch('/api/trips')
+            .then(res => res.json())
+            .then((data: Trip[]) => {
+                const fetched = data.filter(trip => wishlistedTripIds.includes(trip.id));
+                setWishlistedTrips(fetched);
+            })
+            .catch(() => setWishlistedTrips([]))
+            .finally(() => setIsLoading(false));
     }, []);
 
   return (
