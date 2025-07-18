@@ -4,6 +4,8 @@ import Booking from '../models/Booking.js';
 import Trip from '../models/Trip.js';
 import User from '../models/User.js';
 import Payout from '../models/Payout.js';
+import Review from '../models/Review.js';
+import Notification from '../models/Notification.js';
 import { requireJwt } from '../middlewares/jwtAuth.js';
 
 const router = express.Router();
@@ -136,12 +138,18 @@ router.get('/me/payout-history', requireJwt('organizer'), async (req, res) => {
 // GET /api/organizers/me/eligible-payouts
 router.get('/me/eligible-payouts', requireJwt('organizer'), async (req, res) => {
     try {
-        // Placeholder logic: return confirmed bookings as eligible
         const trips = await Trip.find({ organizer: req.user.id }).select('_id title');
         const tripIds = trips.map(t => t._id);
-        const bookings = await Booking.find({ trip: { $in: tripIds }, status: 'confirmed' })
-            .populate('trip', 'title price');
-        res.json(bookings);
+        const paidTrips = await Payout.find({ organizer: req.user.id }).distinct('trip');
+
+        const eligibleBookings = await Booking.find({
+            trip: { $in: tripIds.filter(id => !paidTrips.includes(id.toString())) },
+            status: 'confirmed'
+        })
+            .populate('trip', 'title price')
+            .populate('user', 'name email');
+
+        res.json(eligibleBookings);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -171,7 +179,12 @@ router.post('/me/payouts/request', requireJwt('organizer'), async (req, res) => 
 // GET /api/organizers/me/reviews
 router.get('/me/reviews', requireJwt('organizer'), async (req, res) => {
     try {
-        res.json([]); // Reviews not implemented in schema
+        const trips = await Trip.find({ organizer: req.user.id }).select('_id');
+        const tripIds = trips.map(t => t._id);
+        const reviews = await Review.find({ trip: { $in: tripIds } })
+            .populate('user', 'name')
+            .populate('trip', 'title');
+        res.json(reviews);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -180,7 +193,9 @@ router.get('/me/reviews', requireJwt('organizer'), async (req, res) => {
 // GET /api/organizers/me/notifications
 router.get('/me/notifications', requireJwt('organizer'), async (req, res) => {
     try {
-        res.json([]); // Placeholder for future notifications
+        const notifications = await Notification.find({ organizer: req.user.id })
+            .sort({ createdAt: -1 });
+        res.json(notifications);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
