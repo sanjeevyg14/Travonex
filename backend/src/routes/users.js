@@ -2,9 +2,25 @@ import express from 'express';
 import User from '../models/User.js';
 import { requireJwt } from '../middlewares/jwtAuth.js';
 
+/**
+ * @swagger
+ * tags:
+ *   name: Users
+ *   description: User management
+ */
+
 const router = express.Router();
 
-// Get all users
+/**
+ * @swagger
+ * /api/users:
+ *   get:
+ *     summary: List users
+ *     tags: [Users]
+ *   post:
+ *     summary: Create user
+ *     tags: [Users]
+ */
 router.get('/', async (req, res) => {
     try {
         const users = await User.find();
@@ -25,7 +41,16 @@ router.post('/', async (req, res) => {
     }
 });
 
-// GET /api/users/me/profile
+/**
+ * @swagger
+ * /api/users/me/profile:
+ *   get:
+ *     summary: Get current user profile
+ *     tags: [Users]
+ *   put:
+ *     summary: Update current user profile
+ *     tags: [Users]
+ */
 router.get('/me/profile', requireJwt('user'), async (req, res) => {
     try {
         const user = await User.findById(req.user.id).select('-password');
