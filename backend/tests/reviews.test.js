@@ -7,6 +7,8 @@ import assert from 'assert';
 let mongoServer;
 
 before(async () => {
+  // Ensure no active connections before starting a new in-memory server
+  await mongoose.disconnect();
   mongoServer = await MongoMemoryServer.create();
   const uri = mongoServer.getUri();
   await mongoose.connect(uri, { dbName: 'travonex-test' });
