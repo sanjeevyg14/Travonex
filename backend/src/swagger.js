@@ -23,7 +23,8 @@ export default function generateSwaggerSpec(app, mappings = []) {
         version: '1.0.0'
       }
     },
-    apis: ['src/routes/*.js']
+    // Resolve absolute path so docs work regardless of CWD
+    apis: [new URL('./routes/*.js', import.meta.url).pathname]
   };
 
   const spec = swaggerJsdoc(options);
@@ -76,6 +77,14 @@ export default function generateSwaggerSpec(app, mappings = []) {
       });
     });
   }
+
+  // Merge duplicate paths that may include trailing slashes
+  const deduped = {};
+  for (const [path, ops] of Object.entries(spec.paths)) {
+    const key = path !== '/' && path.endsWith('/') ? path.slice(0, -1) : path;
+    deduped[key] = { ...(deduped[key] || {}), ...ops };
+  }
+  spec.paths = deduped;
 
   return spec;
 }
