@@ -108,7 +108,7 @@ export default function AdminRolesPage() {
 
     const handleRoleSelect = (role: Role) => {
         setSelectedRole(role);
-        setPermissions(role.permissions || {});
+        setPermissions((role.permissions ?? {}) as Record<string, string[]>);
     };
 
     const handlePermissionChange = (module: string, permission: string, checked: boolean) => {

@@ -383,8 +383,8 @@ export default function AdminUsersPage() {
     if (!selectedUser) return;
     
     // Simulate updating the user list
-    setUsers(users.map(u => 
-        u.id === selectedUser.id ? { ...u, ...data, interests: data.interests?.split(',').map(s => s.trim()) } : u
+    setUsers(users.map(u =>
+        u.id === selectedUser.id ? ({ ...u, ...data, interests: data.interests?.split(',').map(s => s.trim()) } as User) : u
     ));
     
     // BACKEND: Add a log to the audit trail.

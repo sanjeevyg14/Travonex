@@ -67,6 +67,16 @@ function FilterSidebarContent({
   maxPrice,
   activeFilterCount, resetFilters
 }: FilterProps) {
+
+  function handleFromDate(date?: Date) {
+    setDateRange({ ...dateRange, from: date });
+  }
+
+  function handleToDate(date?: Date) {
+    setDateRange({ ...dateRange, to: date });
+  }
+
+
   
   const handleRatingChange = (value: string) => {
     setSelectedRating(parseInt(value, 10));
@@ -103,8 +113,8 @@ function FilterSidebarContent({
             <div>
                 <h3 className="font-semibold mb-3 text-sm">Dates</h3>
                 <div className="space-y-2">
-                    <DatePicker date={dateRange.from} setDate={(date) => setDateRange((prev: any) => ({...prev, from: date}))} placeholder="Start date"/>
-                    <DatePicker date={dateRange.to} setDate={(date) => setDateRange((prev: any) => ({...prev, to: date}))} placeholder="End date" />
+                    <DatePicker date={dateRange.from} setDate={handleFromDate} placeholder="Start date"/>
+                    <DatePicker date={dateRange.to} setDate={handleToDate} placeholder="End date" />
                 </div>
             </div>
              {/* Trip Duration Filter */}
@@ -192,6 +202,7 @@ function SearchPageComponent() {
   const [selectedDuration, setSelectedDuration] = useState('all');
   const [selectedOrganizer, setSelectedOrganizer] = useState('all');
   const [selectedRating, setSelectedRating] = useState(0);
+
 
   const getAverageRating = (trip: Trip) => {
     if (!trip.reviews || trip.reviews.length === 0) return 0;

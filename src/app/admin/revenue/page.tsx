@@ -70,6 +70,7 @@ export default function AdminRevenuePage() {
   }
 
   const { totalRevenue, totalCommission, totalPayouts, pendingPayoutsValue, organizerRevenue, topTrips } = data;
+  const pendingRequests = organizerRevenue.filter((o: { pendingPayouts: number }) => o.pendingPayouts > 0).length;
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
@@ -148,7 +149,7 @@ export default function AdminRevenuePage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">₹{pendingPayoutsValue.toLocaleString('en-IN')}</div>
-            <p className="text-xs text-muted-foreground">Across {pendingPayouts.length} requests</p>
+            <p className="text-xs text-muted-foreground">Across {pendingRequests} requests</p>
           </CardContent>
         </Card>
       </div>
@@ -186,7 +187,7 @@ export default function AdminRevenuePage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {topTrips.map(trip => (
+                        {topTrips.map((trip: { id: string; title: string; grossRevenue: number }) => (
                             <TableRow key={trip.id}>
                                 <TableCell className="font-medium">{trip.title}</TableCell>
                                 <TableCell className="text-right font-mono">₹{trip.grossRevenue.toLocaleString('en-IN')}</TableCell>
@@ -216,7 +217,7 @@ export default function AdminRevenuePage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {organizerRevenue.map(org => (
+                        {organizerRevenue.map((org: { id: string; name: string; totalRevenue: number; commissionEarned: number; payoutsProcessed: number; pendingPayouts: number; lastPayoutDate: string | null }) => (
                             <TableRow key={org.id}>
                                 <TableCell className="font-medium">{org.name}</TableCell>
                                 <TableCell className="text-right font-mono">₹{org.totalRevenue.toLocaleString('en-IN')}</TableCell>
@@ -224,10 +225,10 @@ export default function AdminRevenuePage() {
                                 <TableCell className="text-right font-mono">₹{org.payoutsProcessed.toLocaleString('en-IN')}</TableCell>
                                 <TableCell className="text-right font-mono">₹{org.pendingPayouts.toLocaleString('en-IN')}</TableCell>
                                 <TableCell>
-                                    {org.lastPayoutDate === 'N/A' ? (
-                                        'N/A'
-                                    ) : (
+                                    {org.lastPayoutDate ? (
                                         <ClientOnlyDate dateString={org.lastPayoutDate} type="date" />
+                                    ) : (
+                                        'N/A'
                                     )}
                                 </TableCell>
                             </TableRow>

@@ -17,7 +17,7 @@ import type { UserSession } from '@/lib/types';
 
 export async function GET(request: Request) {
   // --- Authentication & Authorization ---
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const sessionCookie = cookieStore.get('userSession');
 
   if (!sessionCookie) {
