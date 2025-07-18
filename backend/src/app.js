@@ -26,7 +26,7 @@ import paymentsRouter from './routes/payments.js';
 import otpSignupRouter from './routes/otpSignup.js';
 import adminRouter from './routes/admin.js';
 import swaggerUi from 'swagger-ui-express';
-import swaggerSpec from './swagger.js';
+import generateSwaggerSpec from './swagger.js';
 
 
 const app = express();
@@ -45,9 +45,6 @@ app.use(cors({
 }));
 
 app.use(express.json());
-
-// Swagger UI
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // API routes
 app.use('/api/trips', tripsRouter);
@@ -73,6 +70,9 @@ app.use('/api/auth/otp-signup', otpSignupRouter);
 app.get('/', (req, res) => {
     res.send('Travonex Backend API');
 });
+
+const swaggerSpec = generateSwaggerSpec(app);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // 404 handler
 app.use((req, res, next) => {
