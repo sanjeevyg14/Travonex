@@ -4,6 +4,9 @@ export const saveUserRole = async (idToken: string, role: string, info: Record<s
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ idToken, role, ...info })
   });
-  if (!res.ok) throw new Error('Failed to save user');
-  return res.json();
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((data as any).message || 'Failed to save user');
+  }
+  return data;
 };
