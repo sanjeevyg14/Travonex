@@ -44,6 +44,7 @@ router.post('/', async (req, res) => {
                 name,
                 email,
                 phone,
+                role: 'organizer',
                 kycStatus: 'Incomplete',
                 vendorAgreementStatus: 'Not Submitted',
             });
@@ -53,6 +54,7 @@ router.post('/', async (req, res) => {
                 name,
                 email,
                 phone,
+                role: 'user',
                 referralCode: generateReferralCode(),
             });
             await user.save();

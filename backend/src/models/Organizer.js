@@ -5,6 +5,7 @@ const organizerSchema = new mongoose.Schema({
     name: String,
     email: String,
     phone: String,
+    role: { type: String, default: 'organizer' },
     password: String,
     logo: String,
     address: String,

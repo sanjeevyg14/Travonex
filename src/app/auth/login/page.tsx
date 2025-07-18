@@ -98,7 +98,7 @@ export default function LoginPage() {
         const { idToken } = await verifyOtp(verificationId, otp);
         credentialToSend = idToken;
       }
-      const { redirectPath } = await login(identifier, credentialToSend);
+      const { redirectPath } = await login(identifier, credentialToSend, loginMode);
       toast({ title: "Login Successful", description: "Redirecting..." });
       // DEV_COMMENT: Using window.location.href for a full-page reload is the most reliable way
       // to ensure the browser has processed the new session cookie before making the next request.
