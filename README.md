@@ -15,3 +15,8 @@ Travonex is a multi-faceted travel platform designed to connect adventurous trav
 To get started, take a look at the main application entry point: `src/app/page.tsx`.
 
 For detailed setup instructions, developer notes, and a backend API guide, please refer to **`README2.md`**.
+
+## Environment Setup
+
+Create a `.env` file in the project root with your frontend variables. Copy `backend/.env.example` to `backend/.env` and fill in the database and API keys. Replace placeholder image URLs and mocked data with real services when moving to production.
+
