@@ -5,7 +5,6 @@ import { useState, useEffect, Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { TripCard, TripCardSkeleton } from "@/components/common/TripCard";
 // Fallback mock trips are kept for development if the backend is unavailable
-import { trips as mockTrips } from "@/lib/mock-data";
 import type { Trip } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Frown, X, SlidersHorizontal } from "lucide-react";
@@ -24,8 +23,7 @@ import { Slider } from "@/components/ui/slider";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
-const fallbackTrips = mockTrips.filter(t => t.status === 'Published');
-const initialMaxPrice = Math.max(...fallbackTrips.map(t => t.price), 100000);
+const initialMaxPrice = 100000;
 
 // DEV_COMMENT: To avoid duplicating the filter UI for desktop and mobile,
 // it's extracted into its own component. The filter data (categories, interests)
@@ -183,13 +181,12 @@ function FilterSidebarContent({
 function SearchPageComponent() {
   const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || "");
-  const [sortedTrips, setSortedTrips] = useState<Trip[]>([]);
   const [sortKey, setSortKey] = useState("relevance");
   const [isLoading, setIsLoading] = useState(true);
 
   const [maxPrice, setMaxPrice] = useState(initialMaxPrice);
 
-  const [trips, setTrips] = useState<Trip[]>(fallbackTrips);
+  const [trips, setTrips] = useState<Trip[]>([]);
   const [categories, setCategories] = useState<{id:string; name:string; status?:string}[]>([]);
   const [interests, setInterests] = useState<{id:string; name:string; status?:string}[]>([]);
   const [organizers, setOrganizers] = useState<{id:string; name:string}[]>([]);
@@ -204,31 +201,20 @@ function SearchPageComponent() {
   const [selectedRating, setSelectedRating] = useState(0);
 
 
-  const getAverageRating = (trip: Trip) => {
-    if (!trip.reviews || trip.reviews.length === 0) return 0;
-    const total = trip.reviews.reduce((acc, review) => acc + review.rating, 0);
-    return total / trip.reviews.length;
-  };
 
   useEffect(() => {
     const loadInitial = async () => {
       try {
-        const [tripRes, catRes, intRes, orgRes] = await Promise.all([
-          fetch('/api/trips'),
+        const [catRes, intRes, orgRes] = await Promise.all([
           fetch('/api/categories'),
           fetch('/api/interests'),
           fetch('/api/organizers'),
         ]);
-        const [tripData, catData, intData, orgData] = await Promise.all([
-          tripRes.json(),
+        const [catData, intData, orgData] = await Promise.all([
           catRes.json(),
           intRes.json(),
           orgRes.json(),
         ]);
-        if (Array.isArray(tripData)) {
-          setTrips(tripData);
-          setMaxPrice(Math.max(...tripData.map((t: any) => t.price), initialMaxPrice));
-        }
         if (Array.isArray(catData)) setCategories(catData);
         if (Array.isArray(intData)) setInterests(intData);
         if (Array.isArray(orgData)) setOrganizers(orgData);
@@ -243,77 +229,55 @@ function SearchPageComponent() {
     setSearchTerm(searchParams.get('q') || "");
   }, [searchParams]);
 
-  useEffect(() => {
-    setIsLoading(true);
-    // BACKEND: This entire filtering logic should be handled by a backend API endpoint
-    // that accepts these filter parameters. e.g., GET /api/trips?q=...&category=...&price_min=...
-    const timer = setTimeout(() => {
-        let results = trips
-        .filter(trip => trip.status === 'Published')
-        // Search term filter
-        .filter(trip => {
-            const term = searchTerm.toLowerCase();
-            if (!term) return true;
-            return (
-            trip.title.toLowerCase().includes(term) ||
-            trip.location.toLowerCase().includes(term) ||
-            (trip.interests && trip.interests.some(interest => interest.toLowerCase().includes(term)))
-            );
-        })
-        // Category filter
-        .filter(trip => selectedCategories.length === 0 || selectedCategories.includes(trip.tripType))
-        // Interest filter
-        .filter(trip => selectedInterests.length === 0 || (trip.interests && trip.interests.some(i => selectedInterests.includes(i))))
-        // Price range filter
-        .filter(trip => trip.price >= priceRange[0] && trip.price <= priceRange[1])
-        // Date range filter
-        .filter(trip => {
-            if (!dateRange.from && !dateRange.to) return true;
-            return trip.batches.some(batch => {
-                const startDate = new Date(batch.startDate);
-                const endDate = new Date(batch.endDate);
-                if(dateRange.from && dateRange.to) return startDate <= dateRange.to && endDate >= dateRange.from;
-                if(dateRange.from) return endDate >= dateRange.from;
-                if(dateRange.to) return startDate <= dateRange.to;
-                return false;
-            });
-        })
-        // Duration filter
-        .filter(trip => {
-            if (selectedDuration === 'all') return true;
-            const durationDays = parseInt(trip.duration.split(' ')[0]); // simplified assumption
-            if (selectedDuration === 'short') return durationDays <= 3;
-            if (selectedDuration === 'weekend') return durationDays > 3 && durationDays <= 5;
-            if (selectedDuration === 'long') return durationDays > 5;
-            return true;
-        })
-        // Organizer filter
-        .filter(trip => selectedOrganizer === 'all' || trip.organizerId === selectedOrganizer)
-        // Rating filter
-        .filter(trip => getAverageRating(trip) >= selectedRating);
-        
-        // BACKEND: Sorting should also be done on the backend via query parameters.
-        let sorted = [...results];
-        switch (sortKey) {
-            case 'price-asc':
-                sorted.sort((a, b) => a.price - b.price);
-                break;
-            case 'price-desc':
-                sorted.sort((a, b) => b.price - a.price);
-                break;
-            case 'newest':
-                sorted.sort((a,b) => new Date(b.batches[0]?.startDate || 0).getTime() - new Date(a.batches[0]?.startDate || 0).getTime());
-                break;
-            case 'relevance':
-            default:
-                break;
-        }
-        setSortedTrips(sorted);
-        setIsLoading(false);
-    }, 500); // Simulate network delay
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
-    return () => clearTimeout(timer);
-  }, [trips, searchTerm, selectedCategories, selectedInterests, priceRange, dateRange, selectedDuration, sortKey, selectedOrganizer, selectedRating]);
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, selectedCategories, selectedInterests, priceRange, dateRange, selectedDuration, sortKey, selectedOrganizer, selectedRating]);
+
+  useEffect(() => {
+    const fetchTrips = async () => {
+      setIsLoading(true);
+      try {
+        const params = new URLSearchParams();
+        if (searchTerm) params.set('q', searchTerm);
+        if (selectedCategories.length) params.set('category', selectedCategories.join(','));
+        if (selectedInterests.length) params.set('interest', selectedInterests.join(','));
+        if (priceRange[0] > 0) params.set('priceMin', String(priceRange[0]));
+        if (priceRange[1] < maxPrice) params.set('priceMax', String(priceRange[1]));
+        if (dateRange.from) params.set('from', dateRange.from.toISOString());
+        if (dateRange.to) params.set('to', dateRange.to.toISOString());
+        if (selectedDuration !== 'all') params.set('duration', selectedDuration);
+        if (selectedOrganizer !== 'all') params.set('organizer', selectedOrganizer);
+        if (selectedRating > 0) params.set('rating', String(selectedRating));
+        params.set('sort', sortKey);
+        params.set('page', String(page));
+        params.set('limit', '9');
+
+        const res = await fetch(`/api/trips?${params.toString()}`);
+        const data = await res.json();
+
+        const tripsData = Array.isArray(data) ? data : [];
+        if (page === 1) {
+          setTrips(tripsData);
+          if (tripsData.length) {
+            setMaxPrice(Math.max(...tripsData.map(t => t.price), initialMaxPrice));
+            setPriceRange([0, Math.max(...tripsData.map(t => t.price), initialMaxPrice)]);
+          }
+        } else {
+          setTrips(prev => [...prev, ...tripsData]);
+        }
+        setHasMore(tripsData.length > 0);
+      } catch (err) {
+        console.error('Failed to fetch trips', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTrips();
+  }, [page, searchTerm, selectedCategories, selectedInterests, priceRange, dateRange, selectedDuration, sortKey, selectedOrganizer, selectedRating]);
 
   const handleCategoryChange = (category: string, checked: boolean) => {
     setSelectedCategories(prev => checked ? [...prev, category] : prev.filter(c => c !== category));
@@ -380,7 +344,7 @@ function SearchPageComponent() {
         <div className="lg:col-span-3">
             <div className="flex flex-col md:flex-row gap-4 mb-6 items-center">
               <p className="text-sm font-medium text-muted-foreground flex-grow">
-                {isLoading ? 'Searching...' : `Showing ${sortedTrips.length} trips`}
+                {isLoading && page === 1 ? 'Searching...' : `Showing ${trips.length} trips`}
               </p>
                {/* Mobile Filter Button */}
               <div className="lg:hidden w-full">
@@ -412,22 +376,24 @@ function SearchPageComponent() {
               </Select>
             </div>
           
-            {isLoading ? (
+            {isLoading && page === 1 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                     {Array.from({ length: 6 }).map((_, i) => <TripCardSkeleton key={i} />)}
                 </div>
-            ) : sortedTrips.length > 0 ? (
+            ) : trips.length > 0 ? (
                 <>
                     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                        {sortedTrips.map(trip => (
+                        {trips.map(trip => (
                             <TripCard key={trip.id} trip={trip} />
                         ))}
                     </div>
-                     {/* BACKEND: Pagination logic should be handled here, fetching the next page of results from the API. */}
-                     <div className="flex justify-center mt-8">
-                        <Button variant="outline">Previous</Button>
-                        <Button variant="outline" className="ml-2">Next</Button>
-                    </div>
+                     {hasMore && (
+                      <div className="flex justify-center mt-8">
+                        <Button variant="outline" onClick={() => setPage(p => p + 1)} disabled={isLoading}>
+                          {isLoading && page > 1 ? 'Loading...' : 'Load More'}
+                        </Button>
+                      </div>
+                     )}
                 </>
             ) : (
                 <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm py-16">
