@@ -16,23 +16,31 @@ import * as React from "react";
 import { TripCard, TripCardSkeleton } from "@/components/common/TripCard";
 import type { Trip } from "@/lib/types";
 
-// Mock wishlisted trips by filtering from the main data source
-const wishlistedTripIds = ['1', '3', '6'];
-
 export default function WishlistPage() {
     const [wishlistedTrips, setWishlistedTrips] = React.useState<Trip[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
 
     React.useEffect(() => {
-        setIsLoading(true);
-        fetch('/api/trips')
-            .then(res => res.json())
-            .then((data: Trip[]) => {
-                const fetched = data.filter(trip => wishlistedTripIds.includes(trip.id));
-                setWishlistedTrips(fetched);
-            })
-            .catch(() => setWishlistedTrips([]))
-            .finally(() => setIsLoading(false));
+        async function fetchWishlist() {
+            setIsLoading(true);
+            try {
+                const res = await fetch('/api/users/me/wishlist', {
+                    headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` },
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    // BACKEND: Expected to return an array of Trip objects
+                    setWishlistedTrips(Array.isArray(data) ? data : data.trips || []);
+                } else {
+                    setWishlistedTrips([]);
+                }
+            } catch {
+                setWishlistedTrips([]);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+        fetchWishlist();
     }, []);
 
   return (
