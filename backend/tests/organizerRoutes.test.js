@@ -25,7 +25,14 @@ before(async () => {
   const organizer = await Organizer.create({ name: 'Org', email: 'org@example.com', password: 'pass' });
   const user = await User.create({ name: 'User', email: 'user@example.com', password: 'pass' });
   const trip = await Trip.create({ title: 'Trip1', slug: 'trip1', organizer: organizer._id, price: 100 });
-  await Booking.create({ user: user._id, trip: trip._id, status: 'confirmed' });
+  await Booking.create({
+    user: user._id,
+    trip: trip._id,
+    status: 'confirmed',
+    travelers: [
+      { name: 'User', email: 'user@example.com', phone: '123', emergencyName: 'Em', emergencyPhone: '456' }
+    ]
+  });
   await Review.create({ user: user._id, trip: trip._id, rating: 5, comment: 'Great' });
   await Notification.create({ organizer: organizer._id, title: 'Test', message: 'Hello' });
 
