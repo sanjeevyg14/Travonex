@@ -61,6 +61,17 @@ router.get('/me/profile', requireJwt('user'), async (req, res) => {
     }
 });
 
+// GET /api/users/me/wallet-transactions
+router.get('/me/wallet-transactions', requireJwt('user'), async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).select('walletTransactions');
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        res.json(user.walletTransactions || []);
+    } catch (err) {
+        res.status(500).json({ message: 'Failed to fetch wallet transactions', details: err.message });
+    }
+});
+
 // PUT /api/users/me/profile
 router.put('/me/profile', requireJwt('user'), async (req, res) => {
     try {
