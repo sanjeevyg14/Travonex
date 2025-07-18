@@ -1,4 +1,5 @@
 import swaggerJsdoc from 'swagger-jsdoc';
+import listEndpoints from 'express-list-endpoints';
 
 function extractRoutes(router, base = '') {
   const routes = [];

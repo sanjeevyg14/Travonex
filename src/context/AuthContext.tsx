@@ -7,7 +7,7 @@ import type { UserSession } from '@/lib/types';
 interface AuthContextType {
   user: UserSession | null;
   token: string | null;
-  login: (email: string, password: string) => Promise<{ redirectPath: string }>; 
+  login: (identifier: string, credential: string, mode: 'phone' | 'email') => Promise<{ redirectPath: string }>;
   logout: () => void;
   loading: boolean;
 }
@@ -37,11 +37,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
   
-  const login = async (email: string, password: string) => {
+  const login = async (identifier: string, credential: string, mode: 'phone' | 'email') => {
+    const body = mode === 'phone'
+      ? { phone: identifier, idToken: credential }
+      : { email: identifier, password: credential };
     const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(body),
     });
 
     const result = await response.json();
