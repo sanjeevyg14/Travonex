@@ -43,7 +43,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { payouts as mockPayouts, organizers, trips } from "@/lib/mock-data";
+import { useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -83,7 +83,7 @@ function ProcessPayoutDialog({ payout, onPayoutProcessed }: { payout: Payout, on
         setOpen(false); // Close the dialog
     };
 
-    const organizer = organizers.find(o => o.id === payout.organizerId);
+    const organizer = (payout as any).organizer;
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -141,9 +141,9 @@ function PayoutDetailsDialog({ payout }: { payout: Payout }) {
     
     // DEV_COMMENT: Fetch related data to display in the dialog.
     // In a real app, this data might be passed in directly or fetched via a dedicated API endpoint.
-    const organizer = organizers.find(o => o.id === payout.organizerId);
-    const trip = trips.find(t => t.id === payout.tripId);
-    const batch = trip?.batches.find(b => b.id === payout.batchId);
+    const organizer = (payout as any).organizer;
+    const trip = (payout as any).trip;
+    const batch = trip?.batches?.find((b: any) => b.id === payout.batchId);
     
     const commissionPercentage = payout.totalRevenue > 0 ? ((payout.platformCommission / payout.totalRevenue) * 100).toFixed(1) : 0;
 
@@ -232,8 +232,14 @@ function PayoutDetailsDialog({ payout }: { payout: Payout }) {
 
 
 export default function AdminPayoutsPage() {
-    // In a real app, this state would be managed via API calls and a data fetching library.
-    const [payouts, setPayouts] = React.useState<Payout[]>(mockPayouts);
+    const [payouts, setPayouts] = React.useState<Payout[]>([]);
+
+    useEffect(() => {
+        fetch('/api/admin/payouts')
+            .then(res => res.json())
+            .then(setPayouts)
+            .catch(() => setPayouts([]));
+    }, []);
 
     const handlePayoutProcessed = (payoutId: string, details: any) => {
         // This simulates the state update after a successful API call.
@@ -279,9 +285,9 @@ export default function AdminPayoutsPage() {
                         </TableHeader>
                         <TableBody>
                             {payouts.map((payout) => {
-                                const organizer = organizers.find(o => o.id === payout.organizerId);
-                                const trip = trips.find(t => t.id === payout.tripId);
-                                const batch = trip?.batches.find(b => b.id === payout.batchId);
+                                const organizer = (payout as any).organizer;
+                                const trip = (payout as any).trip;
+                                const batch = trip?.batches?.find((b: any) => b.id === payout.batchId);
                                 return (
                                     <TableRow key={payout.id}>
                                         <TableCell className="font-medium">{organizer?.name || 'N/A'}</TableCell>

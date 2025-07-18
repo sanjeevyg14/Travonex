@@ -25,7 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PlusCircle, Edit, Loader2 } from "lucide-react";
-import { promoCodes as mockPromoCodes } from "@/lib/mock-data";
+import { useEffect } from "react";
 import type { PromoCode } from "@/lib/types";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -84,14 +84,19 @@ export default function AdminPromotionsPage() {
     resolver: zodResolver(PromoCodeFormSchema),
   });
 
-  React.useEffect(() => {
-    // FRONTEND: Simulate API call
+  useEffect(() => {
     setIsLoading(true);
-    setTimeout(() => {
-        setPromoCodes(mockPromoCodes);
+    fetch('/api/admin/promotions')
+      .then(res => res.json())
+      .then((data) => {
+        setPromoCodes(data);
         setIsLoading(false);
-    }, 1000);
-  }, [])
+      })
+      .catch(() => {
+        setPromoCodes([]);
+        setIsLoading(false);
+      });
+  }, []);
 
   const handleAddNew = () => {
     setEditingPromo(null);

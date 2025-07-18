@@ -12,18 +12,17 @@
  * - **Audit Trail**: The backend should log that the change was made by an admin, including the admin's ID and the provided remark, in the `tripChangeLogs`.
  */
 import { TripForm } from "@/components/trips/TripForm";
-import { trips } from "@/lib/mock-data";
 import { notFound } from "next/navigation";
 
 // Disable static generation to avoid type mismatch for params during build
 export const dynamic = "force-dynamic";
 
-export default function AdminEditTripPage({ params }: { params: { tripId: string } }) {
-    // BACKEND: Fetch trip data using a secure admin endpoint
-    const trip = trips.find(t => t.id === params.tripId);
-    if (!trip) {
+export default async function AdminEditTripPage({ params }: { params: { tripId: string } }) {
+    const res = await fetch(`/api/admin/trips/${params.tripId}`);
+    if (!res.ok) {
         notFound();
     }
+    const trip = await res.json();
   
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">

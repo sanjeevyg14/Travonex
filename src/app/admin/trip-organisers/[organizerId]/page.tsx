@@ -5,7 +5,7 @@
 import * as React from "react";
 import Link from 'next/link';
 import { useParams, notFound } from "next/navigation";
-import { organizers as mockOrganizers, trips as mockTrips, bookings as mockBookings } from "@/lib/mock-data";
+import { useEffect } from "react";
 import type { Organizer, OrganizerDocument, Trip, UserSession } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 
@@ -62,25 +62,36 @@ export default function OrganizerProfilePage() {
     const params = useParams<{ organizerId: string }>();
     const { organizerId } = params;
     const { token } = useAuth();
-    // BACKEND: Fetch this from `GET /api/admin/organizers/{organizerId}`
-    const initialOrganizer = mockOrganizers.find(o => o.id === organizerId);
-    
-    if (!initialOrganizer) {
-        notFound();
-    }
-
     const { toast } = useToast();
-    const [organizer, setOrganizer] = React.useState<Organizer>(initialOrganizer);
+    const [organizer, setOrganizer] = React.useState<Organizer | null>(null);
+    const [organizerTrips, setOrganizerTrips] = React.useState<Trip[]>([]);
+    const [totalBookings, setTotalBookings] = React.useState(0);
+    const [totalRevenue, setTotalRevenue] = React.useState(0);
     const [isDocPreviewOpen, setIsDocPreviewOpen] = React.useState(false);
     const [selectedDoc, setSelectedDoc] = React.useState<OrganizerDocument | null>(null);
     const [isSaving, setIsSaving] = React.useState(false);
 
+    if (!organizer) {
+        return <div className="p-4">Loading...</div>;
+    }
 
-    // BACKEND: These calculations should be part of the API response.
-    const organizerTrips = mockTrips.filter(t => t.organizerId === organizer.id);
-    const organizerTripIds = organizerTrips.map(t => t.id);
-    const totalBookings = mockBookings.filter(b => organizerTripIds.includes(b.tripId)).length;
-    const totalRevenue = mockBookings.filter(b => organizerTripIds.includes(b.tripId)).reduce((acc, booking) => acc + booking.amount, 0);
+
+    useEffect(() => {
+        fetch(`/api/admin/organizers/${organizerId}`)
+            .then(res => res.json())
+            .then(data => {
+                setOrganizer(data.organizer);
+                setOrganizerTrips(data.trips || []);
+                setTotalBookings(data.totalBookings || 0);
+                setTotalRevenue(data.totalRevenue || 0);
+            })
+            .catch(() => {
+                setOrganizer(null);
+                setOrganizerTrips([]);
+                setTotalBookings(0);
+                setTotalRevenue(0);
+            });
+    }, [organizerId]);
 
     const handleDocStatusChange = (docType: string, status: 'Verified' | 'Rejected') => {
         // BACKEND: Call `PATCH /api/admin/organizers/{organizerId}/documents/{docType}` with { status }
