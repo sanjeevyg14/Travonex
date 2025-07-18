@@ -37,7 +37,6 @@ import { useCity } from "@/context/CityContext";
 import { Switch } from "@/components/ui/switch";
 import { DatePicker } from "@/components/ui/datepicker";
 import { Label } from "@/components/ui/label";
-import { useEffect } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 

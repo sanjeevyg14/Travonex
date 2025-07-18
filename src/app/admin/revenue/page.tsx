@@ -186,7 +186,7 @@ export default function AdminRevenuePage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {topTrips.map(trip => (
+                        {topTrips.map((trip: { id: string; title: string; grossRevenue: number }) => (
                             <TableRow key={trip.id}>
                                 <TableCell className="font-medium">{trip.title}</TableCell>
                                 <TableCell className="text-right font-mono">₹{trip.grossRevenue.toLocaleString('en-IN')}</TableCell>
@@ -216,7 +216,7 @@ export default function AdminRevenuePage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {organizerRevenue.map(org => (
+                        {organizerRevenue.map((org: { id: string; name: string; totalRevenue: number; commissionEarned: number; payoutsProcessed: number; pendingPayouts: number; lastPayoutDate: string | null }) => (
                             <TableRow key={org.id}>
                                 <TableCell className="font-medium">{org.name}</TableCell>
                                 <TableCell className="text-right font-mono">₹{org.totalRevenue.toLocaleString('en-IN')}</TableCell>

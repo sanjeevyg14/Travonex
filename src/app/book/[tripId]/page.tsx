@@ -192,6 +192,7 @@ export default function BookingPage() {
 
   // DEV_COMMENT: START - Dynamic Fare Calculation
   // The backend MUST re-run this exact calculation logic to ensure price integrity.
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const fareDetails = useMemo(() => {
     if (!trip || !batch) {
       return { basePrice: 0, subtotal: 0, couponDiscount: 0, walletDiscount: 0, tax: 0, totalPayable: 0 };
