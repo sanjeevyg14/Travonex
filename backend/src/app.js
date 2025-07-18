@@ -25,6 +25,29 @@ import loginRouter from './routes/login.js';
 import paymentsRouter from './routes/payments.js';
 import otpSignupRouter from './routes/otpSignup.js';
 import adminRouter from './routes/admin.js';
+
+// Mapping of base paths to routers for Swagger docs
+export const routeMappings = [
+  ['/api/trips', tripsRouter],
+  ['/api/users', usersRouter],
+  ['/api/organizers', organizersRouter],
+  ['/api/bookings', bookingsRouter],
+  ['/api/coupons', couponsRouter],
+  ['/api/disputes', disputesRouter],
+  ['/api/admin/disputes', adminDisputesRouter],
+  ['/api/reviews', reviewsRouter],
+  ['/api/cities', citiesRouter],
+  ['/api/categories', categoriesRouter],
+  ['/api/interests', interestsRouter],
+  ['/api/auth', authRouter],
+  ['/api/upload', uploadRouter],
+  ['/api/payments', paymentsRouter],
+  ['/api/admin', adminRouter],
+  ['/api/protected', protectedRouter],
+  ['/api/auth/signup', signupRouter],
+  ['/api/auth/login', loginRouter],
+  ['/api/auth/otp-signup', otpSignupRouter]
+];
 import swaggerUi from 'swagger-ui-express';
 import generateSwaggerSpec from './swagger.js';
 
@@ -47,31 +70,15 @@ app.use(cors({
 app.use(express.json());
 
 // API routes
-app.use('/api/trips', tripsRouter);
-app.use('/api/users', usersRouter);
-app.use('/api/organizers', organizersRouter);
-app.use('/api/bookings', bookingsRouter);
-app.use('/api/coupons', couponsRouter);
-app.use('/api/disputes', disputesRouter);
-app.use('/api/admin/disputes', adminDisputesRouter);
-app.use('/api/reviews', reviewsRouter);
-app.use('/api/cities', citiesRouter);
-app.use('/api/categories', categoriesRouter);
-app.use('/api/interests', interestsRouter);
-app.use('/api/auth', authRouter);
-app.use('/api/upload', uploadRouter);
-app.use('/api/payments', paymentsRouter);
-app.use('/api/admin', adminRouter);
-app.use('/api/protected', protectedRouter); // Example: requires auth
-app.use('/api/auth/signup', signupRouter);
-app.use('/api/auth/login', loginRouter);
-app.use('/api/auth/otp-signup', otpSignupRouter);
+for (const [basePath, router] of routeMappings) {
+  app.use(basePath, router);
+}
 
 app.get('/', (req, res) => {
     res.send('Travonex Backend API');
 });
 
-const swaggerSpec = generateSwaggerSpec(app);
+const swaggerSpec = generateSwaggerSpec(app, routeMappings);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // 404 handler
