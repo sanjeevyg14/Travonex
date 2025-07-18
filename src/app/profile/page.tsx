@@ -53,6 +53,26 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const [dob, setDob] = React.useState<Date | undefined>();
   const [isSaving, setIsSaving] = React.useState(false);
+  const [activeTab, setActiveTab] = React.useState("personal");
+  const [walletTransactions, setWalletTransactions] = React.useState<WalletTransaction[]>([]);
+  const [walletLoading, setWalletLoading] = React.useState(false);
+
+  const fetchWalletTransactions = React.useCallback(async () => {
+    setWalletLoading(true);
+    try {
+      const res = await fetch('/api/users/me/wallet-transactions', {
+        headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setWalletTransactions(data);
+      }
+    } catch (err) {
+      console.error('Failed to load wallet transactions', err);
+    } finally {
+      setWalletLoading(false);
+    }
+  }, []);
 
   React.useEffect(() => {
     async function fetchProfile() {
@@ -152,7 +172,16 @@ export default function ProfilePage() {
             </div>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="personal" className="w-full">
+          <Tabs
+            value={activeTab}
+            onValueChange={(v) => {
+              setActiveTab(v);
+              if (v === 'wallet' && walletTransactions.length === 0) {
+                fetchWalletTransactions();
+              }
+            }}
+            className="w-full"
+          >
             <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="personal">Personal</TabsTrigger>
               <TabsTrigger value="address">Address</TabsTrigger>
@@ -307,7 +336,6 @@ export default function ProfilePage() {
                     </Card>
                 </div>
                 {/* DEV_COMMENT: START - Enhanced Wallet Transaction History Card */}
-                {/* BACKEND: This data should be fetched from `GET /api/users/me/wallet-transactions`. */}
                 <Card>
                     <CardHeader>
                         <CardTitle>Transaction History</CardTitle>
@@ -324,10 +352,10 @@ export default function ProfilePage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {authLoading ? <WalletHistorySkeleton /> : (
-                                    user.walletTransactions && user.walletTransactions.length > 0 ? (
-                                        user.walletTransactions.map(tx => (
-                                            <TableRow key={tx.id}>
+                                {walletLoading ? <WalletHistorySkeleton /> : (
+                                    walletTransactions.length > 0 ? (
+                                        walletTransactions.map((tx, idx) => (
+                                            <TableRow key={tx.id ?? idx}>
                                                 <TableCell className="text-muted-foreground"><ClientOnlyDate dateString={tx.date} type="date" /></TableCell>
                                                 <TableCell className="font-medium">{tx.description}</TableCell>
                                                 <TableCell><Badge variant="outline">{tx.source}</Badge></TableCell>
