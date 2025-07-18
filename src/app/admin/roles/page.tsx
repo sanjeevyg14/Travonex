@@ -33,7 +33,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { adminUsers, organizers as mockOrganizers } from "@/lib/mock-data";
+import { useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -89,13 +89,20 @@ type AdminUserFormData = z.infer<typeof AdminUserFormSchema>;
 export default function AdminRolesPage() {
     const { toast } = useToast();
     const [roles, setRoles] = React.useState<Role[]>(mockRoles);
-    const [admins, setAdmins] = React.useState<AdminUser[]>(adminUsers);
+    const [admins, setAdmins] = React.useState<AdminUser[]>([]);
     const [selectedRole, setSelectedRole] = React.useState<Role | null>(null);
     const [permissions, setPermissions] = React.useState<Record<string, string[]>>({});
     const [isRoleDialogOpen, setIsRoleDialogOpen] = React.useState(false);
     const [isAdminDialogOpen, setIsAdminDialogOpen] = React.useState(false);
     const [editingRole, setEditingRole] = React.useState<Role | null>(null);
     const [isSaving, setIsSaving] = React.useState(false);
+
+    useEffect(() => {
+        fetch('/api/admin/users?role=admin')
+            .then(res => res.json())
+            .then(setAdmins)
+            .catch(() => setAdmins([]));
+    }, []);
 
     const roleForm = useForm<RoleFormData>({
         resolver: zodResolver(RoleFormSchema),

@@ -32,7 +32,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { bookings as mockBookings, trips, users } from "@/lib/mock-data";
+import { useEffect } from "react";
 import { cn } from "@/lib/utils";
 import type { Booking, Trip } from "@/lib/types";
 import { Users } from "lucide-react";
@@ -160,7 +160,14 @@ function BookingDetailsDialog({ booking, trip }: { booking: Booking; trip: Trip 
 
 
 export default function AdminBookingsPage() {
-  const [bookings, setBookings] = React.useState<Booking[]>(mockBookings);
+  const [bookings, setBookings] = React.useState<Booking[]>([]);
+
+  useEffect(() => {
+    fetch('/api/admin/bookings')
+      .then(res => res.json())
+      .then(setBookings)
+      .catch(() => setBookings([]));
+  }, []);
   
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
@@ -192,9 +199,9 @@ export default function AdminBookingsPage() {
             </TableHeader>
             <TableBody>
               {bookings.length > 0 ? bookings.map((booking) => {
-                const trip = trips.find(t => t.id === booking.tripId);
-                const user = users.find(u => u.id === booking.userId);
-                const batch = trip?.batches.find(b => b.id === booking.batchId);
+                const trip = (booking as any).trip;
+                const user = (booking as any).user;
+                const batch = trip?.batches?.find((b: any) => b.id === booking.batchId);
                 
                 return (
                     <TableRow key={booking.id}>

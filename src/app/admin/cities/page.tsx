@@ -18,15 +18,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { cities as mockCities } from "@/lib/mock-data";
+import { useEffect } from "react";
 import { Switch } from "@/components/ui/switch";
 import { PlusCircle } from "lucide-react";
 import type { City } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AdminCitiesPage() {
-  const [cities, setCities] = React.useState<City[]>(mockCities);
+  const [cities, setCities] = React.useState<City[]>([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    fetch('/api/admin/cities')
+      .then(res => res.json())
+      .then(setCities)
+      .catch(() => setCities([]));
+  }, []);
 
   const handleStatusToggle = (id: string, newStatus: boolean) => {
     // BACKEND: Call PUT /api/admin/cities/{id} with { enabled: newStatus }

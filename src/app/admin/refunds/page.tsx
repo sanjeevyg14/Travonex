@@ -35,7 +35,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { bookings as mockBookings, trips, users } from "@/lib/mock-data";
+import { useEffect } from "react";
 import type { Booking } from "@/lib/types";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -106,8 +106,14 @@ function ProcessRefundDialog({ booking, onRefundProcessed }: { booking: Booking,
 }
 
 export default function AdminRefundsPage() {
-  // BACKEND: Fetch from `GET /api/admin/refunds` or `GET /api/bookings?status=Cancelled`
-  const [bookings, setBookings] = React.useState<Booking[]>(mockBookings.filter(b => b.status === 'Cancelled'));
+  const [bookings, setBookings] = React.useState<Booking[]>([]);
+
+  useEffect(() => {
+    fetch('/api/admin/refunds')
+      .then(res => res.json())
+      .then(setBookings)
+      .catch(() => setBookings([]));
+  }, []);
   
   const handleRefundProcessed = (bookingId: string) => {
     setBookings(currentBookings => 
@@ -148,7 +154,7 @@ export default function AdminRefundsPage() {
             </TableHeader>
             <TableBody>
               {pendingRefunds.length > 0 ? pendingRefunds.map((booking) => {
-                const user = users.find(u => u.id === booking.userId);
+                const user = (booking as any).user;
                 
                 return (
                     <TableRow key={booking.id}>

@@ -27,7 +27,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { DatePicker } from "@/components/ui/datepicker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { organizers, cities } from "@/lib/mock-data";
+import { useEffect } from "react";
 
 
 const monthlyChartData = [
@@ -57,15 +57,34 @@ const categoryChartConfig = {
     bookings: { label: "Bookings", color: "hsl(var(--primary))" },
 } satisfies ChartConfig;
 
-// DEV_COMMENT: Mock values for display. In a real app, these would come from the API.
-const mockTotalRevenue = 1234567;
-const mockTotalBookings = 1234;
-const mockNewUsers = 573;
-const mockAvgBookingValue = 2450;
+interface Summary {
+  totalRevenue: number;
+  totalBookings: number;
+  newUsers: number;
+  avgBookingValue: number;
+}
 
 
 export default function AdminReportsPage() {
   const [dateRange, setDateRange] = React.useState<{from?: Date, to?: Date}>({});
+  const [organizers, setOrganizers] = React.useState<any[]>([]);
+  const [summary, setSummary] = React.useState<Summary>({
+    totalRevenue: 0,
+    totalBookings: 0,
+    newUsers: 0,
+    avgBookingValue: 0,
+  });
+
+  useEffect(() => {
+    fetch('/api/admin/organizers')
+      .then(res => res.json())
+      .then(setOrganizers)
+      .catch(() => setOrganizers([]));
+    fetch('/api/admin/reports/summary')
+      .then(res => res.json())
+      .then(setSummary)
+      .catch(() => setSummary({ totalRevenue: 0, totalBookings: 0, newUsers: 0, avgBookingValue: 0 }));
+  }, []);
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
@@ -108,7 +127,7 @@ export default function AdminReportsPage() {
             <span className="text-muted-foreground">₹</span>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹{mockTotalRevenue.toLocaleString('en-IN')}</div>
+            <div className="text-2xl font-bold">₹{summary.totalRevenue.toLocaleString('en-IN')}</div>
             <p className="text-xs text-muted-foreground">in selected period</p>
           </CardContent>
         </Card>
@@ -118,7 +137,7 @@ export default function AdminReportsPage() {
             <Briefcase className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+{mockTotalBookings.toLocaleString('en-IN')}</div>
+            <div className="text-2xl font-bold">+{summary.totalBookings.toLocaleString('en-IN')}</div>
             <p className="text-xs text-muted-foreground">+12.1% from last period</p>
           </CardContent>
         </Card>
@@ -128,7 +147,7 @@ export default function AdminReportsPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+{mockNewUsers.toLocaleString('en-IN')}</div>
+            <div className="text-2xl font-bold">+{summary.newUsers.toLocaleString('en-IN')}</div>
             <p className="text-xs text-muted-foreground">in selected period</p>
           </CardContent>
         </Card>
@@ -138,7 +157,7 @@ export default function AdminReportsPage() {
             <BarChart2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹{mockAvgBookingValue.toLocaleString('en-IN')}</div>
+            <div className="text-2xl font-bold">₹{summary.avgBookingValue.toLocaleString('en-IN')}</div>
             <p className="text-xs text-muted-foreground">per traveler</p>
           </CardContent>
         </Card>

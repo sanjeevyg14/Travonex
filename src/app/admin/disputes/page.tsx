@@ -32,7 +32,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { disputes as mockDisputes, users, organizers, bookings } from "@/lib/mock-data";
+import { useEffect } from "react";
 import type { Dispute } from "@/lib/types";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -42,9 +42,9 @@ import { Textarea } from "@/components/ui/textarea";
 function DisputeDetailsDialog({ dispute, isOpen, onOpenChange }: { dispute: Dispute | null, isOpen: boolean, onOpenChange: (open: boolean) => void }) {
     if (!dispute) return null;
 
-    const user = users.find(u => u.id === dispute.userId);
-    const organizer = organizers.find(o => o.id === dispute.organizerId);
-    const booking = bookings.find(b => b.id === dispute.bookingId);
+    const user = (dispute as any).user;
+    const organizer = (dispute as any).organizer;
+    const booking = (dispute as any).booking;
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -91,8 +91,16 @@ function DisputeDetailsDialog({ dispute, isOpen, onOpenChange }: { dispute: Disp
 
 
 export default function AdminDisputesPage() {
+  const [disputes, setDisputes] = React.useState<Dispute[]>([]);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [selectedDispute, setSelectedDispute] = React.useState<Dispute | null>(null);
+
+  useEffect(() => {
+    fetch('/api/admin/disputes')
+      .then(res => res.json())
+      .then(setDisputes)
+      .catch(() => setDisputes([]));
+  }, []);
 
   const handleViewDetails = (dispute: Dispute) => {
     setSelectedDispute(dispute);
@@ -129,9 +137,9 @@ export default function AdminDisputesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockDisputes.map((dispute) => {
-                  const user = users.find(u => u.id === dispute.userId);
-                  const organizer = organizers.find(o => o.id === dispute.organizerId);
+              {disputes.map((dispute) => {
+                  const user = (dispute as any).user;
+                  const organizer = (dispute as any).organizer;
                   return (
                       <TableRow key={dispute.id}>
                           <TableCell className="font-mono">{dispute.bookingId}</TableCell>
