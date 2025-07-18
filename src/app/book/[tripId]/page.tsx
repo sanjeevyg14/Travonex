@@ -149,7 +149,7 @@ export default function BookingPage() {
   const [selectedPickup, setSelectedPickup] = useState<string>('');
   const [selectedDropoff, setSelectedDropoff] = useState<string>('');
   const [couponCode, setCouponCode] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<{ id: string; code: string; discount: number } | null>(null);
   const [useWallet, setUseWallet] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   // DEV_COMMENT: END - State Management for Booking Form
@@ -180,13 +180,31 @@ export default function BookingPage() {
   };
   
   // BACKEND: This should call POST /api/coupons/validate
-  const handleApplyCoupon = () => {
-    if (couponCode.toUpperCase() === 'TRAVEL500') {
-      setAppliedCoupon({ code: couponCode.toUpperCase(), discount: 500 });
-      toast({ title: "Coupon Applied!", description: `A discount of ₹500 has been applied.` });
-    } else {
+  const handleApplyCoupon = async () => {
+    if (!couponCode) {
+      toast({ variant: 'destructive', title: 'Invalid Coupon', description: 'Please enter a coupon code.' });
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: couponCode, tripId: trip.id, batchId: batch.id })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setAppliedCoupon(null);
+        toast({ variant: 'destructive', title: 'Invalid Coupon', description: data.message || 'The entered coupon code is not valid.' });
+        return;
+      }
+
+      setAppliedCoupon({ id: data.couponId || data.id, code: couponCode.toUpperCase(), discount: data.discount });
+      toast({ title: 'Coupon Applied!', description: `A discount of ₹${data.discount} has been applied.` });
+    } catch (err) {
       setAppliedCoupon(null);
-      toast({ variant: 'destructive', title: "Invalid Coupon", description: "The entered coupon code is not valid." });
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to validate coupon.' });
     }
   };
 
@@ -235,6 +253,7 @@ export default function BookingPage() {
       dropoff: trip.dropoffPoints.find(p => p.label === selectedDropoff),
       travelers: travelers,
       walletUsedAmount: fareDetails.walletDiscount,
+      couponId: appliedCoupon?.id || null,
       couponUsed: appliedCoupon?.code || null,
       couponDiscount: fareDetails.couponDiscount,
       subtotal: fareDetails.subtotal,
