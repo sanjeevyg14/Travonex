@@ -1,10 +1,9 @@
 
-
-"use client"
+"use client";
 
 import * as React from "react";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from "recharts";
-import { Download, Users, Banknote, AlertCircle } from "lucide-react";
+import { Download, Users, Banknote, AlertCircle, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +11,6 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { DatePicker } from "@/components/ui/datepicker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { organizers, trips, bookings, payouts } from "@/lib/mock-data";
 import type { ChartConfig } from '@/components/ui/chart';
 import { ClientOnlyDate } from "@/components/common/ClientOnlyDate";
 
@@ -42,45 +40,36 @@ const chartConfig = {
   payouts: { label: "Payouts", color: "hsl(var(--secondary))" },
 } satisfies ChartConfig;
 
-const totalRevenue = bookings.filter(b => b.status !== 'Cancelled').reduce((acc, b) => acc + b.amount, 0);
-const totalCommission = totalRevenue * 0.10; // Assuming 10% commission
-const totalPayouts = payouts.filter(p => p.status === 'Paid').reduce((acc, p) => acc + p.netPayout, 0);
-const pendingPayouts = payouts.filter(p => p.status === 'Pending');
-const pendingPayoutsValue = pendingPayouts.reduce((acc, p) => acc + p.netPayout, 0);
+async function getRevenueData(token: string) {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/admin/revenue`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!res.ok) throw new Error('Failed to load revenue');
+  return res.json();
+}
 
 export default function AdminRevenuePage() {
   const [dateRange, setDateRange] = React.useState<{from?: Date, to?: Date}>({});
+  const [loading, setLoading] = React.useState(true);
+  const [data, setData] = React.useState<any>(null);
 
-  const organizerRevenue = React.useMemo(() => {
-    return organizers.map(org => {
-      const orgTrips = trips.filter(t => t.organizerId === org.id);
-      const orgTripIds = orgTrips.map(t => t.id);
-      const orgBookings = bookings.filter(b => orgTripIds.includes(b.tripId) && b.status !== 'Cancelled');
-      const orgRevenue = orgBookings.reduce((acc, b) => acc + b.amount, 0);
-      const orgCommission = orgRevenue * 0.10;
-      const orgPayouts = payouts.filter(p => p.organizerId === org.id);
-      const paidPayouts = orgPayouts.filter(p => p.status === 'Paid').reduce((acc, p) => acc + p.netPayout, 0);
-      const pendingPayouts = orgPayouts.filter(p => p.status === 'Pending').reduce((acc, p) => acc + p.netPayout, 0);
-      const lastPayout = orgPayouts.filter(p=>p.status === 'Paid').sort((a,b) => new Date(b.paidDate as string).getTime() - new Date(a.paidDate as string).getTime())[0];
-
-      return {
-        ...org,
-        totalRevenue: orgRevenue,
-        commissionEarned: orgCommission,
-        payoutsProcessed: paidPayouts,
-        pendingPayouts,
-        lastPayoutDate: lastPayout?.paidDate ? new Date(lastPayout.paidDate as string).toISOString() : 'N/A'
-      }
-    }).sort((a, b) => b.totalRevenue - a.totalRevenue);
+  React.useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (!token) return;
+    getRevenueData(token)
+      .then((d) => { setData(d); setLoading(false); })
+      .catch((err) => { console.error(err); setLoading(false); });
   }, []);
 
-  const topTrips = React.useMemo(() => {
-     return trips.map(trip => {
-      const tripBookings = bookings.filter(b => b.tripId === trip.id && b.status !== 'Cancelled');
-      const grossRevenue = tripBookings.reduce((acc, b) => acc + b.amount, 0);
-      return { ...trip, grossRevenue, bookingCount: tripBookings.length };
-    }).sort((a,b) => b.grossRevenue - a.grossRevenue).slice(0, 5);
-  }, []);
+  if (loading) {
+    return <div className="p-4"><Loader2 className="h-6 w-6 animate-spin" /></div>;
+  }
+
+  if (!data) {
+    return <p className="p-4">Failed to load data</p>;
+  }
+
+  const { totalRevenue, totalCommission, totalPayouts, pendingPayoutsValue, organizerRevenue, topTrips } = data;
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
@@ -109,7 +98,9 @@ export default function AdminRevenuePage() {
                 <SelectTrigger><SelectValue placeholder="Filter by Organizer" /></SelectTrigger>
                 <SelectContent>
                     <SelectItem value="all">All Organizers</SelectItem>
-                    {organizers.map(o => <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>)}
+                    {data.organizerRevenue?.map((o: any) => (
+                      <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
+                    ))}
                 </SelectContent>
             </Select>
             <div className="flex gap-2">

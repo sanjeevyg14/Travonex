@@ -61,6 +61,72 @@ router.get('/dashboard', requireJwt('admin'), async (req, res) => {
   }
 });
 
+// GET /api/admin/revenue
+router.get('/revenue', requireJwt('admin'), async (req, res) => {
+  try {
+    const [bookings, payouts, organizers] = await Promise.all([
+      Booking.find({ status: { $ne: 'cancelled' } })
+        .populate({ path: 'trip', select: 'title price organizer' })
+        .populate('user', 'name')
+        .sort({ createdAt: -1 }),
+      Payout.find().populate('organizer', 'name').populate('trip', 'title paidDate'),
+      Organizer.find().select('name')
+    ]);
+
+    const totalRevenue = bookings.reduce((acc, b) => acc + (b.trip?.price || 0), 0);
+    const totalCommission = totalRevenue * 0.10;
+    const paidPayouts = payouts.filter(p => p.status === 'Paid');
+    const totalPayouts = paidPayouts.reduce((acc, p) => acc + (p.netPayout || 0), 0);
+    const pendingPayouts = payouts.filter(p => p.status === 'Pending');
+    const pendingPayoutsValue = pendingPayouts.reduce((acc, p) => acc + (p.netPayout || 0), 0);
+
+    const organizerRevenue = organizers.map(org => {
+      const orgBookings = bookings.filter(b => b.trip?.organizer?.toString() === org._id.toString());
+      const orgRevenue = orgBookings.reduce((acc, b) => acc + (b.trip?.price || 0), 0);
+      const orgCommission = orgRevenue * 0.10;
+      const orgPayouts = payouts.filter(p => p.organizer?.toString() === org._id.toString());
+      const paid = orgPayouts.filter(p => p.status === 'Paid').reduce((acc, p) => acc + (p.netPayout || 0), 0);
+      const pending = orgPayouts.filter(p => p.status === 'Pending').reduce((acc, p) => acc + (p.netPayout || 0), 0);
+      const lastPaid = orgPayouts.filter(p => p.status === 'Paid').sort((a, b) => new Date(b.paidDate || b.createdAt).getTime() - new Date(a.paidDate || a.createdAt).getTime())[0];
+      return {
+        id: org._id,
+        name: org.name,
+        totalRevenue: orgRevenue,
+        commissionEarned: orgCommission,
+        payoutsProcessed: paid,
+        pendingPayouts: pending,
+        lastPayoutDate: lastPaid?.paidDate || null
+      };
+    }).sort((a, b) => b.totalRevenue - a.totalRevenue);
+
+    const tripMap = new Map();
+    bookings.forEach(b => {
+      const id = b.trip?._id?.toString();
+      if (!id) return;
+      if (!tripMap.has(id)) {
+        tripMap.set(id, { id, title: b.trip.title, grossRevenue: 0, bookingCount: 0 });
+      }
+      const t = tripMap.get(id);
+      t.grossRevenue += b.trip.price || 0;
+      t.bookingCount += 1;
+      tripMap.set(id, t);
+    });
+    const topTrips = Array.from(tripMap.values()).sort((a, b) => b.grossRevenue - a.grossRevenue).slice(0, 5);
+
+    res.json({
+      totalRevenue,
+      totalCommission,
+      totalPayouts,
+      pendingPayoutsValue,
+      organizerRevenue,
+      topTrips
+    });
+  } catch (err) {
+    console.error('Admin revenue error:', err);
+    res.status(500).json({ message: 'Failed to fetch revenue data' });
+  }
+});
+
 // --- Additional Admin Management Endpoints ---
 
 // Users list
