@@ -47,6 +47,34 @@ export default function generateSwaggerSpec(app, mappings = []) {
       }
     }
   });
+  if (app) {
+    spec.paths = spec.paths || {};
+    const configs = mappings.length
+      ? mappings
+      : [['', app]];
+    configs.forEach(([base, router]) => {
+      const endpoints = listEndpoints(router);
+      endpoints.forEach(({ path, methods }) => {
+        const fullPath = `${base}${path}`;
+        if (!fullPath.startsWith('/api')) return;
+        const openapiPath = fullPath.replace(/:([^/]+)/g, '{$1}');
+        if (!spec.paths[openapiPath]) {
+          spec.paths[openapiPath] = {};
+        }
+        methods.forEach(method => {
+          const lower = method.toLowerCase();
+          if (!spec.paths[openapiPath][lower]) {
+            spec.paths[openapiPath][lower] = {
+              summary: `${method} ${fullPath}`,
+              responses: {
+                200: { description: 'Success' }
+              }
+            };
+          }
+        });
+      });
+    });
+  }
 
   return spec;
 }
