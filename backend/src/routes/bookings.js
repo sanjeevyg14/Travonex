@@ -60,6 +60,19 @@ router.put('/:id', async (req, res) => {
     }
 });
 
+// Cancel a booking
+router.post('/:id/cancel', async (req, res) => {
+    try {
+        const booking = await Booking.findById(req.params.id);
+        if (!booking) return res.status(404).json({ error: 'Booking not found' });
+        booking.status = 'cancelled';
+        await booking.save();
+        res.json(booking);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Delete a booking by ID
 router.delete('/:id', async (req, res) => {
     try {

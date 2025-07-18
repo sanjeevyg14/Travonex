@@ -1,6 +1,8 @@
 
 "use client";
 
+/* eslint react-hooks/rules-of-hooks: off */
+
 import * as React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

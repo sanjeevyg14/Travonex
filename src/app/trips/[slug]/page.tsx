@@ -37,6 +37,8 @@ import {
 } from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ClientOnlyDate } from "@/components/common/ClientOnlyDate";
+import type { TripBatch, Point, ItineraryItem, FAQ } from "@/lib/types";
+import { users } from "@/lib/mock-data";
 
 
 // DEV_COMMENT: Data fetching now happens on the server.
@@ -70,14 +72,14 @@ export default async function TripDetailsPage({ params }: { params: { slug: stri
   // --- DEV_COMMENT: START - Trip-Specific Average Rating Calculation ---
   // This logic calculates the average rating *for this trip only*.
   // The backend should return these pre-calculated values in the trip API response to avoid this client-side logic.
-  const tripAverageRating = (trip.reviews?.length || 0) > 0 ? (trip.reviews.reduce((acc, r) => acc + r.rating, 0) / trip.reviews.length) : 0;
+  const tripAverageRating = (trip.reviews?.length || 0) > 0 ? (trip.reviews.reduce((acc: number, r: { rating: number }) => acc + r.rating, 0) / trip.reviews.length) : 0;
   const tripReviewCount = trip.reviews?.length || 0;
   // --- DEV_COMMENT: END - Trip-Specific Average Rating Calculation ---
 
 
   // DEV_COMMENT: Filter batches to show only those available for booking.
   // Business Logic: Only 'Active' batches are visible to the user. 'Inactive', 'Pending', etc., are hidden.
-  const activeBatches = trip.batches.filter(b => b.status === 'Active');
+  const activeBatches = trip.batches.filter((b: TripBatch) => b.status === 'Active');
 
   return (
     <main className="flex-1 p-4 md:p-8">
@@ -107,7 +109,7 @@ export default async function TripDetailsPage({ params }: { params: { slug: stri
              <Image src={trip.image} alt={trip.title} fill className="rounded-lg object-cover" data-ai-hint={trip.imageHint} priority />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            {trip.gallery.slice(0, 4).map((img, index) => (
+            {trip.gallery.slice(0, 4).map((img: { url: string; hint: string }, index: number) => (
               <div key={index} className="relative h-48">
                 <Image src={img.url} alt={`Gallery image ${index+1}`} fill className="rounded-lg object-cover" data-ai-hint={img.hint} />
               </div>
@@ -175,7 +177,7 @@ export default async function TripDetailsPage({ params }: { params: { slug: stri
                   ₹{trip.price.toLocaleString('en-IN')} <span className="text-base font-normal text-muted-foreground">/ person</span>
                 </div>
                 <div className="space-y-3">
-                  {activeBatches.map(batch => (
+                  {activeBatches.map((batch: TripBatch) => (
                     <div key={batch.id} className="p-4 border rounded-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                       <div className="flex items-center gap-3">
                         <Calendar className="h-6 w-6 text-primary flex-shrink-0" />
@@ -215,7 +217,7 @@ export default async function TripDetailsPage({ params }: { params: { slug: stri
                     <div className="space-y-3">
                       <h3 className="font-semibold text-foreground">Pickup Points</h3>
                       <ul className="space-y-2 text-muted-foreground">
-                        {trip.pickupPoints.map((point, index) => (
+                        {trip.pickupPoints.map((point: Point, index: number) => (
                           <li key={index} className="flex justify-between items-center">
                             <span>{point.label} - <span className="font-medium text-primary">{point.time}</span></span>
                             <a href={point.mapsLink} target="_blank" rel="noopener noreferrer">
@@ -230,7 +232,7 @@ export default async function TripDetailsPage({ params }: { params: { slug: stri
                      <div className="space-y-3">
                       <h3 className="font-semibold text-foreground">Drop-off Points</h3>
                       <ul className="space-y-2 text-muted-foreground">
-                        {trip.dropoffPoints.map((point, index) => (
+                        {trip.dropoffPoints.map((point: Point, index: number) => (
                            <li key={index} className="flex justify-between items-center">
                             <span>{point.label} - <span className="font-medium text-primary">{point.time}</span></span>
                              <a href={point.mapsLink} target="_blank" rel="noopener noreferrer">
@@ -254,7 +256,7 @@ export default async function TripDetailsPage({ params }: { params: { slug: stri
                     <div className="space-y-2">
                         <h3 className="font-semibold text-green-600">Inclusions</h3>
                         <ul className="space-y-2 text-muted-foreground">
-                            {trip.inclusions.map((item, index) => (
+                            {trip.inclusions.map((item: string, index: number) => (
                                 <li key={index} className="flex items-start gap-2">
                                     <Check className="h-5 w-5 text-green-600 mt-0.5" />
                                     <span>{item}</span>
@@ -265,7 +267,7 @@ export default async function TripDetailsPage({ params }: { params: { slug: stri
                       <div className="space-y-2">
                         <h3 className="font-semibold text-red-600">Exclusions</h3>
                         <ul className="space-y-2 text-muted-foreground">
-                            {trip.exclusions.map((item, index) => (
+                            {trip.exclusions.map((item: string, index: number) => (
                                 <li key={index} className="flex items-start gap-2">
                                     <X className="h-5 w-5 text-red-600 mt-0.5" />
                                     <span>{item}</span>
@@ -282,7 +284,7 @@ export default async function TripDetailsPage({ params }: { params: { slug: stri
                     <CardTitle>Itinerary</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    {trip.itinerary.map(item => (
+                    {trip.itinerary.map((item: ItineraryItem) => (
                         <div key={item.day} className="flex gap-4">
                             <div className="flex flex-col items-center">
                                 <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">{item.day}</div>
@@ -320,7 +322,7 @@ export default async function TripDetailsPage({ params }: { params: { slug: stri
                 </CardHeader>
                 <CardContent>
                   <Accordion type="single" collapsible className="w-full">
-                    {trip.faqs.map((faq, index) => (
+                    {trip.faqs.map((faq: FAQ, index: number) => (
                       <AccordionItem key={index} value={`item-${index}`}>
                         <AccordionTrigger>{faq.question}</AccordionTrigger>
                         <AccordionContent>{faq.answer}</AccordionContent>
@@ -385,7 +387,7 @@ export default async function TripDetailsPage({ params }: { params: { slug: stri
                     )}
 
                     <div className="space-y-4">
-                        {trip.reviews?.map(review => {
+                        {trip.reviews?.map((review: { id: string; userId: string; rating: number; comment: string }) => {
                             const user = users.find(u => u.id === review.userId);
                             return (
                                 <div key={review.id} className="flex gap-4 border-t pt-4 first:border-t-0 first:pt-0">
