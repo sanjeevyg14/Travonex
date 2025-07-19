@@ -20,8 +20,7 @@
  */
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import { users } from "@/lib/mock-data";
+import { useState, useEffect, useMemo } from "react";
 import type { Trip } from "@/lib/types";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -83,14 +82,24 @@ export default function BookingPage() {
   const batchId = searchParams.get('batch');
   const { toast } = useToast();
   
-  const { user: sessionUser, loading: authLoading } = useAuth();
-  
-  // DEV_COMMENT: The component now uses the actual logged-in user's data from the AuthContext.
-  // We find the full user profile from the mock data array based on the session ID.
-  const currentUser = useMemo(() => {
-    if (!sessionUser) return null;
-    return users.find(u => u.id === sessionUser.id);
-  }, [sessionUser]);
+  const { user: sessionUser, token, loading: authLoading } = useAuth();
+  const [currentUser, setCurrentUser] = useState<any | null>(null);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!sessionUser) return;
+      try {
+        const res = await fetch('/api/users/me/profile', { headers: { Authorization: token ? `Bearer ${token}` : '' } });
+        if (res.ok) {
+          const data = await res.json();
+          setCurrentUser(data);
+        }
+      } catch (err) {
+        console.error('Profile fetch error:', err);
+      }
+    };
+    loadProfile();
+  }, [sessionUser, token]);
 
 
   // DEV_COMMENT: START - Profile Completion and Auth Gate
