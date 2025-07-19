@@ -29,7 +29,17 @@ const router = express.Router();
 // Get all trips
 router.get('/', async (req, res) => {
     try {
-        const trips = await Trip.find().populate('organizer');
+        const query = {};
+        if (req.query.isBanner === 'true') {
+            query.isBannerTrip = true;
+        }
+
+        let tripQuery = Trip.find(query).populate('organizer');
+        if (req.query.limit && !isNaN(parseInt(req.query.limit))) {
+            tripQuery = tripQuery.limit(parseInt(req.query.limit, 10));
+        }
+
+        const trips = await tripQuery;
         res.json(trips);
     } catch (err) {
         res.status(500).json({ error: err.message });
