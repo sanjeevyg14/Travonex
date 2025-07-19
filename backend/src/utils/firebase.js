@@ -19,7 +19,6 @@ if (process.env.NODE_ENV !== 'test') {
     private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
   };
   // Debug: ensure project_id is present
-  console.log('\uD83D\uDD11 Firebase serviceAccount.project_id =', serviceAccount.project_id);
 
   const firebaseConfig = {
     credential: cert(serviceAccount),
