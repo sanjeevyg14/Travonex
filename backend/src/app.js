@@ -88,6 +88,7 @@ app.get('/', (req, res) => {
     res.send('Travonex Backend API');
 });
 
+const swaggerSpec = generateSwaggerSpec(routeMappings);
 const swaggerSpec = generateSwaggerSpec(app, routeMappings);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
