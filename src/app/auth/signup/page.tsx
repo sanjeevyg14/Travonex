@@ -44,7 +44,11 @@ export default function SignupPage() {
       toast({ title: "OTP sent" });
       setCountdown(60);
     } catch (err: any) {
-      toast({ variant: "destructive", title: "Failed to send OTP", description: err.message });
+      let msg = err.message;
+      if (msg.includes('auth/too-many-requests')) {
+        msg = 'Too many attempts. Please wait and try again.';
+      }
+      toast({ variant: "destructive", title: "Failed to send OTP", description: msg });
     }
   };
 
@@ -57,7 +61,11 @@ export default function SignupPage() {
       toast({ title: 'OTP Resent' });
       setCountdown(60);
     } catch (err: any) {
-      toast({ variant: 'destructive', title: 'Failed to resend OTP', description: err.message });
+      let msg = err.message;
+      if (msg.includes('auth/too-many-requests')) {
+        msg = 'Too many attempts. Please wait and try again.';
+      }
+      toast({ variant: 'destructive', title: 'Failed to resend OTP', description: msg });
     } finally {
       setIsResending(false);
     }
@@ -70,7 +78,13 @@ export default function SignupPage() {
       await saveUserRole(idToken, role, { name, email });
       toast({ title: "Signup successful" });
     } catch (err: any) {
-      toast({ variant: "destructive", title: "Verification failed", description: err.message });
+      let msg = err.message || 'Verification failed';
+      if (msg.includes('auth/code-expired')) {
+        msg = 'OTP expired. Please request a new one.';
+      } else if (msg.includes('auth/invalid-verification-code')) {
+        msg = 'Invalid OTP. Please try again.';
+      }
+      toast({ variant: 'destructive', title: 'Verification failed', description: msg });
     }
   };
 
