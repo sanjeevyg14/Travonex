@@ -32,12 +32,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { organizers as mockOrganizers } from "@/lib/mock-data";
+import { useEffect } from "react";
 import type { Organizer } from "@/lib/types";
 import { Eye } from "lucide-react";
 
 export default function AdminTripOrganisersPage() {
-  const [organizers, setOrganizers] = React.useState<Organizer[]>(mockOrganizers);
+  const [organizers, setOrganizers] = React.useState<Organizer[]>([]);
+
+  useEffect(() => {
+    fetch('/api/admin/organizers')
+      .then(res => res.json())
+      .then(setOrganizers)
+      .catch(() => setOrganizers([]));
+  }, []);
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">

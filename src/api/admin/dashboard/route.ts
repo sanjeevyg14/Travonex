@@ -32,9 +32,13 @@ export async function GET(request: Request) {
     const backendUrl = `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/admin/dashboard`;
     const res = await fetch(backendUrl, { headers: { Authorization: authHeader } });
     const data = await res.json();
+    if (!res.ok) {
+      console.error('Backend error fetching admin dashboard:', data);
+      return NextResponse.json(data, { status: res.status });
+    }
     return NextResponse.json(data, { status: res.status });
   } catch (error) {
     console.error('Failed to fetch admin dashboard data:', error);
-    return NextResponse.json({ message: 'An error occurred.' }, { status: 500 });
+    return NextResponse.json({ message: 'Failed to fetch admin dashboard data' }, { status: 500 });
   }
 }

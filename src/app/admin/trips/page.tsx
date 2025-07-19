@@ -17,7 +17,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { trips as mockTrips, organizers } from "@/lib/mock-data";
+import { useEffect } from "react";
 import type { Trip } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,8 +40,20 @@ const getStatusBadgeClass = (status: Trip['status']) => {
 }
 
 export default function AdminTripsListPage() {
-  const [trips, setTrips] = useState<Trip[]>(mockTrips);
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [organizers, setOrganizers] = useState<any[]>([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    fetch('/api/admin/trips')
+      .then(res => res.json())
+      .then(setTrips)
+      .catch(() => setTrips([]));
+    fetch('/api/admin/organizers')
+      .then(res => res.json())
+      .then(setOrganizers)
+      .catch(() => setOrganizers([]));
+  }, []);
 
   const handleStatusChange = (tripId: string, newStatus: Trip['status']) => {
     // DEV_COMMENT: Simulates an API call to update the trip's status.

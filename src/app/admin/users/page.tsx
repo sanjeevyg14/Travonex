@@ -26,7 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { users as mockUsers, bookings, trips, auditLogs } from "@/lib/mock-data";
+import { useEffect } from "react";
 import type { User, Booking, WalletTransaction } from "@/lib/types";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -118,7 +118,7 @@ function AdjustWalletDialog({ user, onSave, isOpen, onOpenChange }: { user: User
 function UserDetailsDialog({ user, onAdjustWalletClick, isOpen, onOpenChange }: { user: User | null, onAdjustWalletClick: () => void, isOpen: boolean, onOpenChange: (open: boolean) => void }) {
     if (!user) return null;
 
-    const userBookings = bookings.filter(b => b.userId === user.id);
+    const userBookings = (user as any).bookings || [];
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -164,7 +164,7 @@ function UserDetailsDialog({ user, onAdjustWalletClick, isOpen, onOpenChange }: 
                                         <TableHeader><TableRow><TableHead>Trip</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Amount</TableHead></TableRow></TableHeader>
                                         <TableBody>
                                             {userBookings.map(booking => {
-                                                const trip = trips.find(t => t.id === booking.tripId);
+                                                const trip = (booking as any).trip;
                                                 return (
                                                     <TableRow key={booking.id}>
                                                         <TableCell>{trip?.title}</TableCell>
@@ -322,7 +322,14 @@ function EditUserDialog({ user, isOpen, onOpenChange, onSave }: { user: User | n
 
 export default function AdminUsersPage() {
   const { toast } = useToast();
-  const [users, setUsers] = React.useState<User[]>(mockUsers);
+  const [users, setUsers] = React.useState<User[]>([]);
+
+  useEffect(() => {
+    fetch('/api/admin/users')
+      .then(res => res.json())
+      .then(setUsers)
+      .catch(() => setUsers([]));
+  }, []);
   const [isViewOpen, setIsViewOpen] = React.useState(false);
   const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [isWalletOpen, setIsWalletOpen] = React.useState(false);
@@ -365,16 +372,6 @@ export default function AdminUsersPage() {
         } : u
     ));
     
-    // BACKEND: Add a log to the audit trail for this specific action.
-    auditLogs.push({
-      id: `log${auditLogs.length + 1}`,
-      adminId: 'ADM001',
-      adminName: 'Super Admin',
-      action: 'Update',
-      module: 'Wallet',
-      details: `${data.type} of ₹${data.amount} for user ${selectedUser.name}. Reason: ${data.reason}`,
-      timestamp: new Date().toISOString()
-    });
   }
 
   const handleSaveUser = (data: UserFormData) => {
@@ -387,18 +384,7 @@ export default function AdminUsersPage() {
         u.id === selectedUser.id ? ({ ...u, ...data, interests: data.interests?.split(',').map(s => s.trim()) } as User) : u
     ));
     
-    // BACKEND: Add a log to the audit trail.
-    const newLog = {
-      id: `log${auditLogs.length + 1}`,
-      adminId: 'ADM001', // This should come from the logged-in admin's session
-      adminName: 'Super Admin',
-      action: 'Update' as const,
-      module: 'Users',
-      details: `Updated profile for user ${data.name} (${selectedUser.id})`,
-      timestamp: new Date().toISOString()
-    };
-    auditLogs.push(newLog); // In a real app, this is an API call
-    console.log("Audit Log created:", newLog);
+    // BACKEND: Add a log to the audit trail here
 
     toast({
         title: "User Updated",

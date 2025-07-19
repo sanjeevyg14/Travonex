@@ -2,20 +2,10 @@
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
-  // --- Authentication & Authorization ---
-  const authHeader = request.headers.get('Authorization');
+  const authHeader = request.headers.get('Authorization') || '';
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!authHeader) {
     return NextResponse.json({ message: 'Unauthorized: No token provided' }, { status: 401 });
-  }
-
-  // In a real app, you would verify the JWT token here.
-  // For our mock scenario, we'll parse our simple token "id-role".
-  const token = authHeader.split(' ')[1];
-  const [organizerId, userRole] = token.split('-');
-  
-  if (!organizerId || userRole !== 'ORGANIZER') {
-       return NextResponse.json({ message: 'Forbidden: Invalid role or token' }, { status: 403 });
   }
 
   try {
@@ -23,6 +13,14 @@ export async function GET(request: Request) {
     const res = await fetch(backendUrl, { headers: { Authorization: authHeader } });
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
+    const backendRes = await fetch(backendUrl, { headers: { Authorization: authHeader } });
+    const data = await backendRes.json();
+
+    if (!backendRes.ok) {
+      return NextResponse.json(data, { status: backendRes.status });
+    }
+
+    return NextResponse.json(data, { status: 200 });
   } catch (error) {
     console.error('Failed to fetch organizer dashboard data:', error);
     return NextResponse.json({ message: 'An error occurred.' }, { status: 500 });

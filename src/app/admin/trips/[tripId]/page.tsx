@@ -27,7 +27,7 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useParams, notFound, useRouter } from "next/navigation";
-import { trips as mockTrips, organizers } from "@/lib/mock-data";
+import { useEffect } from "react";
 import type { Trip, TripBatch } from "@/lib/types";
 
 import { useToast } from "@/hooks/use-toast";
@@ -71,17 +71,30 @@ export default function AdminTripDetailPage() {
     const params = useParams<{ tripId: string }>();
     const router = useRouter();
     const { toast } = useToast();
-    const initialTrip = mockTrips.find(t => t.id === params.tripId);
-    
-    if (!initialTrip) {
-        notFound();
-    }
+    const [trip, setTrip] = React.useState<Trip | null>(null);
+    const [organizer, setOrganizer] = React.useState<any>(null);
 
-    const [trip, setTrip] = React.useState<Trip>(initialTrip);
+    useEffect(() => {
+        fetch(`/api/admin/trips/${params.tripId}`)
+            .then(res => {
+                if (!res.ok) { notFound(); }
+                return res.json();
+            })
+            .then((data) => {
+                setTrip(data);
+                return fetch(`/api/admin/organizers/${data.organizerId}`);
+            })
+            .then(res => res.ok ? res.json() : null)
+            .then(setOrganizer)
+            .catch(() => setTrip(null));
+    }, [params.tripId]);
     const [rejectionReason, setRejectionReason] = React.useState("");
     const [isRejectDialogOpen, setIsRejectDialogOpen] = React.useState(false);
 
-    const organizer = organizers.find(o => o.id === trip.organizerId);
+
+    if (!trip) {
+        return <div className="p-4">Loading...</div>;
+    }
 
     const handleStatusChange = (newStatus: Trip['status']) => {
         // BACKEND: Call `PATCH /api/admin/trips/{trip.id}` with { status: newStatus }

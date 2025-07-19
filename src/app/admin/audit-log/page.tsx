@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Download, SlidersHorizontal } from "lucide-react";
+import { useEffect } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -36,6 +37,9 @@ export default function AdminAuditLogPage() {
     const [auditLogs, setAuditLogs] = React.useState<AuditLog[]>([]);
 
     React.useEffect(() => {
+    const [auditLogs, setAuditLogs] = React.useState<any[]>([]);
+
+    useEffect(() => {
         fetch('/api/admin/audit-logs')
             .then(res => res.json())
             .then(setAuditLogs)

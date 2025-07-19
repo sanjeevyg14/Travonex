@@ -19,14 +19,21 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { adminNotifications as mockNotifications } from "@/lib/mock-data";
+import { useEffect } from "react";
 import { CheckCircle, Eye } from "lucide-react";
 import Link from "next/link";
 import { ClientOnlyDate } from "@/components/common/ClientOnlyDate";
 
 
 export default function AdminNotificationsPage() {
-    const [notifications, setNotifications] = React.useState(mockNotifications);
+    const [notifications, setNotifications] = React.useState<any[]>([]);
+
+    useEffect(() => {
+        fetch('/api/admin/notifications')
+            .then(res => res.json())
+            .then(setNotifications)
+            .catch(() => setNotifications([]));
+    }, []);
 
     const unreadNotifications = notifications.filter(n => !n.isRead);
     const allNotifications = notifications;

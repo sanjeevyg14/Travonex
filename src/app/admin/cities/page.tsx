@@ -18,6 +18,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
+import { useEffect } from "react";
 import { Switch } from "@/components/ui/switch";
 import { PlusCircle } from "lucide-react";
 import type { City } from "@/lib/types";
@@ -29,6 +31,8 @@ export default function AdminCitiesPage() {
 
   React.useEffect(() => {
     fetch('/api/cities')
+  useEffect(() => {
+    fetch('/api/admin/cities')
       .then(res => res.json())
       .then(setCities)
       .catch(() => setCities([]));
