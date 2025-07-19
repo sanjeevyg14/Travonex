@@ -68,21 +68,22 @@ The application uses environment variables for configuration, particularly for t
     ```env
     # This key is required for Genkit to communicate with Google AI services.
     # Get your key from Google AI Studio: https://aistudio.google.com/app/apikey
-    GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY_HERE
+    GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY
     NEXT_PUBLIC_RAZORPAY_KEY_ID=YOUR_RAZORPAY_KEY_ID
     CORS_ORIGIN=http://localhost:3000
+    NEXT_PUBLIC_BASE_URL=http://localhost:3000
 
     # Firebase client SDK configuration
-    NEXT_PUBLIC_FIREBASE_API_KEY="AIzaSyCmjbghfeOi7a3CzctkQku4-OkceajlL1o"
-    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="travonex-78b26.firebaseapp.com"
-    NEXT_PUBLIC_FIREBASE_PROJECT_ID="travonex-78b26"
-    NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="travonex-78b26.firebasestorage.app"
-    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="344710455474"
-    NEXT_PUBLIC_FIREBASE_APP_ID="1:344710455474:web:2687b18ad1ad05b03ae9ab"
-    NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID="G-C6KSX10G84"
+    NEXT_PUBLIC_FIREBASE_API_KEY=YOUR_FIREBASE_API_KEY
+    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=YOUR_FIREBASE_AUTH_DOMAIN
+    NEXT_PUBLIC_FIREBASE_PROJECT_ID=YOUR_FIREBASE_PROJECT_ID
+    NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=YOUR_FIREBASE_STORAGE_BUCKET
+    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=YOUR_FIREBASE_MESSAGING_SENDER_ID
+    NEXT_PUBLIC_FIREBASE_APP_ID=YOUR_FIREBASE_APP_ID
+    NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=YOUR_FIREBASE_MEASUREMENT_ID
     ```
 
-3.  **Important**: Replace `YOUR_GOOGLE_API_KEY_HERE` with your actual API key from Google AI Studio, and set `YOUR_RAZORPAY_KEY_ID` to the key from your Razorpay dashboard. `CORS_ORIGIN` should be the URL of your frontend (e.g., `http://localhost:3000`). Fill in the Firebase values with the details from your Firebase project if you deploy your own instance.
+3.  **Important**: Replace `YOUR_GOOGLE_API_KEY` with your actual API key from Google AI Studio, and set `YOUR_RAZORPAY_KEY_ID` to the key from your Razorpay dashboard. `CORS_ORIGIN` should be the URL of your frontend (e.g., `http://localhost:3000`). Fill in the Firebase values with the details from your Firebase project if you deploy your own instance.
 
 ### Step 3.4: Backend Environment Variables
 The Express backend in the `backend` folder uses its own `.env` file. Copy `backend/.env.example` to `.env` inside that folder and fill in your MongoDB URI, Firebase service account credentials, JWT secret, and Razorpay keys.
