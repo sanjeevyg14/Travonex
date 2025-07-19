@@ -180,7 +180,7 @@ Your database schema should align with the TypeScript types defined in `src/lib/
 *   **Logic:** This endpoint should check the user's credentials against the `AdminUser`, `Organizer`, and `User` tables to determine their role.
 *   **Response:** On successful login, the API should return a session token (e.g., JWT) and a user object containing `id`, `name`, `email`, `role`, and `avatar`.
 *   **Session Management:** The frontend uses `localStorage` to persist the session. All subsequent API calls should include the token in the `Authorization` header for validation.
-*   **Signup:** Users and organizers register using phone number verification. The frontend obtains a Firebase ID token after OTP verification and sends it to `POST /api/auth/signup` along with the user's name, email, and desired role.
+*   **Signup:** New accounts register at `/signup` using phone number verification. The frontend obtains a Firebase ID token after OTP verification and sends it to `POST /api/auth/signup` along with the user's name and email. The backend determines the account's role.
 *   **Login:** Phone-based logins also use Firebase verification. After confirming the OTP, the frontend sends the resulting ID token as the `credential` in `POST /api/auth/login`.
     On success, the API responds with a `redirectPath` indicating the role-specific
     dashboard (`/trip-organiser/dashboard` for organizers, `/` for regular users, or

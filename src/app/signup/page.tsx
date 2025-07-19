@@ -14,8 +14,6 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import OtpInput from "@/components/ui/OtpInput";
 
 export default function SignupPage() {
@@ -24,7 +22,6 @@ export default function SignupPage() {
   const [otp, setOtp] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("USER");
   const [verificationId, setVerificationId] = useState<string | null>(null);
   const [isResending, setIsResending] = useState(false);
   const [countdown, setCountdown] = useState(0);
@@ -75,7 +72,7 @@ export default function SignupPage() {
     if (!verificationId) return;
     try {
       const { idToken } = await verifyOtp(verificationId, otp);
-      await saveUserRole(idToken, role, { name, email });
+      await saveUserRole(idToken, { name, email });
       toast({ title: "Signup successful" });
     } catch (err: any) {
       let msg = err.message || 'Verification failed';
@@ -94,16 +91,6 @@ export default function SignupPage() {
         <CardTitle>Phone Signup</CardTitle>
       </CardHeader>
       <CardContent className="grid gap-4">
-        <RadioGroup value={role} onValueChange={setRole} className="flex gap-4">
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="USER" id="role-user" />
-            <Label htmlFor="role-user">User</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="ORGANIZER" id="role-organizer" />
-            <Label htmlFor="role-organizer">Trip Organizer</Label>
-          </div>
-        </RadioGroup>
         <Input placeholder="Full Name" value={name} onChange={(e) => setName(e.target.value)} />
         <Input placeholder="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         <Input placeholder="Phone Number" value={phone} onChange={(e) => setPhone(e.target.value)} />
