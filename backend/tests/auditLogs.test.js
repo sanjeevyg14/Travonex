@@ -25,7 +25,11 @@ after(async () => {
 
 describe('Audit log routes', () => {
   it('records a log on trip update and retrieves logs', async () => {
-    const admin = await AdminUser.create({ name: 'A', email: 'a@example.com', password: 'pass' });
+    const admin = await AdminUser.create({
+      name: 'A',
+      email: `admin-${Date.now()}@example.com`,
+      password: 'pass'
+    });
     token = jwt.sign({ id: admin._id.toString(), role: 'admin' }, process.env.JWT_SECRET);
     const trip = await Trip.create({ title: 'T', slug: 'audit-trip' });
 
