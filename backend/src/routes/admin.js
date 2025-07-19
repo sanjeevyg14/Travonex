@@ -8,6 +8,7 @@ import Payout from '../models/Payout.js';
 import Banner from '../models/Banner.js';
 import Category from '../models/Category.js';
 import Interest from '../models/Interest.js';
+import AuditLog from '../models/AuditLog.js';
 import { requireJwt } from '../middlewares/jwtAuth.js';
 import { sendEmail } from '../utils/email.js';
 
@@ -164,12 +165,19 @@ router.get('/organizers/:id', requireJwt('admin'), async (req, res) => {
 router.patch('/organizers/:id/status', requireJwt('admin'), async (req, res) => {
   try {
     const { kycStatus, vendorAgreementStatus } = req.body;
-    const organizer = await Organizer.findByIdAndUpdate(
+  const organizer = await Organizer.findByIdAndUpdate(
       req.params.id,
       { kycStatus, vendorAgreementStatus },
       { new: true, runValidators: true }
     );
     if (!organizer) return res.status(404).json({ message: 'Organizer not found' });
+    await AuditLog.create({
+      action: 'Organizer status updated',
+      admin: req.user.id,
+      targetCollection: 'Organizer',
+      targetId: organizer._id.toString(),
+      details: { kycStatus, vendorAgreementStatus }
+    });
     res.json({ message: 'Status updated', organizer });
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -298,6 +306,13 @@ router.patch('/trips/:id', requireJwt('admin'), async (req, res) => {
         console.error('Failed to send rejection email:', e);
       }
     }
+    await AuditLog.create({
+      action: 'Trip updated',
+      admin: req.user.id,
+      targetCollection: 'Trip',
+      targetId: trip._id.toString(),
+      details: req.body
+    });
 
     res.json(trip);
   } catch (err) {
