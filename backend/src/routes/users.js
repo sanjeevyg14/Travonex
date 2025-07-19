@@ -72,6 +72,51 @@ router.get('/me/wallet-transactions', requireJwt('user'), async (req, res) => {
     }
 });
 
+// GET /api/users/me/wishlist
+router.get('/me/wishlist', requireJwt('user'), async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).select('wishlist');
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        res.json(user.wishlist || []);
+    } catch (err) {
+        res.status(500).json({ message: 'Failed to fetch wishlist', details: err.message });
+    }
+});
+
+// POST /api/users/me/wishlist
+router.post('/me/wishlist', requireJwt('user'), async (req, res) => {
+    try {
+        const { tripId } = req.body;
+        if (!tripId) return res.status(400).json({ message: 'tripId required' });
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        if (!user.wishlist) user.wishlist = [];
+        if (!user.wishlist.some(id => id.toString() === tripId)) {
+            user.wishlist.push(tripId);
+            await user.save();
+        }
+        res.status(201).json(user.wishlist);
+    } catch (err) {
+        res.status(400).json({ message: 'Failed to add to wishlist', details: err.message });
+    }
+});
+
+// DELETE /api/users/me/wishlist/:tripId
+router.delete('/me/wishlist/:tripId', requireJwt('user'), async (req, res) => {
+    try {
+        const { tripId } = req.params;
+        const user = await User.findByIdAndUpdate(
+            req.user.id,
+            { $pull: { wishlist: tripId } },
+            { new: true }
+        ).select('wishlist');
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        res.json(user.wishlist);
+    } catch (err) {
+        res.status(500).json({ message: 'Failed to remove from wishlist', details: err.message });
+    }
+});
+
 // PUT /api/users/me/profile
 router.put('/me/profile', requireJwt('user'), async (req, res) => {
     try {

@@ -33,6 +33,7 @@ const userSchema = new mongoose.Schema({
     marketingOptIn: { type: Boolean, default: true },
     walletBalance: { type: Number, default: 0 },
     walletTransactions: [walletTransactionSchema],
+    wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Trip' }],
     referralCode: { type: String, unique: true },
     referredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     isProfileComplete: { type: Boolean, default: false },
