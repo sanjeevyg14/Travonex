@@ -1,8 +1,12 @@
-export const saveUserRole = async (idToken: string, role: string, info: Record<string, any>) => {
+export const saveUserRole = async (
+  idToken: string,
+  role: string,
+  info: Record<string, any>
+) => {
   const res = await fetch('/api/auth/signup', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ idToken, role, ...info })
+    body: JSON.stringify({ idToken, accountType: role, terms: true, ...info })
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
