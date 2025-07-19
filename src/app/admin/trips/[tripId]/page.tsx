@@ -113,7 +113,6 @@ export default function AdminTripDetailPage() {
         // BACKEND: The PATCH call would also include `{ adminNotes: rejectionReason }`
         console.log("Rejection Reason:", rejectionReason);
         handleStatusChange('Rejected');
-        // TODO: Backend should trigger an email to the organizer with the rejection reason.
     }
     
     // DEV_COMMENT: This function handles the logic for featuring a trip.
