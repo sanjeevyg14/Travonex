@@ -18,6 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
 import { useEffect } from "react";
 import { Switch } from "@/components/ui/switch";
 import { PlusCircle } from "lucide-react";
@@ -28,6 +29,8 @@ export default function AdminCitiesPage() {
   const [cities, setCities] = React.useState<City[]>([]);
   const { toast } = useToast();
 
+  React.useEffect(() => {
+    fetch('/api/cities')
   useEffect(() => {
     fetch('/api/admin/cities')
       .then(res => res.json())

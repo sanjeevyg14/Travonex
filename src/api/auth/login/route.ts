@@ -21,6 +21,15 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
+    const backendUrl = `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/auth/login`;
+    const res = await fetch(backendUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(await request.json()),
+    });
+    const data = await res.json();
+    const response = NextResponse.json(data, { status: res.status });
+    if (res.ok && data.token && data.user) {
     const body = await request.json();
     const backendRes = await fetch(`${process.env.BACKEND_URL || 'http://localhost:5000'}/api/auth/login`, {
       method: 'POST',
@@ -46,6 +55,8 @@ export async function POST(request: Request) {
       });
     }
     return response;
+  } catch (error) {
+    console.error('Login error:', error);
   } catch (err) {
     console.error('Login error:', err);
     return NextResponse.json({ message: 'An internal server error occurred' }, { status: 500 });

@@ -29,10 +29,14 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/datepicker";
 import { ClientOnlyDate } from "@/components/common/ClientOnlyDate";
+import type { AuditLog } from "@/lib/types";
 
 
 export default function AdminAuditLogPage() {
     const [dateRange, setDateRange] = React.useState<{from?: Date, to?: Date}>({});
+    const [auditLogs, setAuditLogs] = React.useState<AuditLog[]>([]);
+
+    React.useEffect(() => {
     const [auditLogs, setAuditLogs] = React.useState<any[]>([]);
 
     useEffect(() => {

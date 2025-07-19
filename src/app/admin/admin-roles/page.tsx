@@ -33,6 +33,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+// Data now fetched from the backend
 import { useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -112,6 +113,13 @@ export default function AdminRolesPage() {
         resolver: zodResolver(AdminUserFormSchema),
         defaultValues: { status: 'Active' }
     });
+
+    React.useEffect(() => {
+        fetch('/api/admin/users')
+            .then(res => res.json())
+            .then(setAdmins)
+            .catch(() => setAdmins([]));
+    }, []);
 
     const handleRoleSelect = (role: Role) => {
         setSelectedRole(role);

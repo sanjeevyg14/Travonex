@@ -18,5 +18,5 @@ For detailed setup instructions, developer notes, and a backend API guide, pleas
 
 ## Environment Setup
 
-Create a `.env` file in the project root with your frontend variables. Copy `backend/.env.example` to `backend/.env` and fill in the database and API keys. Replace placeholder image URLs and mocked data with real services when moving to production.
+Create a `.env` file in the project root with your frontend variables. Copy `backend/.env.example` to `backend/.env` and fill in the database and API keys. Replace placeholder image URLs with real services when moving to production. All application data now comes from the Express backend via the `/api` routes.
 

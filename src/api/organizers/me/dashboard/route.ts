@@ -10,6 +10,9 @@ export async function GET(request: Request) {
 
   try {
     const backendUrl = `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/organizers/me/dashboard`;
+    const res = await fetch(backendUrl, { headers: { Authorization: authHeader } });
+    const data = await res.json();
+    return NextResponse.json(data, { status: res.status });
     const backendRes = await fetch(backendUrl, { headers: { Authorization: authHeader } });
     const data = await backendRes.json();
 
