@@ -192,7 +192,7 @@ Your database schema should align with the TypeScript types defined in `src/lib/
 The frontend is built to call these (or similar) API endpoints. You will find `// BACKEND:` comments in the code pointing to these specific integration points.
 
 *   **Auth:** `POST /api/auth/login`, `POST /api/auth/signup`, `POST /api/auth/logout`
-*   **Users (Public):** `GET /api/trips`, `GET /api/trips/slug/{slug}`, `POST /api/bookings`
+*   **Users (Public):** `GET /api/trips`, `GET /api/trips/slug/{slug}`, `POST /api/bookings/create` (preferred) or `POST /api/bookings`
 *   **Payments:** `POST /api/payments/create-order`, `POST /api/payments/verify`
 *   **Users (Authenticated):** `GET /api/users/me/profile`, `PUT /api/users/me/profile`, `GET /api/users/me/bookings`
 *   **Organizers:** `GET /api/organizers/me/dashboard`, `GET /api/organizers/me/trips`, `POST /api/trips`, `PUT /api/trips/{id}`, `DELETE /api/trips/{id}`, `GET /api/organizers/me/bookings`, `GET /api/organizers/me/payouts`, `POST /api/organizers/me/payouts/request`

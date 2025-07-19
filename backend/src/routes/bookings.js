@@ -23,8 +23,8 @@ router.get('/user/:userId', async (req, res) => {
     }
 });
 
-// Create a new booking
-router.post('/', async (req, res) => {
+// Handler for creating a booking
+const createBooking = async (req, res) => {
     try {
         const booking = new Booking(req.body);
         await booking.save();
@@ -32,7 +32,13 @@ router.post('/', async (req, res) => {
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
-});
+};
+
+// Create a new booking
+router.post('/', createBooking);
+
+// Preferred create endpoint
+router.post('/create', createBooking);
 
 // Get a booking by ID
 router.get('/:id', async (req, res) => {
