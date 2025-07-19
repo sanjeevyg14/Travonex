@@ -89,6 +89,7 @@ app.get('/', (req, res) => {
 });
 
 const swaggerSpec = generateSwaggerSpec(routeMappings);
+const swaggerSpec = generateSwaggerSpec(app, routeMappings);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // 404 handler
