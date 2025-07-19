@@ -180,7 +180,7 @@ export default function AdminBookingsPage() {
       .then(res => res.json())
       .then(setTrips)
       .catch(() => setTrips([]));
-    fetch('/api/admin/users')
+    fetch('/api/admin/access/users')
       .then(res => res.json())
       .then(setUsers)
       .catch(() => setUsers([]));

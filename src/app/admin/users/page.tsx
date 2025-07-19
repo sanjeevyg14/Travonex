@@ -9,9 +9,9 @@
  * @developer_notes
  * - **State Management**: Uses `useState` and `react-hook-form` to manage the selected user for both view and edit dialogs. The logic to reset the form on opening the edit dialog is crucial for preventing data contamination between different users.
  * - **API Integration**:
- *   - Fetch Users: `GET /api/admin/users`.
- *   - User Details: The dialogs fetch detailed data from `GET /api/admin/users/{userId}`.
- *   - Update User: The "Edit" dialog triggers `PUT /api/admin/users/{userId}` with the form data.
+ *   - Fetch Users: `GET /api/admin/access/users`.
+ *   - User Details: The dialogs fetch detailed data from `GET /api/admin/access/users/{userId}`.
+ *   - Update User: The "Edit" dialog triggers `PUT /api/admin/access/users/{userId}` with the form data.
  *   - Admin actions (like updating a profile) should be logged in the audit trail.
  */
 "use client";
@@ -325,7 +325,7 @@ export default function AdminUsersPage() {
   const [users, setUsers] = React.useState<User[]>([]);
 
   useEffect(() => {
-    fetch('/api/admin/users')
+    fetch('/api/admin/access/users')
       .then(res => res.json())
       .then(setUsers)
       .catch(() => setUsers([]));
@@ -353,7 +353,7 @@ export default function AdminUsersPage() {
   const handleSaveWallet = (data: AdjustWalletData) => {
     if (!selectedUser) return;
     
-    // BACKEND: Call a dedicated API: PATCH /api/admin/users/{userId}/wallet
+    // BACKEND: Call a dedicated API: PATCH /api/admin/access/users/{userId}/wallet
     const amount = data.type === 'Credit' ? data.amount : -data.amount;
     const newTransaction: WalletTransaction = {
         id: `txn_${Date.now()}`,
@@ -375,7 +375,7 @@ export default function AdminUsersPage() {
   }
 
   const handleSaveUser = (data: UserFormData) => {
-    // BACKEND: Call PUT /api/admin/users/{selectedUser.id}
+    // BACKEND: Call PUT /api/admin/access/users/{selectedUser.id}
     // The backend should log this action in the audit trail.
     if (!selectedUser) return;
     
