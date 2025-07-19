@@ -1,5 +1,27 @@
 import swaggerJsdoc from 'swagger-jsdoc';
-import listEndpoints from 'express-list-endpoints';
+
+// Walk router stacks to list endpoints
+export function extractEndpoints(routeMappings) {
+  const routes = [];
+
+  const collect = (router, prefix) => {
+    router.stack.forEach((layer) => {
+      if (layer.route) {
+        const methods = Object.keys(layer.route.methods).map((m) => m.toUpperCase());
+        const suffix = layer.route.path === '/' ? '' : layer.route.path;
+        routes.push({ path: `${prefix}${suffix}`, methods });
+      } else if (layer.name === 'router' && layer.handle?.stack) {
+        collect(layer.handle, prefix);
+      }
+    });
+  };
+
+  for (const [base, router] of routeMappings) {
+    collect(router, base);
+  }
+
+  return routes;
+}
 
 // Common status code responses for documentation
 const DEFAULT_RESPONSES = {
@@ -44,7 +66,7 @@ const DEFAULT_RESPONSES = {
   }
 };
 
-export default function generateSwaggerSpec(app) {
+export default function generateSwaggerSpec(routeMappings) {
   const options = {
     definition: {
       openapi: '3.0.0',
@@ -60,7 +82,7 @@ export default function generateSwaggerSpec(app) {
   const spec = swaggerJsdoc(options);
   spec.paths = spec.paths || {};
 
-  const endpoints = listEndpoints(app);
+  const endpoints = extractEndpoints(routeMappings);
   endpoints.forEach(({ path, methods }) => {
     if (!path.startsWith('/api')) return;
     const openapiPath = path.replace(/:([^/]+)/g, '{$1}');
