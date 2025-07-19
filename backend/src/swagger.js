@@ -1,5 +1,4 @@
 import swaggerJsdoc from 'swagger-jsdoc';
-import listEndpoints from 'express-list-endpoints';
 
 // Common status code responses for documentation
 const DEFAULT_RESPONSES = {
@@ -44,7 +43,22 @@ const DEFAULT_RESPONSES = {
   }
 };
 
-export default function generateSwaggerSpec(app) {
+export function extractRoutes(router, base = '') {
+  const routes = [];
+  for (const layer of router.stack || []) {
+    if (layer.route) {
+      const path = base + (layer.route.path === '/' ? '' : layer.route.path);
+      const methods = Object.keys(layer.route.methods).map((m) => m.toUpperCase());
+      routes.push({ path, methods });
+    } else if (layer.name === 'router' && layer.handle && layer.handle.stack) {
+      const nestedBase = base + (layer.path || '');
+      routes.push(...extractRoutes(layer.handle, nestedBase));
+    }
+  }
+  return routes;
+}
+
+export default function generateSwaggerSpec(app, routeMappings = []) {
   const options = {
     definition: {
       openapi: '3.0.0',
@@ -60,27 +74,29 @@ export default function generateSwaggerSpec(app) {
   const spec = swaggerJsdoc(options);
   spec.paths = spec.paths || {};
 
-  const endpoints = listEndpoints(app);
-  endpoints.forEach(({ path, methods }) => {
-    if (!path.startsWith('/api')) return;
-    const openapiPath = path.replace(/:([^/]+)/g, '{$1}');
-    spec.paths[openapiPath] = spec.paths[openapiPath] || {};
-
-    methods.forEach((method) => {
-      const lower = method.toLowerCase();
-      if (!spec.paths[openapiPath][lower]) {
-        spec.paths[openapiPath][lower] = {
-          summary: `${method} ${path}`,
-          responses: { ...DEFAULT_RESPONSES[method] }
-        };
-      } else {
-        spec.paths[openapiPath][lower].responses = {
-          ...DEFAULT_RESPONSES[method],
-          ...(spec.paths[openapiPath][lower].responses || {})
-        };
-      }
-    });
-  });
+  for (const [basePath, router] of routeMappings) {
+    const routes = extractRoutes(router, basePath);
+    for (const { path, methods } of routes) {
+      if (!path.startsWith('/api')) continue;
+      const openapiPath = path.replace(/:([^/]+)/g, '{$1}');
+      spec.paths[openapiPath] = spec.paths[openapiPath] || {};
+      methods.forEach((method) => {
+        const upper = method.toUpperCase();
+        const lower = method.toLowerCase();
+        if (!spec.paths[openapiPath][lower]) {
+          spec.paths[openapiPath][lower] = {
+            summary: `${upper} ${path}`,
+            responses: { ...DEFAULT_RESPONSES[upper] }
+          };
+        } else {
+          spec.paths[openapiPath][lower].responses = {
+            ...DEFAULT_RESPONSES[upper],
+            ...(spec.paths[openapiPath][lower].responses || {})
+          };
+        }
+      });
+    }
+  }
 
   // Merge duplicate paths that may include trailing slashes
   const deduped = {};
