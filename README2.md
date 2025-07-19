@@ -216,13 +216,23 @@ The frontend is built to call these (or similar) API endpoints. You will find `/
 
 ## 7. Running Tests
 
-Use the root `test` script to run the backend test suite:
+Before running the tests, install dependencies in **both** the project root and the
+`backend` folder:
+
+```bash
+npm install
+cd backend && npm install
+```
+
+After the dependencies are installed, use the root `test` script to run the backend
+test suite:
 
 ```bash
 npm test
 ```
 
-This command runs `npm --prefix backend test`, executing the tests located in the `backend` directory.
+This command runs `npm --prefix backend test`, executing the tests located in the
+`backend` directory.
 
 ---
 
