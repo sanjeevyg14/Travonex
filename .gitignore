@@ -2,3 +2,7 @@ node_modules
 .env*
 env.txt
 .next
+
+# Ignore development environment
+.idx/
+modified.txt
