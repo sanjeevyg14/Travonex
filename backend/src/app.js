@@ -88,7 +88,7 @@ app.get('/', (req, res) => {
     res.send('Travonex Backend API');
 });
 
-const swaggerSpec = generateSwaggerSpec(app, routeMappings);
+const swaggerSpec = generateSwaggerSpec(app);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // 404 handler
