@@ -21,7 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PlusCircle, Edit, Eye, Lock, Loader2 } from "lucide-react";
-import { trips as mockTrips, bookings } from "@/lib/mock-data";
+
 import type { Trip } from "@/lib/types";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -30,8 +30,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ClientOnlyDate } from "@/components/common/ClientOnlyDate";
 
 
-// Mock organizer ID
-const MOCK_ORGANIZER_ID = 'VND001';
 
 const getStatusBadgeVariant = (status: Trip['status']) => {
     switch (status) {
@@ -61,16 +59,31 @@ const TripsTableSkeleton = () => (
 
 export default function OrganizerTripsPage() {
   const [organizerTrips, setOrganizerTrips] = React.useState<Trip[]>([]);
+  const [organizerBookings, setOrganizerBookings] = React.useState<any[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [error, setError] = React.useState('');
 
   React.useEffect(() => {
-    // FRONTEND: Simulate fetching data
-    // BACKEND: Call `GET /api/organizers/me/trips`
-    setIsLoading(true);
-    setTimeout(() => {
-        setOrganizerTrips(mockTrips.filter(t => t.organizerId === MOCK_ORGANIZER_ID));
+    const load = async () => {
+      setIsLoading(true);
+      try {
+        const [tripsRes, bookingsRes] = await Promise.all([
+          fetch('/api/organizers/me/trips'),
+          fetch('/api/organizers/me/bookings'),
+        ]);
+        if (!tripsRes.ok || !bookingsRes.ok) throw new Error('Failed to load');
+        const tripsData = await tripsRes.json();
+        const bookingsData = await bookingsRes.json();
+        setOrganizerTrips(tripsData);
+        setOrganizerBookings(bookingsData);
+      } catch (err) {
+        console.error('Trips fetch error:', err);
+        setError('Failed to load trips');
+      } finally {
         setIsLoading(false);
-    }, 300);
+      }
+    };
+    load();
   }, []);
 
   const handlePauseToggle = (tripId: string, isPublished: boolean) => {
@@ -122,8 +135,12 @@ export default function OrganizerTripsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? <TripsTableSkeleton /> : organizerTrips.length > 0 ? organizerTrips.map((trip) => {
-                const tripBookings = bookings.filter(b => b.tripId === trip.id && b.status !== 'Cancelled');
+              {isLoading ? <TripsTableSkeleton /> : error ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center text-red-600 py-6">{error}</TableCell>
+                </TableRow>
+              ) : organizerTrips.length > 0 ? organizerTrips.map((trip) => {
+                const tripBookings = organizerBookings.filter(b => b.tripId === trip.id && b.status !== 'Cancelled');
                 const totalCapacity = trip.batches.reduce((acc, batch) => acc + batch.maxParticipants, 0);
                 const isEditable = trip.status === 'Draft' || trip.status === 'Published' || trip.status === 'Unlisted';
                 const nextBatch = trip.batches.filter(b => new Date(b.startDate) > new Date()).sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())[0];

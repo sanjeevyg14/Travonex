@@ -14,9 +14,8 @@
  */
 import * as React from "react";
 import { BookingsClient } from "@/components/bookings/BookingsClient";
-import { trips, organizers } from "@/lib/mock-data";
 import { cookies } from "next/headers";
-import type { UserSession } from "@/lib/types";
+import type { UserSession, Trip, Organizer } from "@/lib/types";
 
 // DEV_COMMENT: Data fetching now happens on the server before the page is rendered.
 // It securely reads the session cookie to identify the user.
@@ -41,8 +40,32 @@ async function getUserBookings() {
   }
 }
 
+async function getTrips() : Promise<Trip[]> {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/trips`);
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
+async function getOrganizers() : Promise<Organizer[]> {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/organizers`);
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
 export default async function BookingsPage() {
-  const userBookings = await getUserBookings();
+  const [userBookings, trips, organizers] = await Promise.all([
+    getUserBookings(),
+    getTrips(),
+    getOrganizers(),
+  ]);
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
@@ -60,10 +83,10 @@ export default async function BookingsPage() {
         This pattern allows for fast initial page loads with server-side rendering,
         while still enabling rich client-side interactivity.
       */}
-      <BookingsClient 
-        initialBookings={userBookings} 
-        allTrips={trips} 
-        allOrganizers={organizers} 
+      <BookingsClient
+        initialBookings={userBookings}
+        allTrips={trips}
+        allOrganizers={organizers}
       />
     </main>
   );

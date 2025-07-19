@@ -37,7 +37,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { bookings as mockBookings, trips, users } from "@/lib/mock-data";
+
 import { Users as UsersIcon, Calendar, User, Mail, Phone, Info } from "lucide-react";
 import type { Booking } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -58,18 +58,24 @@ const BookingsSkeleton = () => (
 export default function OrganizerBookingsPage() {
     const [organizerBookings, setOrganizerBookings] = React.useState<Booking[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
+    const [error, setError] = React.useState('');
 
     React.useEffect(() => {
-        // FRONTEND: Simulate fetching data
-        // BACKEND: In a real app, this filtering would be done on the backend.
-        // The API (`/api/organizers/me/bookings`) should only return bookings for the authenticated organizer.
-        setIsLoading(true);
-        setTimeout(() => {
-            const organizerTripIds = trips.filter(t => t.organizerId === MOCK_ORGANIZER_ID).map(t => t.id);
-            const fetchedBookings = mockBookings.filter(b => organizerTripIds.includes(b.tripId));
-            setOrganizerBookings(fetchedBookings);
-            setIsLoading(false);
-        }, 300);
+        const load = async () => {
+            setIsLoading(true);
+            try {
+                const res = await fetch('/api/organizers/me/bookings');
+                if (!res.ok) throw new Error('Failed to load');
+                const data = await res.json();
+                setOrganizerBookings(data);
+            } catch (err) {
+                console.error('Bookings fetch error:', err);
+                setError('Failed to load bookings');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        load();
     }, []);
 
   return (
@@ -90,12 +96,11 @@ export default function OrganizerBookingsPage() {
         <CardContent>
           {isLoading ? (
             <BookingsSkeleton />
+          ) : error ? (
+            <p className="text-red-600 text-center py-12">{error}</p>
           ) : organizerBookings.length > 0 ? (
             <Accordion type="single" collapsible className="w-full">
               {organizerBookings.map((booking) => {
-                const trip = trips.find(t => t.id === booking.tripId);
-                const user = users.find(u => u.id === booking.userId);
-                const batch = trip?.batches.find(b => b.id === booking.batchId);
                 return (
                   <AccordionItem value={booking.id} key={booking.id}>
                     <AccordionTrigger className="hover:bg-muted/50 px-4 rounded-md">
@@ -103,8 +108,8 @@ export default function OrganizerBookingsPage() {
                             <div className="flex items-center gap-4">
                                 <UsersIcon className="h-5 w-5 text-primary" />
                                 <div className="text-left">
-                                    <p className="font-semibold">{user?.name}</p>
-                                    <p className="text-muted-foreground">{trip?.title}</p>
+                                    <p className="font-semibold">{booking.user?.name}</p>
+                                    <p className="text-muted-foreground">{booking.trip?.title}</p>
                                 </div>
                             </div>
                              <div className="flex items-center gap-4 md:gap-6">

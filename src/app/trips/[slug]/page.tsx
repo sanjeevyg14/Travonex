@@ -38,7 +38,6 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ClientOnlyDate } from "@/components/common/ClientOnlyDate";
 import type { TripBatch, Point, ItineraryItem, FAQ } from "@/lib/types";
-import { users } from "@/lib/mock-data";
 
 
 // DEV_COMMENT: Data fetching now happens on the server.
@@ -48,7 +47,9 @@ async function getTripData(slug: string) {
         return { trip: null, organizer: null };
     }
     const data = await res.json();
-    return { trip: data, organizer: data.organizer };
+    const reviewsRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/reviews/trip/${data.id}`);
+    const reviews = reviewsRes.ok ? await reviewsRes.json() : [];
+    return { trip: { ...data, reviews }, organizer: data.organizer };
 }
 
 
@@ -387,8 +388,8 @@ export default async function TripDetailsPage({ params }: { params: { slug: stri
                     )}
 
                     <div className="space-y-4">
-                        {trip.reviews?.map((review: { id: string; userId: string; rating: number; comment: string }) => {
-                            const user = users.find(u => u.id === review.userId);
+                        {trip.reviews?.map((review: { id: string; user: { name: string }; rating: number; comment: string }) => {
+                            const user = review.user;
                             return (
                                 <div key={review.id} className="flex gap-4 border-t pt-4 first:border-t-0 first:pt-0">
                                     <Avatar>
