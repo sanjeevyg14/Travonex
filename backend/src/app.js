@@ -25,6 +25,7 @@ import loginRouter from './routes/login.js';
 import paymentsRouter from './routes/payments.js';
 import otpSignupRouter from './routes/otpSignup.js';
 import adminRouter from './routes/admin.js';
+import adminAccessRouter from './routes/adminAccess.js';
 
 // Mapping of base paths to routers for Swagger docs
 export const routeMappings = [
@@ -43,6 +44,7 @@ export const routeMappings = [
   ['/api/upload', uploadRouter],
   ['/api/payments', paymentsRouter],
   ['/api/admin', adminRouter],
+  ['/api/admin', adminAccessRouter],
   ['/api/protected', protectedRouter],
   ['/api/auth/signup', signupRouter],
   ['/api/auth/login', loginRouter],

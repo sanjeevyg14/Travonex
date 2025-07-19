@@ -5,8 +5,8 @@ const adminUserSchema = new mongoose.Schema({
     name: String,
     email: { type: String, unique: true },
     password: String,
-    role: { type: String, default: 'admin' },
-    status: { type: String, enum: ['Active', 'Suspended'], default: 'Active' },
+    role: { type: mongoose.Schema.Types.ObjectId, ref: 'Role' },
+    status: { type: String, enum: ['Active', 'Inactive', 'Suspended'], default: 'Active' },
 });
 
 adminUserSchema.methods.comparePassword = function (candidatePassword) {
