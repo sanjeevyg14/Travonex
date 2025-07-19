@@ -81,7 +81,11 @@ export default function LoginPage() {
       setStep(2);
       startResendTimer();
     } catch (err: any) {
-      toast({ variant: "destructive", title: "Failed to send OTP", description: err.message });
+      let msg = err.message;
+      if (msg.includes('auth/too-many-requests')) {
+        msg = 'Too many attempts. Please wait and try again.';
+      }
+      toast({ variant: "destructive", title: "Failed to send OTP", description: msg });
     } finally {
       setIsLoading(false);
     }
@@ -105,10 +109,16 @@ export default function LoginPage() {
       // This solves the race condition that caused the login/logout loop.
       window.location.href = redirectPath || '/';
     } catch (error: any) {
+        let msg = error.message || 'Invalid credentials or OTP. Please try again.';
+        if (msg.includes('auth/code-expired')) {
+            msg = 'OTP expired. Please request a new one.';
+        } else if (msg.includes('auth/invalid-verification-code')) {
+            msg = 'Invalid OTP. Please try again.';
+        }
         toast({
             variant: 'destructive',
             title: 'Login Failed',
-            description: error.message || 'Invalid credentials or OTP. Please try again.',
+            description: msg,
         });
     } finally {
       setIsLoading(false);
@@ -124,7 +134,11 @@ export default function LoginPage() {
       toast({ title: 'OTP Resent' });
       startResendTimer();
     } catch (err: any) {
-      toast({ variant: 'destructive', title: 'Failed to resend OTP', description: err.message });
+      let msg = err.message;
+      if (msg.includes('auth/too-many-requests')) {
+        msg = 'Too many attempts. Please wait and try again.';
+      }
+      toast({ variant: 'destructive', title: 'Failed to resend OTP', description: msg });
     } finally {
       setIsResending(false);
     }
