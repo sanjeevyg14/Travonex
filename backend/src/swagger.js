@@ -23,7 +23,6 @@ export function extractEndpoints(routeMappings) {
   return routes;
 }
 
-
 // Common status code responses for documentation
 const DEFAULT_RESPONSES = {
   GET: {
@@ -68,22 +67,6 @@ const DEFAULT_RESPONSES = {
 };
 
 export default function generateSwaggerSpec(routeMappings) {
-export function extractRoutes(router, base = '') {
-  const routes = [];
-  for (const layer of router.stack || []) {
-    if (layer.route) {
-      const path = base + (layer.route.path === '/' ? '' : layer.route.path);
-      const methods = Object.keys(layer.route.methods).map((m) => m.toUpperCase());
-      routes.push({ path, methods });
-    } else if (layer.name === 'router' && layer.handle && layer.handle.stack) {
-      const nestedBase = base + (layer.path || '');
-      routes.push(...extractRoutes(layer.handle, nestedBase));
-    }
-  }
-  return routes;
-}
-
-export default function generateSwaggerSpec(app, routeMappings = []) {
   const options = {
     definition: {
       openapi: '3.0.0',
@@ -118,31 +101,19 @@ export default function generateSwaggerSpec(app, routeMappings = []) {
           ...(spec.paths[openapiPath][lower].responses || {})
         };
       }
+      if (['post', 'put', 'patch'].includes(lower)) {
+        spec.paths[openapiPath][lower].requestBody =
+          spec.paths[openapiPath][lower].requestBody || {
+            required: true,
+            content: {
+              'application/json': {
+                schema: { type: 'object' }
+              }
+            }
+          };
+      }
     });
   });
-  for (const [basePath, router] of routeMappings) {
-    const routes = extractRoutes(router, basePath);
-    for (const { path, methods } of routes) {
-      if (!path.startsWith('/api')) continue;
-      const openapiPath = path.replace(/:([^/]+)/g, '{$1}');
-      spec.paths[openapiPath] = spec.paths[openapiPath] || {};
-      methods.forEach((method) => {
-        const upper = method.toUpperCase();
-        const lower = method.toLowerCase();
-        if (!spec.paths[openapiPath][lower]) {
-          spec.paths[openapiPath][lower] = {
-            summary: `${upper} ${path}`,
-            responses: { ...DEFAULT_RESPONSES[upper] }
-          };
-        } else {
-          spec.paths[openapiPath][lower].responses = {
-            ...DEFAULT_RESPONSES[upper],
-            ...(spec.paths[openapiPath][lower].responses || {})
-          };
-        }
-      });
-    }
-  }
 
   // Merge duplicate paths that may include trailing slashes
   const deduped = {};
