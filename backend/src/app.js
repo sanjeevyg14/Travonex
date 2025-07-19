@@ -25,6 +25,8 @@ import loginRouter from './routes/login.js';
 import paymentsRouter from './routes/payments.js';
 import otpSignupRouter from './routes/otpSignup.js';
 import adminRouter from './routes/admin.js';
+import contentRouter from './routes/content.js';
+import faqsRouter from './routes/faqs.js';
 
 // Mapping of base paths to routers for Swagger docs
 export const routeMappings = [
@@ -46,7 +48,9 @@ export const routeMappings = [
   ['/api/protected', protectedRouter],
   ['/api/auth/signup', signupRouter],
   ['/api/auth/login', loginRouter],
-  ['/api/auth/otp-signup', otpSignupRouter]
+  ['/api/auth/otp-signup', otpSignupRouter],
+  ['/api/content', contentRouter],
+  ['/api/faqs', faqsRouter]
 ];
 import swaggerUi from 'swagger-ui-express';
 import generateSwaggerSpec from './swagger.js';
