@@ -26,6 +26,7 @@ import loginRouter from './routes/login.js';
 import paymentsRouter from './routes/payments.js';
 import otpSignupRouter from './routes/otpSignup.js';
 import adminRouter from './routes/admin.js';
+import adminAccessRouter from './routes/adminAccess.js';
 import adminAuditLogsRouter from './routes/adminAuditLogs.js';
 import contentRouter from './routes/content.js';
 import faqsRouter from './routes/faqs.js';
@@ -49,6 +50,7 @@ export const routeMappings = [
   ['/api/payments', paymentsRouter],
   ['/api/admin/audit-logs', adminAuditLogsRouter],
   ['/api/admin', adminRouter],
+  ['/api/admin', adminAccessRouter],
   ['/api/protected', protectedRouter],
   ['/api/auth/signup', signupRouter],
   ['/api/auth/login', loginRouter],
