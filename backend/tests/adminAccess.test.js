@@ -26,13 +26,13 @@ after(async () => {
 describe('Admin roles and users routes', () => {
   it('creates and lists roles', async () => {
     const resCreate = await request(app)
-      .post('/api/admin/roles')
+      .post('/api/admin/access/roles')
       .set('Authorization', `Bearer ${token}`)
       .send({ name: 'Support', permissions: { Dashboard: ['View'] } });
     assert.equal(resCreate.statusCode, 201);
 
     const resList = await request(app)
-      .get('/api/admin/roles')
+      .get('/api/admin/access/roles')
       .set('Authorization', `Bearer ${token}`);
     assert.equal(resList.statusCode, 200);
     assert.equal(resList.body.length, 1);
@@ -41,7 +41,7 @@ describe('Admin roles and users routes', () => {
   it('creates and updates an admin user', async () => {
     const role = await Role.findOne();
     const resCreate = await request(app)
-      .post('/api/admin/users')
+      .post('/api/admin/access/users')
       .set('Authorization', `Bearer ${token}`)
       .send({
         name: 'Admin',
@@ -54,7 +54,7 @@ describe('Admin roles and users routes', () => {
     const admin = resCreate.body;
 
     const resUpdate = await request(app)
-      .put(`/api/admin/users/${admin._id}`)
+      .put(`/api/admin/access/users/${admin._id}`)
       .set('Authorization', `Bearer ${token}`)
       .send({ status: 'Suspended' });
     assert.equal(resUpdate.statusCode, 200);

@@ -50,7 +50,7 @@ export const routeMappings = [
   ['/api/payments', paymentsRouter],
   ['/api/admin/audit-logs', adminAuditLogsRouter],
   ['/api/admin', adminRouter],
-  ['/api/admin', adminAccessRouter],
+  ['/api/admin/access', adminAccessRouter],
   ['/api/protected', protectedRouter],
   ['/api/auth/signup', signupRouter],
   ['/api/auth/login', loginRouter],

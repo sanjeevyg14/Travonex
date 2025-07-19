@@ -10,12 +10,12 @@
  * @developer_notes
  * - **State Management**: Uses `useState` and `react-hook-form` to manage roles, admins, and dialog states.
  * - **API Integration**:
- *   - `GET /api/admin/roles`, `GET /api/admin/users` to fetch initial data.
- *   - `POST /api/admin/roles`: Create a new role with permissions.
- *   - `PUT /api/admin/roles/{roleId}`: Update an existing role's name or permissions.
- *   - `DELETE /api/admin/roles/{roleId}`: Delete a role. Ensure it's not currently assigned to any admin.
- *   - `POST /api/admin/users`: Create a new admin user.
- *   - `PUT /api/admin/users/{userId}`: Update an admin user (status, role).
+ *   - `GET /api/admin/access/roles`, `GET /api/admin/access/users` to fetch initial data.
+ *   - `POST /api/admin/access/roles`: Create a new role with permissions.
+ *   - `PUT /api/admin/access/roles/{roleId}`: Update an existing role's name or permissions.
+ *   - `DELETE /api/admin/access/roles/{roleId}`: Delete a role. Ensure it's not currently assigned to any admin.
+ *   - `POST /api/admin/access/users`: Create a new admin user.
+ *   - `PUT /api/admin/access/users/{userId}`: Update an admin user (status, role).
  */
 "use client";
 
@@ -98,7 +98,7 @@ export default function AdminRolesPage() {
     const [isSaving, setIsSaving] = React.useState(false);
 
     useEffect(() => {
-        fetch('/api/admin/users?role=admin')
+        fetch('/api/admin/access/users?role=admin')
             .then(res => res.json())
             .then(setAdmins)
             .catch(() => setAdmins([]));
@@ -133,7 +133,7 @@ export default function AdminRolesPage() {
     const handleSaveChanges = async () => {
         if (!selectedRole) return;
         setIsSaving(true);
-        // BACKEND: Call `PUT /api/admin/roles/{selectedRole.id}` with the updated permissions object.
+        // BACKEND: Call `PUT /api/admin/access/roles/{selectedRole.id}` with the updated permissions object.
         await new Promise(resolve => setTimeout(resolve, 300));
         console.log("Saving permissions for role:", selectedRole.id, permissions);
         const updatedRoles = roles.map(r => r.id === selectedRole.id ? { ...r, permissions } : r);
@@ -160,7 +160,7 @@ export default function AdminRolesPage() {
     const handleRoleFormSubmit = async (data: RoleFormData) => {
         setIsSaving(true);
         // BACKEND: This is where you would call the API to create/update a role.
-        // POST /api/admin/roles or PUT /api/admin/roles/{id}
+        // POST /api/admin/access/roles or PUT /api/admin/access/roles/{id}
         await new Promise(resolve => setTimeout(resolve, 300));
         if (editingRole) {
             const updatedRole = { ...editingRole, name: data.name, permissions: data.permissions || {} };
@@ -181,7 +181,7 @@ export default function AdminRolesPage() {
     };
     
     const handleDeleteRole = (roleId: string) => {
-        // BACKEND: Call `DELETE /api/admin/roles/{roleId}`
+        // BACKEND: Call `DELETE /api/admin/access/roles/{roleId}`
         // The backend should check if any admins are currently assigned this role before deleting.
         setRoles(roles.filter(r => r.id !== roleId));
         if (selectedRole?.id === roleId) {
@@ -193,7 +193,7 @@ export default function AdminRolesPage() {
 
     const handleAdminFormSubmit = async (data: AdminUserFormData) => {
         setIsSaving(true);
-        // BACKEND: Call POST /api/admin/users to create a new admin.
+        // BACKEND: Call POST /api/admin/access/users to create a new admin.
         // The backend should hash the password before saving.
         await new Promise(resolve => setTimeout(resolve, 300));
         

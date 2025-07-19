@@ -202,8 +202,8 @@ The frontend is built to call these (or similar) API endpoints. You will find `/
     *   `GET /api/admin/bookings`, `GET /api/admin/bookings/{id}`
     *   `GET /api/admin/organizers`, `GET /api/admin/organizers/{id}`, `PATCH /api/admin/organizers/{id}/status`
     *   `GET /api/admin/payouts`, `POST /api/admin/payouts/{id}/process`
-    *   `GET /api/admin/users`, `PUT /api/admin/users/{id}`
-    *   `GET /api/admin/roles`, `POST /api/admin/roles`, `PUT /api/admin/roles/{id}`
+    *   `GET /api/admin/access/users`, `PUT /api/admin/access/users/{id}`
+    *   `GET /api/admin/access/roles`, `POST /api/admin/access/roles`, `PUT /api/admin/access/roles/{id}`
 
 ### 6.4. Critical Server-Side Validations
 **Do not trust the frontend.** The client-side logic is for user experience only. The backend **MUST** re-validate all critical business logic:
