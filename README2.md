@@ -235,6 +235,18 @@ npm test
 This command runs `npm --prefix backend test`, executing the tests located in the
 `backend` directory.
 
+## Deploying to Google Cloud Run
+
+The backend can be containerized and deployed on **Google Cloud Run** for automatic scaling and load balancing. A sample `Dockerfile` is located in the `backend` folder. Build and run it locally with:
+
+```bash
+docker build -t travonex-backend ./backend
+docker run -p 8080:8080 travonex-backend
+```
+
+To deploy, configure a Cloud Build trigger in Google Cloud that builds this container and deploys it to Cloud Run. Set the service port to `8080` as defined in the `Dockerfile`.
+
+
 ---
 
 ## 8. Frequently Asked Questions (FAQs)
