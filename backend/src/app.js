@@ -19,6 +19,7 @@ import reviewsRouter from './routes/reviews.js';
 import couponsRouter from './routes/coupons.js';
 import disputesRouter from './routes/disputes.js';
 import adminDisputesRouter from './routes/adminDisputes.js';
+import bannersRouter from './routes/banners.js';
 import protectedRouter from './routes/protected.js';
 import signupRouter from './routes/signup.js';
 import loginRouter from './routes/login.js';
@@ -39,6 +40,7 @@ export const routeMappings = [
   ['/api/cities', citiesRouter],
   ['/api/categories', categoriesRouter],
   ['/api/interests', interestsRouter],
+  ['/api/banners', bannersRouter],
   ['/api/auth', authRouter],
   ['/api/upload', uploadRouter],
   ['/api/payments', paymentsRouter],
