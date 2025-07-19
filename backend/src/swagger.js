@@ -101,6 +101,17 @@ export default function generateSwaggerSpec(routeMappings) {
           ...(spec.paths[openapiPath][lower].responses || {})
         };
       }
+      if (['post', 'put', 'patch'].includes(lower)) {
+        spec.paths[openapiPath][lower].requestBody =
+          spec.paths[openapiPath][lower].requestBody || {
+            required: true,
+            content: {
+              'application/json': {
+                schema: { type: 'object' }
+              }
+            }
+          };
+      }
     });
   });
 
